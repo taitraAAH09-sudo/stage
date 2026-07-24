@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v16">
+<meta name="build" content="v18">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -124,6 +124,7 @@
   .f-input, .f-ta, .f-sel{ width:100%; font-family:inherit; font-size:14px; padding:9px 11px;
         border:1px solid var(--paper-line); border-radius:6px; background:var(--paper); color:var(--ink); outline:none; }
   .f-input:focus, .f-ta:focus{ border-color:var(--gold); background:#fff; }
+  #pw-input::placeholder{ color:#9aa7b2; opacity:1; letter-spacing:1px; font-size:15px; font-weight:600; }
   .f-ta{ resize:vertical; min-height:56px; }
   .hint{ font-size:12px; color:var(--navy-light); margin-top:3px; }
   .split-preview{ font-size:12px; margin-top:5px; padding:7px 9px; background:var(--paper);
@@ -164,12 +165,18 @@
            border:1.5px solid var(--paper-line); background:#fff; color:var(--navy); cursor:pointer; }
   .dirbtn:hover{ border-color:var(--gold); }
   .dirbtn.on{ background:var(--navy); border-color:var(--navy); color:#fff; }
-  .thsec{ font-size:13px; font-weight:800; color:var(--navy); margin:16px 0 7px;
-          padding-bottom:5px; border-bottom:2px solid var(--paper-line); }
+  .thsec{ font-size:17px; font-weight:800; color:var(--navy); margin:22px 0 10px;
+          padding-bottom:8px; border-bottom:3px solid var(--gold);
+          display:flex; align-items:center; gap:9px; letter-spacing:.02em; }
+  .thsec .n{ display:inline-flex; align-items:center; justify-content:center;
+             width:28px; height:28px; border-radius:50%; background:var(--navy);
+             color:#fff; font-size:15px; font-weight:800; flex-shrink:0; }
   .throw{ display:flex; align-items:center; gap:8px; margin-bottom:7px; }
-  .throw>span{ font-size:12.5px; font-weight:700; color:var(--navy-light); width:100px; flex-shrink:0; }
-  .throw input[type=color]{ width:40px; height:30px; padding:2px; border:1px solid var(--paper-line);
-        border-radius:5px; background:#fff; cursor:pointer; flex-shrink:0; }
+  .throw{ margin-bottom:10px; }
+  .throw>span{ font-size:13.5px; font-weight:700; color:var(--navy-light); width:106px; flex-shrink:0; }
+  .throw input[type=color]{ width:66px; height:44px; padding:3px; border:2px solid var(--paper-line);
+        border-radius:8px; background:#fff; cursor:pointer; flex-shrink:0; }
+  .throw input[type=color]:hover{ border-color:var(--gold); }
   .throw input[type=text]{ flex:1; font-family:ui-monospace,monospace; font-size:12.5px; padding:6px 9px;
         border:1px solid var(--paper-line); border-radius:5px; background:#fff; }
   .pick{ font-size:11.5px; padding:6px 10px; border-radius:5px; border:1px solid var(--paper-line);
@@ -210,7 +217,7 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v16</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v18</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
         <button class="newtab" id="btn-newtab" title="清空本頁活動內容，交給下一位使用（時段／日期／配色會保留）">開新頁</button>
@@ -423,32 +430,31 @@
     <h2>🎨 色塊／文字配色（三段各自獨立）</h2>
     <div class="hint" style="margin-bottom:12px;">每個色塊、每段文字都能單獨調。用滴管可以直接吸畫面上的顏色；下面也可以一鍵套用 KV 偵測到的色。</div>
 
-    <div class="thsec">① 標題色塊</div>
+    <div class="thsec"><span class="n">1</span>標題色塊（最上方那條）</div>
     <div class="throw"><span>底色</span><input type="color" id="t-headBg"><input type="text" id="t-headBg-x"><button class="pick" data-pick="t-headBg">滴管</button></div>
     <div class="throw"><span>漸層第二色</span><input type="color" id="t-headGrad"><input type="text" id="t-headGrad-x"><button class="pick" data-pick="t-headGrad">滴管</button><button class="el-x" id="t-headGrad-off">不用漸層</button></div>
     <div class="throw"><span>漸層方向</span><select class="f-sel" id="t-headDir" style="flex:1;"></select></div>
     <div class="throw"><span>主標文字</span><input type="color" id="t-titleColor"><input type="text" id="t-titleColor-x"><button class="pick" data-pick="t-titleColor">滴管</button></div>
     <div class="throw"><span>副標文字</span><input type="color" id="t-subColor"><input type="text" id="t-subColor-x"><button class="pick" data-pick="t-subColor">滴管</button></div>
 
-    <div class="thsec">② 地點色塊</div>
+    <div class="thsec"><span class="n">2</span>地點色塊（Venue 那條）</div>
     <div class="throw"><span>底色</span><input type="color" id="t-venueBg"><input type="text" id="t-venueBg-x"><button class="pick" data-pick="t-venueBg">滴管</button></div>
     <div class="throw"><span>中文文字</span><input type="color" id="t-venueZhColor"><input type="text" id="t-venueZhColor-x"><button class="pick" data-pick="t-venueZhColor">滴管</button></div>
     <div class="throw"><span>英文文字</span><input type="color" id="t-venueEnColor"><input type="text" id="t-venueEnColor-x"><button class="pick" data-pick="t-venueEnColor">滴管</button></div>
 
-    <div class="thsec">③ 頁尾色塊</div>
+    <div class="thsec"><span class="n">3</span>頁尾色塊（聲明文字那條）</div>
     <div class="throw"><span>底色</span><input type="color" id="t-footBg"><input type="text" id="t-footBg-x"><button class="pick" data-pick="t-footBg">滴管</button></div>
     <div class="throw"><span>底色漸層</span><input type="color" id="t-footGrad"><input type="text" id="t-footGrad-x" placeholder="留空=單色"><button class="pick" data-pick="t-footGrad">滴管</button><button class="pick" id="t-footGrad-off">清除</button></div>
     <div class="throw"><span>漸層方向</span><select class="f-sel" id="t-footDir" style="flex:1;"></select></div>
 
-    <div style="border-top:1px dashed var(--paper-line);margin:14px 0 8px;"></div>
-    <div class="f-label">底部背景圖（可蓋過上面的顏色）</div>
-    <div class="hint" style="margin-bottom:8px;">丟 PNG／JPG 進來當頁尾底圖。若原圖是漸層，可用下面的「取圖位置」挑你要的那一角。</div>
+    <div class="thsec"><span class="n">4</span>表格下方大底圖（PNG 匯出用）</div>
+    <div class="hint" style="margin-bottom:9px;">丟一張圖進來，PNG 匯出時會加在整張表格的<b>最下方</b>當橫幅。若原圖是漸層，用「取圖位置」挑你要的那一角（例如右下角）。</div>
     <div class="throw" style="gap:8px;">
-      <button class="btn btn--ghost" id="foot-img-pick">📁 選擇圖檔</button>
-      <button class="btn btn--ghost" id="foot-img-clear">✕ 移除底圖</button>
-      <input type="file" id="foot-img-input" accept=".png,.jpg,.jpeg,.webp" style="display:none">
+      <button class="btn btn--ghost" id="bg-img-pick">📁 選擇圖檔</button>
+      <button class="btn btn--ghost" id="bg-img-clear">✕ 移除底圖</button>
+      <input type="file" id="bg-img-input" accept=".png,.jpg,.jpeg,.webp" style="display:none">
     </div>
-    <div class="throw"><span>取圖位置</span><select class="f-sel" id="t-footPos" style="flex:1;">
+    <div class="throw"><span>取圖位置</span><select class="f-sel" id="t-bgPos" style="flex:1;">
       <option value="center">置中</option>
       <option value="left top">左上</option>
       <option value="center top">上方置中</option>
@@ -459,19 +465,30 @@
       <option value="center bottom">下方置中</option>
       <option value="right bottom">右下</option>
     </select></div>
-    <div class="throw"><span>縮放方式</span><select class="f-sel" id="t-footSize" style="flex:1;">
+    <div class="throw"><span>縮放方式</span><select class="f-sel" id="t-bgSize" style="flex:1;">
       <option value="cover">填滿（可能裁切）</option>
       <option value="contain">完整顯示</option>
       <option value="auto">原尺寸</option>
       <option value="200%">放大 200%</option>
       <option value="400%">放大 400%</option>
     </select></div>
-    <div class="f-label">底圖不透明度 <span id="t-footOp-v" class="lo-val"></span></div>
-    <input type="range" class="f-range" id="t-footOp" min="10" max="100" step="5" value="100">
-    <div id="foot-img-prev" style="margin-top:8px;"></div>
+    <div class="f-label">底圖高度 <span id="t-bgH-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="t-bgH" min="60" max="700" step="10" value="260">
+    <div class="f-label">底圖不透明度 <span id="t-bgOp-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="t-bgOp" min="10" max="100" step="5" value="100">
+    <div id="bg-img-prev" style="margin-top:8px;"></div>
     <div class="throw"><span>文字</span><input type="color" id="t-footColor"><input type="text" id="t-footColor-x"><button class="pick" data-pick="t-footColor">滴管</button></div>
 
-    <div class="thsec">④ 頁首連結區</div>
+    <div class="thsec"><span class="n">5</span>表格議程格子（文字顏色）</div>
+    <div class="hint" style="margin-bottom:9px;">格子的<b>底色</b>在「🎨 分類設定」裡依分類設定；這裡調的是格子內<b>文字</b>的顏色。字級大小請到「📐 版面縮放 → 格內字級」。</div>
+    <div class="throw"><span>公司名稱</span><input type="color" id="t-cellCo"><input type="text" id="t-cellCo-x"><button class="pick" data-pick="t-cellCo">滴管</button></div>
+    <div class="throw"><span>攤位／語言</span><input type="color" id="t-cellMeta"><input type="text" id="t-cellMeta-x"><button class="pick" data-pick="t-cellMeta">滴管</button></div>
+    <div class="throw"><span>議程中文</span><input type="color" id="t-cellZh"><input type="text" id="t-cellZh-x"><button class="pick" data-pick="t-cellZh">滴管</button></div>
+    <div class="throw"><span>議程英文</span><input type="color" id="t-cellEn"><input type="text" id="t-cellEn-x"><button class="pick" data-pick="t-cellEn">滴管</button></div>
+    <div class="throw"><span>時間欄文字</span><input type="color" id="t-timeColor"><input type="text" id="t-timeColor-x"><button class="pick" data-pick="t-timeColor">滴管</button></div>
+    <div class="throw"><span>日期欄文字</span><input type="color" id="t-dateColor"><input type="text" id="t-dateColor-x"><button class="pick" data-pick="t-dateColor">滴管</button></div>
+
+    <div class="thsec"><span class="n">6</span>頁首連結區（Logo／報名鈕）</div>
     <div class="throw"><span>底色</span><input type="color" id="t-brandBg"><input type="text" id="t-brandBg-x"><button class="pick" data-pick="t-brandBg">滴管</button></div>
     <div class="throw"><span>文字／按鈕</span><input type="color" id="t-brandText"><input type="text" id="t-brandText-x"><button class="pick" data-pick="t-brandText">滴管</button></div>
 
@@ -540,6 +557,7 @@
     <h2 style="justify-content:center;">🔒 需要驗證</h2>
     <div class="sub" style="margin-bottom:14px;">此操作需要工作人員密碼</div>
     <input type="password" class="f-input" id="pw-input" autocomplete="off"
+           placeholder="組長分機"
            style="text-align:center; letter-spacing:6px; font-size:18px;">
     <div class="hint" id="pw-err" style="color:var(--danger); font-weight:700; min-height:16px; margin-top:6px;"></div>
     <div class="m-actions" style="justify-content:center;">
@@ -643,10 +661,12 @@ const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, 
 const DEF_TH = {
   headBg:'#1c2b3a', headGrad:'', headDir:'to right',
   venueBg:'#12202c', footBg:'#12202c', footGrad:'', footDir:'to right',
-  footImg:'', footPos:'center', footSize:'cover', footOp:100,
+  bgImg:'', bgPos:'center', bgSize:'cover', bgOp:100, bgH:260,
   titleColor:'#ffffff', subColor:'#d8b25f',
   venueZhColor:'#ffffff', venueEnColor:'#9fb4c6',
   footColor:'#8fa6ba',
+  cellCo:'#111111', cellMeta:'#3a3a3a', cellZh:'#1a3550', cellEn:'#1a3550',
+  timeColor:'#1c2b3a', dateColor:'#1c2b3a',
   brandBg:'#ffffff', brandText:'#1c2b3a'
 };
 const th = k => (TH && TH[k] != null && TH[k] !== '') ? TH[k] : DEF_TH[k];
@@ -675,14 +695,11 @@ function dirPoints(dir, x, y, w, h){
     default:          return [x, y, x+w, y];
   }
 }
-/* 頁尾背景：色 → 漸層 → 圖檔（圖蓋在最上層，可選位置與不透明度） */
+/* 頁尾背景：單色或漸層（大底圖是另一塊，畫在表格下方） */
 function footBgCss(){
-  const base = th('footGrad')
+  return { bg: th('footGrad')
     ? `linear-gradient(${th('footDir')}, ${th('footBg')}, ${th('footGrad')})`
-    : th('footBg');
-  const img = TH.footImg || '';
-  if(!img) return { bg: base, img: '' };
-  return { bg: base, img: img };
+    : th('footBg') };
 }
 function cssGrad(cols, dir){
   if(!cols || !cols.length) return '';
@@ -866,12 +883,12 @@ function render(){
   ).join('');
 
   const CW = lo('w'), CH = lo('h'), CF = lo('f'), TW = lo('t');
-  let head = `<tr><th class="th-time" style="width:${TW}px;">時間 Time</th>` +
-    D.map(d=>`<th style="width:${CW}px;">${esc(dateLabel(d))}</th>`).join('') + `</tr>`;
+  let head = `<tr><th class="th-time" style="width:${TW}px;color:${th('dateColor')};">時間 Time</th>` +
+    D.map(d=>`<th style="width:${CW}px;color:${th('dateColor')};">${esc(dateLabel(d))}</th>`).join('') + `</tr>`;
 
   let body = '';
   T.forEach((t,ti)=>{
-    body += `<tr style="height:${CH}px;"><td class="tcell" style="width:${TW}px;font-size:${lo('tf')}px;">${esc(t)}</td>`;
+    body += `<tr style="height:${CH}px;"><td class="tcell" style="width:${TW}px;font-size:${lo('tf')}px;color:${th('timeColor')};">${esc(t)}</td>`;
     D.forEach((d,di)=>{
       if (occupied[di][ti]) return;               // 被合併吃掉，不輸出 td
       const p = place[`${di}_${ti}`];
@@ -886,11 +903,11 @@ function render(){
       body += `<td class="slot filled" rowspan="${p.span}" style="background:${esc(bg)};" data-edit="${p.id}" data-drop="${di}_${ti}" ${isLoggedIn()?`draggable="true" data-drag="${p.id}"`:''}>
         ${delBtn}
         <div class="ev" style="font-size:${CF}px;">
-          ${a.co ? `<div class="ev-co">【${esc(a.co)}】</div>` : ''}
-          ${(a.booth||a.lang) ? `<div class="ev-meta">${a.booth?`（攤位號：${esc(a.booth)}）`:''}${a.lang?`（${esc(a.lang)}）`:''}</div>` : ''}
-          ${nm.zh ? `<div class="ev-zh">${nl2br(nm.zh)}</div>` : ''}
-          ${nm.en ? `<div class="ev-en">${nl2br(nm.en)}</div>` : ''}
-          ${a.note ? `<div class="ev-meta">${esc(a.note)}</div>` : ''}
+          ${a.co ? `<div class="ev-co" style="color:${th('cellCo')};">【${esc(a.co)}】</div>` : ''}
+          ${(a.booth||a.lang) ? `<div class="ev-meta" style="color:${th('cellMeta')};">${a.booth?`（攤位號：${esc(a.booth)}）`:''}${a.lang?`（${esc(a.lang)}）`:''}</div>` : ''}
+          ${nm.zh ? `<div class="ev-zh" style="color:${th('cellZh')};">${nl2br(nm.zh)}</div>` : ''}
+          ${nm.en ? `<div class="ev-en" style="color:${th('cellEn')};">${nl2br(nm.en)}</div>` : ''}
+          ${a.note ? `<div class="ev-meta" style="color:${th('cellMeta')};">${esc(a.note)}</div>` : ''}
         </div></td>`;
     });
     body += `</tr>`;
@@ -922,18 +939,19 @@ function render(){
         </div>
         <div class="legend">${legendHtml}</div>
       </div>
-      <div class="venueband" style="background:${th('venueBg')};font-size:${lo('vf')}px;">
-        <div style="color:${th('venueZhColor')};">地點：${esc(SET.venueZh||'')}</div>
-        <div style="color:${th('venueEnColor')};">Venue: ${esc(SET.venueEn||'')}</div>
-      </div>
+      ${(SET.venueZh||SET.venueEn)?`<div class="venueband" style="background:${th('venueBg')};font-size:${lo('vf')}px;">
+        ${SET.venueZh?`<div style="color:${th('venueZhColor')};">地點：${esc(SET.venueZh)}</div>`:''}
+        ${SET.venueEn?`<div style="color:${th('venueEnColor')};">Venue: ${esc(SET.venueEn)}</div>`:''}
+      </div>`:''}
       <table class="grid">${head}${body}</table>
-      <div class="board-foot" style="background:${footBgCss().bg};color:${th('footColor')};font-size:${lo('ff')}px;position:relative;">
-        ${TH.footImg?`<div style="position:absolute;inset:0;background-image:url('${TH.footImg}');background-position:${th('footPos')};background-size:${th('footSize')};background-repeat:no-repeat;opacity:${(TH.footOp!=null?TH.footOp:100)/100};pointer-events:none;"></div>`:''}
-        <div style="position:relative;">
-          <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
-          <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
-        </div>
+      <div class="board-foot" style="background:${footBgCss().bg};color:${th('footColor')};font-size:${lo('ff')}px;">
+        <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
+        <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
       </div>
+      ${TH.bgImg?`<div style="height:${Math.max(60,Number(th('bgH'))||260)}px;
+        background-image:url('${TH.bgImg}');background-position:${th('bgPos')};
+        background-size:${th('bgSize')};background-repeat:no-repeat;
+        opacity:${(TH.bgOp!=null?TH.bgOp:100)/100};"></div>`:''}
     </div>`;
 
   host.querySelectorAll('[data-new]').forEach(td=>td.addEventListener('click', ()=>requirePw(()=>{
@@ -1459,6 +1477,12 @@ function recommendTheme(cols, dir){
   sub = ensure(sub, dark, 3.2);
   const vEn = ensure(lumaHex(venueBg)>.58 ? darkenHex(venueBg,.5) : lightenHex(venueBg,.55), venueBg, 3.2);
   const fCol = ensure(lumaHex(footBg)>.58 ? darkenHex(footBg,.5) : lightenHex(footBg,.48), footBg, 3.2);
+  /* 議程格子是淺底，文字一律取深色系，並和分類底色保持對比 */
+  const inkBase = lumaHex(dark) > .5 ? darkenHex(dark,.45) : dark;
+  const cellZh  = ensure(inkBase, '#ffffff', 5.5);
+  const cellCo  = ensure(darkenHex(inkBase,.30), '#ffffff', 7);
+  const cellEn  = ensure(lightenHex(inkBase,.10), '#ffffff', 4.8);
+  const cellMeta= ensure(lightenHex(inkBase,.26), '#ffffff', 4.2);
   return {
     headBg: dark,
     headGrad: cols.length > 1 ? mid : '',
@@ -1469,6 +1493,9 @@ function recommendTheme(cols, dir){
     venueZhColor: onDark(venueBg),
     venueEnColor: vEn,
     footColor: fCol,
+    cellCo, cellMeta, cellZh, cellEn,
+    timeColor: cellZh,
+    dateColor: ensure(inkBase, '#efe9dc', 5),
     brandBg: '#ffffff',
     brandText: dark
   };
@@ -1476,7 +1503,9 @@ function recommendTheme(cols, dir){
 
 /* ── 🎨 色塊／文字配色 ── */
 const TH_KEYS = ['headBg','headGrad','venueBg','footBg','footGrad','titleColor','subColor',
-                 'venueZhColor','venueEnColor','footColor','brandBg','brandText'];
+                 'venueZhColor','venueEnColor','footColor',
+                 'cellCo','cellMeta','cellZh','cellEn','timeColor','dateColor',
+                 'brandBg','brandText'];
 let TH_EDIT = {};
 function thBind(k){
   const c = $('t-'+k), x = $('t-'+k+'-x');
@@ -1505,17 +1534,20 @@ function openTheme(){
   $('t-headDir').value = TH_EDIT.headDir;
   TH_EDIT.footGrad = TH.footGrad || '';
   TH_EDIT.footDir  = th('footDir');
-  TH_EDIT.footImg  = TH.footImg || '';
-  TH_EDIT.footPos  = th('footPos');
-  TH_EDIT.footSize = th('footSize');
-  TH_EDIT.footOp   = TH.footOp != null ? TH.footOp : 100;
+  TH_EDIT.bgImg  = TH.bgImg || '';
+  TH_EDIT.bgPos  = th('bgPos');
+  TH_EDIT.bgSize = th('bgSize');
+  TH_EDIT.bgOp   = TH.bgOp != null ? TH.bgOp : 100;
+  TH_EDIT.bgH    = TH.bgH  != null ? TH.bgH  : 260;
   $('t-footDir').innerHTML = DIRS.map(d=>`<option value="${d.k}">${d.zh}</option>`).join('');
   $('t-footDir').value  = TH_EDIT.footDir;
-  $('t-footPos').value  = TH_EDIT.footPos;
-  $('t-footSize').value = TH_EDIT.footSize;
-  $('t-footOp').value   = TH_EDIT.footOp;
-  $('t-footOp-v').textContent = TH_EDIT.footOp+' %';
-  renderFootPrev();
+  $('t-bgPos').value  = TH_EDIT.bgPos;
+  $('t-bgSize').value = TH_EDIT.bgSize;
+  $('t-bgOp').value   = TH_EDIT.bgOp;
+  $('t-bgOp-v').textContent = TH_EDIT.bgOp+' %';
+  $('t-bgH').value    = TH_EDIT.bgH;
+  $('t-bgH-v').textContent = TH_EDIT.bgH+' px';
+  renderBgPrev();
   renderThKvChips();
   $('mask-theme').classList.add('show');
 }
@@ -1528,24 +1560,30 @@ $('t-footGrad-off').addEventListener('click', ()=>{
   TH_EDIT.footGrad=''; $('t-footGrad-x').value=''; previewTheme();
 });
 $('t-footDir').addEventListener('change', e=>{ TH_EDIT.footDir=e.target.value; previewTheme(); });
-$('t-footPos').addEventListener('change', e=>{ TH_EDIT.footPos=e.target.value; previewTheme(); renderFootPrev(); });
-$('t-footSize').addEventListener('change', e=>{ TH_EDIT.footSize=e.target.value; previewTheme(); renderFootPrev(); });
-$('t-footOp').addEventListener('input', e=>{
-  TH_EDIT.footOp=Number(e.target.value);
-  $('t-footOp-v').textContent=e.target.value+' %'; previewTheme();
+$('t-bgPos').addEventListener('change', e=>{ TH_EDIT.bgPos=e.target.value; previewTheme(); renderBgPrev(); });
+$('t-bgSize').addEventListener('change', e=>{ TH_EDIT.bgSize=e.target.value; previewTheme(); renderBgPrev(); });
+$('t-bgH').addEventListener('input', e=>{
+  TH_EDIT.bgH=Number(e.target.value);
+  $('t-bgH-v').textContent=e.target.value+' px'; renderBgPrev();
 });
-function renderFootPrev(){
-  const box=$('foot-img-prev'); if(!box) return;
-  if(!TH_EDIT.footImg){ box.innerHTML='<span style="font-size:12px;color:var(--navy-light);">尚未載入底圖</span>'; return; }
-  box.innerHTML=`<div style="height:56px;border-radius:6px;border:1px solid var(--paper-line);
-    background-image:url('${TH_EDIT.footImg}');background-position:${TH_EDIT.footPos};
-    background-size:${TH_EDIT.footSize};background-repeat:no-repeat;opacity:${(TH_EDIT.footOp||100)/100};"></div>`;
+$('t-bgOp').addEventListener('input', e=>{
+  TH_EDIT.bgOp=Number(e.target.value);
+  $('t-bgOp-v').textContent=e.target.value+' %'; renderBgPrev();
+});
+function renderBgPrev(){
+  const box=$('bg-img-prev'); if(!box) return;
+  if(!TH_EDIT.bgImg){ box.innerHTML='<span style="font-size:12px;color:var(--navy-light);">尚未載入底圖</span>'; return; }
+  const h=Math.max(50, Math.min(160, (TH_EDIT.bgH||260)/2));
+  box.innerHTML=`<div style="height:${h}px;border-radius:6px;border:1px solid var(--paper-line);
+    background-image:url('${TH_EDIT.bgImg}');background-position:${TH_EDIT.bgPos};
+    background-size:${TH_EDIT.bgSize};background-repeat:no-repeat;opacity:${(TH_EDIT.bgOp||100)/100};"></div>
+    <div class="hint" style="margin-top:5px;">↑ 這就是 PNG 最下方會出現的樣子（預覽為實際高度的一半）</div>`;
 }
-$('foot-img-pick').addEventListener('click', ()=>$('foot-img-input').click());
-$('foot-img-clear').addEventListener('click', ()=>{
-  TH_EDIT.footImg=''; renderFootPrev(); previewTheme();
+$('bg-img-pick').addEventListener('click', ()=>$('bg-img-input').click());
+$('bg-img-clear').addEventListener('click', ()=>{
+  TH_EDIT.bgImg=''; renderBgPrev(); previewTheme();
 });
-$('foot-img-input').addEventListener('change', async function(){
+$('bg-img-input').addEventListener('change', async function(){
   const f=this.files[0]; this.value='';
   if(!f) return;
   try{
@@ -1562,8 +1600,8 @@ $('foot-img-input').addEventListener('change', async function(){
     let out=cv.toDataURL('image/jpeg',0.85);
     if(out.length>900000) out=cv.toDataURL('image/jpeg',0.6);
     if(out.length>900000){ alert('這張圖太大了，請先壓縮或換一張'); return; }
-    TH_EDIT.footImg=out; renderFootPrev(); previewTheme();
-    toast('✓ 底圖已載入');
+    TH_EDIT.bgImg=out; renderBgPrev(); previewTheme();
+    toast('✓ 底圖已載入，PNG 匯出時會加在表格下方');
   }catch(e){ alert('載入失敗：'+(e.message||e)); }
 });
 $('btn-theme').addEventListener('click', ()=>requirePw(openTheme));
@@ -1575,11 +1613,12 @@ $('theme-reset').addEventListener('click', ()=>{
   TH_KEYS.forEach(k=>{ const c=$('t-'+k),x=$('t-'+k+'-x');
     if(c){ c.value=DEF_TH[k]||'#ffffff'; x.value=DEF_TH[k]||''; } });
   $('t-headDir').value = DEF_TH.headDir;
-  TH_EDIT.footImg=''; TH_EDIT.footGrad='';
-  TH_EDIT.footPos='center'; TH_EDIT.footSize='cover'; TH_EDIT.footOp=100;
-  $('t-footDir').value=DEF_TH.footDir; $('t-footPos').value='center';
-  $('t-footSize').value='cover'; $('t-footOp').value=100; $('t-footOp-v').textContent='100 %';
-  renderFootPrev();
+  TH_EDIT.bgImg=''; TH_EDIT.footGrad='';
+  TH_EDIT.bgPos='center'; TH_EDIT.bgSize='cover'; TH_EDIT.bgOp=100; TH_EDIT.bgH=260;
+  $('t-footDir').value=DEF_TH.footDir; $('t-bgPos').value='center';
+  $('t-bgSize').value='cover'; $('t-bgOp').value=100; $('t-bgOp-v').textContent='100 %';
+  $('t-bgH').value=260; $('t-bgH-v').textContent='260 px';
+  renderBgPrev();
   previewTheme();
 });
 $('theme-save').addEventListener('click', async ()=>{
@@ -1884,8 +1923,9 @@ function buildHtmlExport(mode){
   const FOOTBG = th('footGrad')
       ? `linear-gradient(${th('footDir')}, ${th('footBg')}, ${th('footGrad')})`
       : th('footBg');
-  const FOOTIMG = TH.footImg || '';
-  const FOOTOP  = (TH.footOp != null ? TH.footOp : 100)/100;
+  const BGIMG = TH.bgImg || '';
+  const BGOP  = (TH.bgOp != null ? TH.bgOp : 100)/100;
+  const BGH   = Math.max(60, Number(th('bgH'))||260);
   const headBgCss = th('headGrad')
       ? `linear-gradient(${th('headDir')}, ${th('headBg')}, ${th('headGrad')})`
       : th('headBg');
@@ -1970,21 +2010,19 @@ body{margin:0;padding:20px;background:#f4f4f6;
 .venue .v2{color:${th('venueEnColor')};}
 .tblwrap{width:100%;overflow-x:auto;}
 table{width:100%;min-width:${TW+CW*D.length}px;border-collapse:collapse;table-layout:fixed;}
-th{background:#efe9dc;font-size:12.5px;font-weight:800;padding:8px 6px;border:1px solid #ddd5c5;text-align:center;}
+th{background:#efe9dc;font-size:12.5px;font-weight:800;padding:8px 6px;border:1px solid #ddd5c5;text-align:center;color:${th('dateColor')};}
 th.tw{width:${TW}px;}
 td{border:1px solid #ddd5c5;vertical-align:middle;padding:6px 5px;height:${CH}px;
    text-align:center;font-size:${CF}px;line-height:1.4;}
-td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;width:${TW}px;}
-.c-co{font-weight:800;color:#111;}
-.c-meta{font-size:${Math.max(7,CF*0.86)}px;color:#3a3a3a;}
-.c-zh{font-weight:700;color:#1a3550;margin-top:3px;}
-.c-en{color:#1a3550;font-size:${Math.max(7.5,CF*0.94)}px;}
-.foot{position:relative;padding:10px 18px;font-size:${FF}px;line-height:1.5;
+td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;width:${TW}px;color:${th('timeColor')};}
+.c-co{font-weight:800;color:${th('cellCo')};}
+.c-meta{font-size:${Math.max(7,CF*0.86)}px;color:${th('cellMeta')};}
+.c-zh{font-weight:700;color:${th('cellZh')};margin-top:3px;}
+.c-en{color:${th('cellEn')};font-size:${Math.max(7.5,CF*0.94)}px;}
+.foot{padding:10px 18px;font-size:${FF}px;line-height:1.5;
       background:${FOOTBG};color:${th('footColor')};}
-.foot-img{position:absolute;inset:0;background-image:url('${FOOTIMG}');
-      background-position:${th('footPos')};background-size:${th('footSize')};
-      background-repeat:no-repeat;opacity:${FOOTOP};pointer-events:none;}
-.foot-tx{position:relative;}
+.bgband{height:${BGH}px;background-image:url('${BGIMG}');background-position:${th('bgPos')};
+      background-size:${th('bgSize')};background-repeat:no-repeat;opacity:${BGOP};}
 @media(max-width:820px){
   body{padding:8px;}
   .legend{margin-top:10px;justify-content:center;flex-wrap:wrap;}
@@ -2004,18 +2042,16 @@ ${brand}
     </div>
     <div class="legend">${legend}</div>
   </div>
-  <div class="venue">
+  ${((mode!=='en'&&SET.venueZh)||(mode!=='zh'&&SET.venueEn))?`<div class="venue">
     ${mode!=='en'&&SET.venueZh?`<div class="v1">地點：${esc(SET.venueZh)}</div>`:''}
     ${mode!=='zh'&&SET.venueEn?`<div class="v2">Venue: ${esc(SET.venueEn)}</div>`:''}
-  </div>
+  </div>`:''}
   <div class="tblwrap"><table>${head}${body}</table></div>
   <div class="foot">
-    ${FOOTIMG?`<div class="foot-img"></div>`:''}
-    <div class="foot-tx">
-      ${mode!=='en'?`<div>${esc(SET.footZh||DEF_FOOT_ZH)}</div>`:''}
-      ${mode!=='zh'?`<div>${esc(SET.footEn||DEF_FOOT_EN)}</div>`:''}
-    </div>
+    ${mode!=='en'?`<div>${esc(SET.footZh||DEF_FOOT_ZH)}</div>`:''}
+    ${mode!=='zh'?`<div>${esc(SET.footEn||DEF_FOOT_EN)}</div>`:''}
   </div>
+  ${BGIMG?`<div class="bgband"></div>`:''}
 </div>
 </body>
 </html>`;
@@ -2060,15 +2096,15 @@ async function buildLongImage(mode){
   }
   const brandOn = !!(SET.brandLogo || SET.ctaText);
   const H_BRAND = brandOn ? lo('bh') : 0;
-  /* 頁尾底圖先載好，canvas 不能等 */
-  let _footImg=null;
-  if(TH.footImg){
+  /* 表格下方的大底圖先載好，canvas 不能等 */
+  let _bgImg=null;
+  if(TH.bgImg){
     try{
-      _footImg = await new Promise((res,rej)=>{
+      _bgImg = await new Promise((res,rej)=>{
         const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('底圖載入失敗'));
-        i.src=TH.footImg;
+        i.src=TH.bgImg;
       });
-    }catch(_){ _footImg=null; }
+    }catch(_){ _bgImg=null; }
   }
   const W = PAD*2 + TCOL + DCOL*D.length;
   const meas=document.createElement('canvas').getContext('2d');
@@ -2086,14 +2122,14 @@ async function buildLongImage(mode){
   }
   function cellLines(a){
     const L=[]; const nm=splitZhEn(a.name||'');
-    if(a.co) L.push({t:`【${a.co}】`,f:FONT_ZH,s:13*FSC,b:true,c:'#111'});
+    if(a.co) L.push({t:`【${a.co}】`,f:FONT_ZH,s:13*FSC,b:true,c:th('cellCo')});
     const meta=[a.booth?`（攤位號：${a.booth}）`:'',a.lang?`（${a.lang}）`:''].filter(Boolean).join('');
-    if(meta) wrap(meta,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:'#3a3a3a'}));
-    if(mode!=='en'&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,b:true,c:'#1a3550'}));
-    if(mode!=='zh'&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:'#1a3550'}));
-    if(mode==='en'&&!nm.en&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,c:'#1a3550'}));
-    if(mode==='zh'&&!nm.zh&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:'#1a3550'}));
-    if(a.note) wrap(a.note,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:'#3a3a3a'}));
+    if(meta) wrap(meta,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:th('cellMeta')}));
+    if(mode!=='en'&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,b:true,c:th('cellZh')}));
+    if(mode!=='zh'&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:th('cellEn')}));
+    if(mode==='en'&&!nm.en&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,c:th('cellZh')}));
+    if(mode==='zh'&&!nm.zh&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:th('cellEn')}));
+    if(a.note) wrap(a.note,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:th('cellMeta')}));
     return L;
   }
   const occupied=D.map(()=>T.map(()=>false)), place={};
@@ -2111,10 +2147,13 @@ async function buildLongImage(mode){
     const cur=rowH.slice(ti,ti+p.span).reduce((s,x)=>s+x,0);
     if(need>cur){ const add=Math.ceil((need-cur)/p.span); for(let j=ti;j<ti+p.span&&j<T.length;j++) rowH[j]+=add; }
   });
+  const _hasVenue = !!((mode!=='en'&&SET.venueZh) || (mode!=='zh'&&SET.venueEn));
   const H_TITLE=Math.max(60, lo('hh')+12), H_LEG=Math.max(38, lo('lf')*4.2),
-        H_VENUE=Math.max(44, lo('vf')*3.4), H_HEAD=34, H_FOOT=Math.max(42, lo('ff')*4.2);
+        H_VENUE=_hasVenue ? Math.max(44, lo('vf')*3.4) : 0,
+        H_HEAD=34, H_FOOT=Math.max(42, lo('ff')*4.2);
+  const H_BG = _bgImg ? Math.max(60, Number(th('bgH'))||260) : 0;
   const gridH=rowH.reduce((s,x)=>s+x,0);
-  const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+PAD;
+  const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+H_BG+PAD;
   const SC=2, cv=document.createElement('canvas');
   cv.width=W*SC; cv.height=totalH*SC;
   const ctx=cv.getContext('2d'); ctx.scale(SC,SC);
@@ -2175,23 +2214,25 @@ async function buildLongImage(mode){
     lx+=lw;
   });
   y+=H_LEG;
-  // 地點
-  ctx.fillStyle=th('venueBg'); ctx.fillRect(PAD,y,W-PAD*2,H_VENUE);
-  ctx.textAlign='left'; ctx.font=lo('vf')+'px '+FONT_ZH;
-  if(mode!=='en'&&SET.venueZh){ ctx.fillStyle=th('venueZhColor'); ctx.fillText('地點：'+SET.venueZh,PAD+12,y+(mode==='bi'?15:H_VENUE/2)); }
-  if(mode!=='zh'&&SET.venueEn){ ctx.fillStyle=th('venueEnColor'); ctx.font=Math.max(7,lo('vf')*0.92)+'px '+FONT_EN; ctx.fillText('Venue: '+SET.venueEn,PAD+12,y+(mode==='bi'?31:H_VENUE/2)); }
-  y+=H_VENUE;
+  // 地點（沒填就整條不畫，不留空色帶）
+  if(_hasVenue){
+    ctx.fillStyle=th('venueBg'); ctx.fillRect(PAD,y,W-PAD*2,H_VENUE);
+    ctx.textAlign='left'; ctx.font=lo('vf')+'px '+FONT_ZH;
+    if(mode!=='en'&&SET.venueZh){ ctx.fillStyle=th('venueZhColor'); ctx.fillText('地點：'+SET.venueZh,PAD+12,y+(mode==='bi'?15:H_VENUE/2)); }
+    if(mode!=='zh'&&SET.venueEn){ ctx.fillStyle=th('venueEnColor'); ctx.font=Math.max(7,lo('vf')*0.92)+'px '+FONT_EN; ctx.fillText('Venue: '+SET.venueEn,PAD+12,y+(mode==='bi'?31:H_VENUE/2)); }
+    y+=H_VENUE;
+  }
   // 表頭
   const gx=PAD;
   ctx.fillStyle='#efe9dc'; ctx.fillRect(gx,y,W-PAD*2,H_HEAD);
   ctx.strokeStyle='#ddd5c5'; ctx.lineWidth=1;
-  ctx.textAlign='center'; ctx.fillStyle='#1c2b3a'; ctx.font='bold 12.5px '+FONT_ZH;
+  ctx.textAlign='center'; ctx.fillStyle=th('dateColor'); ctx.font='bold 12.5px '+FONT_ZH;
   ctx.fillText(mode==='en'?'Time':'時間 Time',gx+TCOL/2,y+H_HEAD/2);
   ctx.strokeRect(gx,y,TCOL,H_HEAD);
   D.forEach((d,di)=>{
     const x=gx+TCOL+DCOL*di;
     ctx.strokeRect(x,y,DCOL,H_HEAD);
-    ctx.fillStyle='#1c2b3a';
+    ctx.fillStyle=th('dateColor');
     ctx.fillText(mode==='zh'?labelZh(d.iso):dateLabel(d),x+DCOL/2,y+H_HEAD/2);
   });
   y+=H_HEAD;
@@ -2202,7 +2243,7 @@ async function buildLongImage(mode){
     const ry=rowY[ti], rh=rowH[ti];
     ctx.fillStyle='#fafafa'; ctx.fillRect(gx,ry,TCOL,rh);
     ctx.strokeRect(gx,ry,TCOL,rh);
-    ctx.fillStyle='#1c2b3a'; ctx.font='bold '+lo('tf')+'px '+FONT_ZH; ctx.textAlign='center';
+    ctx.fillStyle=th('timeColor'); ctx.font='bold '+lo('tf')+'px '+FONT_ZH; ctx.textAlign='center';
     ctx.fillText(t,gx+TCOL/2,ry+rh/2);
     D.forEach((d,di)=>{
       if(occupied[di][ti]) return;
@@ -2229,28 +2270,31 @@ async function buildLongImage(mode){
     ctx.fillStyle=fg;
   } else ctx.fillStyle=th('footBg');
   ctx.fillRect(PAD,y,W-PAD*2,H_FOOT);
-  if(_footImg){
-    const fw=W-PAD*2, fh=H_FOOT;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(PAD,y,fw,fh); ctx.clip();
-    ctx.globalAlpha=(TH.footOp!=null?TH.footOp:100)/100;
-    const iw=_footImg.width, ih=_footImg.height;
-    const mode2=th('footSize');
-    let sc = mode2==='contain' ? Math.min(fw/iw,fh/ih)
-           : mode2==='auto'    ? 1
-           : mode2==='200%'    ? 2
-           : mode2==='400%'    ? 4
-           : Math.max(fw/iw,fh/ih);          // cover
-    const dw=iw*sc, dh=ih*sc;
-    const pos=String(th('footPos')||'center');
-    const hx = pos.includes('left')?0 : pos.includes('right')?(fw-dw) : (fw-dw)/2;
-    const vy = pos.includes('top')?0  : pos.includes('bottom')?(fh-dh) : (fh-dh)/2;
-    ctx.drawImage(_footImg, PAD+hx, y+vy, dw, dh);
-    ctx.restore();
-  }
   ctx.textAlign='left'; ctx.fillStyle=th('footColor'); ctx.font=lo('ff')+'px '+FONT_ZH;
   if(mode!=='en') ctx.fillText((SET.footZh||DEF_FOOT_ZH).slice(0,120),PAD+12,y+(mode==='bi'?14:H_FOOT/2));
   if(mode!=='zh'){ ctx.font=Math.max(6,lo('ff')*0.9)+'px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
+  y+=H_FOOT;
+
+  /* ── 表格下方大底圖：整條橫幅，可挑要用原圖的哪一角 ── */
+  if(_bgImg && H_BG>0){
+    const bw=W-PAD*2, bh=H_BG;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PAD,y,bw,bh); ctx.clip();
+    ctx.globalAlpha=(TH.bgOp!=null?TH.bgOp:100)/100;
+    const iw=_bgImg.width, ih=_bgImg.height;
+    const sz=th('bgSize');
+    let sc = sz==='contain' ? Math.min(bw/iw,bh/ih)
+           : sz==='auto'    ? 1
+           : sz==='200%'    ? 2
+           : sz==='400%'    ? 4
+           : Math.max(bw/iw,bh/ih);          // cover
+    const dw=iw*sc, dh=ih*sc;
+    const pos=String(th('bgPos')||'center');
+    const hx = pos.includes('left')?0 : pos.includes('right')?(bw-dw) : (bw-dw)/2;
+    const vy = pos.includes('top')?0  : pos.includes('bottom')?(bh-dh) : (bh-dh)/2;
+    ctx.drawImage(_bgImg, PAD+hx, y+vy, dw, dh);
+    ctx.restore();
+  }
 
   const now=new Date();
   const ts=`${_pad2(now.getMonth()+1)}${_pad2(now.getDate())}_${_pad2(now.getHours())}${_pad2(now.getMinutes())}`;
