@@ -158,6 +158,33 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 .nudging{outline:2px dashed var(--c2)!important;outline-offset:2px;opacity:.9;cursor:move!important}
 body.altdown .page *:not(.hnd):not(.rowTools):not(.slotDel):hover{outline:1px dashed rgba(232,85,45,.55);outline-offset:1px;cursor:move}
 
+
+/* ===== 固定工具盤（停在畫布左側空白處，不隨頁面捲動） ===== */
+#tools{position:fixed;left:318px;top:78px;width:196px;z-index:60;background:#12161D;border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 14px 40px rgba(0,0,0,.55)}
+#tools h5{font-size:9.5px;letter-spacing:.16em;color:#5C6577;font-weight:900;margin:0 0 8px}
+#tools h5:not(:first-child){margin-top:14px}
+#tools .swrow{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+#tools .swrow button{aspect-ratio:1;border:1px solid rgba(255,255,255,.14);border-radius:5px;cursor:pointer;padding:0}
+#tools .swrow button:hover{transform:scale(1.12);border-color:#fff}
+#tools .cRow{display:flex;gap:6px;align-items:center;margin-top:7px}
+#tools .cRow input[type=color]{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;background:#1D2230;padding:2px;cursor:pointer}
+#tools .cRow button{flex:1;border:0;border-radius:6px;background:#2B3444;color:#C3CBDA;font-family:inherit;font-size:10.5px;font-weight:700;padding:8px 4px;cursor:pointer}
+#tools .cRow button:hover{filter:brightness(1.3)}
+#tools .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#tools .grid2 button,#tools .full{border:0;border-radius:7px;background:#232A38;color:#C3CBDA;font-family:inherit;font-size:10.5px;font-weight:700;padding:9px 4px;cursor:pointer;text-align:center}
+#tools .full{width:100%;margin-top:5px}
+#tools .grid2 button:hover,#tools .full:hover{background:var(--c2);color:#fff}
+#tools .tip{font-size:8.5px;color:#4C566B;line-height:1.6;margin-top:9px}
+#toolsToggle{position:fixed;left:318px;top:44px;z-index:61;border:0;border-radius:8px;background:#232A38;color:#C3CBDA;font-family:inherit;font-size:10.5px;font-weight:700;padding:7px 12px;cursor:pointer}
+#toolsToggle:hover{background:var(--c2);color:#fff}
+#tools.off{display:none}
+@media(max-width:1500px){#tools,#toolsToggle{left:auto;right:16px}}
+
+/* 使用者自行插入的元件 */
+.uBox{position:relative;display:inline-block;min-width:40px;padding:10px 14px;border-radius:8px;margin:4px}
+.uBox .uDel{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(20,24,33,.85);color:#fff;font-size:10px;line-height:20px;padding:0;cursor:pointer;opacity:0;transition:.15s;z-index:5}
+.uBox:hover .uDel{opacity:1}
+
 /* ===== Preview page ===== */
 .page{max-width:1080px;margin:0 auto;background:var(--c4);color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 [contenteditable]{outline:0}
@@ -329,7 +356,7 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 }
 
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{display:none}}
-@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}.fhandle,.fdel,.fresize,.fadd,.secResize,.mtool,.resize-handle,.dropClear,.rowTools,.slotDel{display:none!important}}
+@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}.fhandle,.fdel,.fresize,.fadd,.secResize,.mtool,.resize-handle,.dropClear,.rowTools,.slotDel,.uDel,#tools,#toolsToggle{display:none!important}}
 </style>
 </head>
 <body>
@@ -455,6 +482,33 @@ document.addEventListener('DOMContentLoaded',function(){
     編輯內容自動儲存於瀏覽器。</p>
 </aside>
 
+<button id="toolsToggle" type="button">🎨 工具盤</button>
+<div id="tools">
+  <h5>文字顏色</h5>
+  <div class="swrow" id="swText"></div>
+  <div class="cRow">
+    <input type="color" id="cText" value="#E8552D">
+    <button id="applyText" type="button">套用文字色</button>
+  </div>
+
+  <h5>背景 / 填滿色</h5>
+  <div class="cRow">
+    <input type="color" id="cFill" value="#F0B429">
+    <button id="applyFill" type="button">套用底色</button>
+  </div>
+  <button class="full" id="clearFill" type="button">清除顏色設定</button>
+
+  <h5>新增元件</h5>
+  <div class="grid2">
+    <button data-ins="text" type="button">＋ 文字</button>
+    <button data-ins="chip" type="button">＋ 色塊字</button>
+    <button data-ins="box" type="button">＋ 方框</button>
+    <button data-ins="line" type="button">＋ 分隔線</button>
+  </div>
+  <button class="full" data-ins="btn" type="button">＋ 按鈕</button>
+
+  <p class="tip">先選取文字再按套用色；沒選取則套用到游標所在的整個元素。新增的元件可用 Alt+拖曳 移動。</p>
+</div>
 <main class="stage">
 <div class="page" id="page">
 
@@ -1457,7 +1511,7 @@ function save(){
   const cl=page.cloneNode(true);
   cl.querySelectorAll('.hnd').forEach(e=>e.remove());
   cl.querySelectorAll('.hide').forEach(e=>e.remove());
-  cl.querySelectorAll('.mtool,.resize-handle,.fhandle,.fdel,.fresize,.fadd,.secResize,.rowTools,.slotDel').forEach(e=>e.remove());
+  cl.querySelectorAll('.mtool,.resize-handle,.fhandle,.fdel,.fresize,.fadd,.secResize,.rowTools,.slotDel,.uDel').forEach(e=>e.remove());
   cl.querySelectorAll('.photo,.logo-slot').forEach(el=>{ if(!el.querySelector('img')) el.remove(); else { el.style.border='0'; el.style.background='transparent'; } });
   cl.querySelectorAll('[contenteditable]').forEach(e=>e.removeAttribute('contenteditable'));
   cl.querySelectorAll('.nudging').forEach(e=>e.classList.remove('nudging'));
@@ -1714,7 +1768,7 @@ function initSpeakerRows(){
    1) 所有有文字的元素自動加 contenteditable
    2) 任何元素 Alt+拖曳 可微調位置（relative 位移，不破壞排版）
    ================================================================ */
-const NO_EDIT = '.hnd,.rowTools,.slotDel,.mtool,.fhandle,.fdel,.fresize,.secResize,.resize-handle,.fadd,.ph,.ribbons,.kvwrap';
+const NO_EDIT = '.hnd,.rowTools,.slotDel,.uDel,.mtool,.fhandle,.fdel,.fresize,.secResize,.resize-handle,.fadd,.ph,.ribbons,.kvwrap';
 
 function makeAllEditable(){
   page.querySelectorAll('*').forEach(el=>{
@@ -1845,8 +1899,133 @@ document.addEventListener('keydown', e=>{
 var typeT;
 page.addEventListener('input', ()=>{ clearTimeout(typeT); typeT=setTimeout(pushHistory, 700); });
 
+
+/* ================================================================
+   工具盤：文字顏色 / 底色 / 新增元件
+   ================================================================ */
+(function(){
+  const tools=document.getElementById('tools');
+  document.getElementById('toolsToggle').onclick=()=>tools.classList.toggle('off');
+
+  /* 記住最後編輯過的位置，套色時才知道要套哪裡 */
+  let lastRange=null, lastEl=null;
+  document.addEventListener('selectionchange',()=>{
+    const sel=window.getSelection();
+    if(!sel || !sel.rangeCount) return;
+    let n=sel.getRangeAt(0).commonAncestorContainer;
+    if(n.nodeType===3) n=n.parentNode;
+    if(page.contains(n)){ lastRange=sel.getRangeAt(0).cloneRange(); lastEl=n; }
+  });
+
+  /* 快速色票 */
+  const PALETTE=['#FFFFFF','#1B2A33','#E8552D','#F0B429','#0E7A88','#0B4FA0',
+                 '#C9A227','#2E7F8C','#265A36','#8A1F2E','#5B3FA0','#6E828C'];
+  const swText=document.getElementById('swText');
+  PALETTE.forEach(c=>{
+    const b=document.createElement('button');
+    b.type='button'; b.style.background=c; b.title=c;
+    b.onmousedown=e=>e.preventDefault();
+    b.onclick=()=>{ document.getElementById('cText').value=c; applyColor('color', c); };
+    swText.appendChild(b);
+  });
+
+  function applyColor(prop, val){
+    const sel=window.getSelection();
+    const hasSel = sel && sel.rangeCount && !sel.getRangeAt(0).collapsed && page.contains(sel.anchorNode);
+    if(hasSel){
+      /* 只套用選取的那幾個字 */
+      const r=sel.getRangeAt(0);
+      const span=document.createElement('span');
+      span.style[prop==='color'?'color':'background']=val;
+      try{ span.appendChild(r.extractContents()); r.insertNode(span); }
+      catch(err){ document.execCommand(prop==='color'?'foreColor':'hiliteColor', false, val); }
+    }else{
+      const t = lastEl && page.contains(lastEl) ? lastEl : null;
+      if(!t){ alert('請先點一下（或選取）頁面上要改顏色的文字。'); return; }
+      if(prop==='color') t.style.color=val; else t.style.background=val;
+    }
+    persist(); pushHistory();
+  }
+  document.getElementById('applyText').onmousedown=e=>e.preventDefault();
+  document.getElementById('applyFill').onmousedown=e=>e.preventDefault();
+  document.getElementById('applyText').onclick=()=>applyColor('color', document.getElementById('cText').value);
+  document.getElementById('applyFill').onclick=()=>applyColor('background', document.getElementById('cFill').value);
+  document.getElementById('clearFill').onclick=()=>{
+    const t = lastEl && page.contains(lastEl) ? lastEl : null;
+    if(!t){ alert('請先點一下要清除顏色的文字。'); return; }
+    t.style.color=''; t.style.background='';
+    persist(); pushHistory();
+  };
+
+  /* ---------- 新增元件 ---------- */
+  function currentSection(){
+    if(activeSec && page.contains(activeSec)) return activeSec;
+    if(lastEl && page.contains(lastEl)){ const s=lastEl.closest('.sec'); if(s) return s; }
+    return page.querySelector('.sec:not(.hide)');
+  }
+  function makeEl(kind){
+    const fill=document.getElementById('cFill').value;
+    const col =document.getElementById('cText').value;
+    const d=document.createElement('div');
+    d.className='uBox freeitem';
+    if(kind==='text'){
+      d.style.cssText='padding:4px 6px;font-size:18px;font-weight:700;color:'+col;
+      d.innerHTML='<span contenteditable>在這裡輸入文字</span>';
+    }
+    if(kind==='chip'){
+      d.style.cssText='background:'+fill+';color:#fff;font-size:14px;font-weight:900;padding:8px 16px;border-radius:6px';
+      d.innerHTML='<span contenteditable>標籤文字</span>';
+    }
+    if(kind==='box'){
+      d.style.cssText='background:'+fill+';color:#fff;font-size:14px;line-height:1.8;padding:18px 20px;border-radius:10px;min-width:220px;display:block';
+      d.innerHTML='<div contenteditable>方框內容，可以打多行文字。</div>';
+    }
+    if(kind==='btn'){
+      d.style.cssText='background:'+fill+';color:#fff;font-size:15px;font-weight:900;padding:13px 34px;border-radius:40px;display:inline-block';
+      d.innerHTML='<span contenteditable>立即報名</span>';
+    }
+    if(kind==='line'){
+      d.style.cssText='display:block;width:100%;height:0;border-top:2px solid '+fill+';margin:16px 0;padding:0';
+      d.innerHTML='';
+    }
+    const del=document.createElement('button');
+    del.type='button'; del.className='uDel'; del.title='刪除這個元件'; del.textContent='✕';
+    del.contentEditable='false';
+    del.onclick=e=>{ e.stopPropagation(); d.remove(); persist(); pushHistory(); };
+    d.appendChild(del);
+    return d;
+  }
+  document.querySelectorAll('#tools [data-ins]').forEach(b=>{
+    b.onclick=()=>{
+      const sec=currentSection();
+      if(!sec){ alert('找不到可插入的區塊。'); return; }
+      const el=makeEl(b.dataset.ins);
+      /* 插在游標所在段落之後，找不到就放區塊最後 */
+      let anchor = lastEl && sec.contains(lastEl) ? lastEl.closest('.sec > *, .wrap2 > *, .inner > *') : null;
+      if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor.nextSibling);
+      else (sec.querySelector('.wrap2, .inner') || sec).appendChild(el);
+      bindUBoxDel(el);
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      const f=el.querySelector('[contenteditable]');
+      if(f){ f.focus();
+        const r=document.createRange(); r.selectNodeContents(f);
+        const sl=window.getSelection(); sl.removeAllRanges(); sl.addRange(r);
+      }
+      persist(); pushHistory();
+    };
+  });
+})();
+
+/* 還原後重新綁定使用者元件的刪除鈕 */
+function bindUBoxDel(el){
+  const b=el.querySelector(':scope > .uDel');
+  if(b) b.onclick=e=>{ e.stopPropagation(); el.remove(); persist(); pushHistory(); };
+}
+function initUBoxes(){ page.querySelectorAll('.uBox').forEach(bindUBoxDel); }
+
 function initFreeGrids(){
   initSpeakerRows();
+  initUBoxes();
   makeAllEditable();
   ['.info','.cards','.logos','.sched'].forEach(sel=>{
     document.querySelectorAll(sel).forEach(container=>{
