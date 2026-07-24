@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v22">
+<meta name="build" content="v25">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -67,13 +67,12 @@
   .bb-logo img{ max-height:38px; max-width:220px; display:block; }
   .bb-cta{ font-size:13px; font-weight:800; padding:8px 18px; border-radius:999px;
            border:2px solid; text-decoration:none; white-space:nowrap; }
-  .board-head{ background:var(--navy); color:#fff; padding:14px 18px; position:relative;
-               display:flex; align-items:center; justify-content:center; }
-  .bh-titles{ width:100%; text-align:center; padding:0 8px; }
+  .board-head{ background:var(--navy); color:#fff; padding:14px 18px;
+               display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  .bh-titles{ flex:1; min-width:0; text-align:center; padding:0 8px; }
   .bh-zh{ font-weight:800; letter-spacing:.05em; line-height:1.25; }
   .bh-en{ color:var(--gold-light); font-weight:600; margin-top:2px; line-height:1.3; }
-  .legend{ position:absolute; right:14px; top:50%; transform:translateY(-50%);
-           display:flex; gap:0; border-radius:6px; overflow:hidden; }
+  .legend{ flex-shrink:0; display:flex; gap:0; border-radius:6px; overflow:hidden; }
   .lg-item{ padding:7px 6px; line-height:1.25; font-weight:700; color:#1a1a1a;
             text-align:center; cursor:pointer; word-break:keep-all; }
   .lg-item .lg-en{ font-weight:500; font-size:8.5px; display:block; margin-top:2px; }
@@ -226,7 +225,7 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v22</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v25</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
         <button class="newtab" id="btn-newtab" title="整個舞台清空歸零，交給下一位使用（活動、時段、日期、配色、Logo 全部清掉，無法復原）">開新頁</button>
@@ -2146,243 +2145,88 @@ $('btn-html').addEventListener('click', ()=>{
   catch(e){ console.error(e); alert('HTML 產生失敗：'+(e.message||e)); }
 });
 
-/* ── 🖼 長圖匯出：整張網格一張 PNG ── */
+/* ── 🖼 PNG 匯出：直接翻拍畫面上的表格，保證與網頁 1:1 ──
+   不再用 canvas 手工重畫，排版一律交給瀏覽器算，
+   所以字級、換行、欄寬永遠和你看到的一樣。 */
+let _h2cLoading = null;
+function loadHtml2Canvas(){
+  if (window.html2canvas) return Promise.resolve();
+  if (_h2cLoading) return _h2cLoading;
+  _h2cLoading = new Promise((res,rej)=>{
+    const el=document.createElement('script');
+    el.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    el.onload=res;
+    el.onerror=()=>rej(new Error('截圖元件載入失敗，請確認網路可連到 cdnjs.cloudflare.com'));
+    document.head.appendChild(el);
+  });
+  return _h2cLoading;
+}
+
 async function buildLongImage(mode){
-  const T=effTimes(), D=effDates(), C=effCats();
+  const D = effDates();
   if(!D.length){ alert('還沒有設定日期，請先到「📅 日期設定」加入展期日期'); return; }
-  const FONT_ZH='"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif';
-  const FONT_EN='"Times New Roman",Times,serif';
-  const PAD=30, TCOL=Math.round(lo('t')), DCOL=Math.round(lo('w'));
-  const CF = lo('f');
-  const FSC = lo('f')/DEF_LO.f;
-  const HEADBG=th('headBg'), HEADG=th('headGrad');
-  function headFill(ctx,x,y,w,h){
-    if(!HEADG) return HEADBG;
-    const [x0,y0,x1,y1]=dirPoints(th('headDir'),x,y,w,h);
-    const g=ctx.createLinearGradient(x0,y0,x1,y1);
-    g.addColorStop(0,HEADBG); g.addColorStop(1,HEADG);
-    return g;
-  }
-  const brandOn = !!(SET.brandLogo || SET.ctaText);
-  const H_BRAND = brandOn ? lo('bh') : 0;
-  /* 表格下方的大底圖先載好，canvas 不能等 */
-  let _bgImg=null;
-  if(TH.bgImg){
-    try{
-      _bgImg = await new Promise((res,rej)=>{
-        const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('底圖載入失敗'));
-        i.src=TH.bgImg;
-      });
-    }catch(_){ _bgImg=null; }
-  }
-  const W = PAD*2 + TCOL + DCOL*D.length;
-  const meas=document.createElement('canvas').getContext('2d');
-  function wrap(text,maxW,size,font){
-    meas.font=size+'px '+font;
-    const out=[];
-    String(text||'').split('\n').forEach(seg=>{
-      let cur='';
-      for(const ch of seg){
-        if(meas.measureText(cur+ch).width>maxW&&cur){ out.push(cur); cur=ch; } else cur+=ch;
-      }
-      out.push(cur);
-    });
-    return out.filter(l=>l!=='');
-  }
-  function cellLines(a){
-    const L=[]; const nm=splitZhEn(a.name||'');
-    /* 字級直接對應畫面：.ev-co 等於格內字級，其餘照畫面的相對比例 */
-    const SCO=CF, SMETA=Math.max(7,CF*0.86), SZH=CF, SEN=Math.max(7.5,CF*0.94);
-    if(a.co) L.push({t:`【${a.co}】`,f:FONT_ZH,s:SCO,b:true,c:th('cellCo')});
-    const meta=[a.booth?`（攤位號：${a.booth}）`:'',a.lang?`（${a.lang}）`:''].filter(Boolean).join('');
-    if(meta) wrap(meta,DCOL-14,SMETA,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SMETA,c:th('cellMeta')}));
-    if(mode!=='en'&&nm.zh) wrap(nm.zh,DCOL-14,SZH,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SZH,b:true,c:th('cellZh')}));
-    if(mode!=='zh'&&nm.en) wrap(nm.en,DCOL-14,SEN,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:SEN,c:th('cellEn')}));
-    if(mode==='en'&&!nm.en&&nm.zh) wrap(nm.zh,DCOL-14,SZH,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SZH,c:th('cellZh')}));
-    if(mode==='zh'&&!nm.zh&&nm.en) wrap(nm.en,DCOL-14,SEN,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:SEN,c:th('cellEn')}));
-    if(a.note) wrap(a.note,DCOL-14,SMETA,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SMETA,c:th('cellMeta')}));
-    return L;
-  }
-  const occupied=D.map(()=>T.map(()=>false)), place={};
-  Object.entries(ACT).forEach(([id,a])=>{
-    const di=D.findIndex(x=>x.iso===a.date); if(di<0) return;
-    const sp=spanOf(a); if(!sp) return;
-    place[`${di}_${sp.i1}`]={a,span:sp.span,lines:cellLines(a)};
-    for(let k=sp.i1+1;k<=sp.i2&&k<T.length;k++) occupied[di][k]=true;
-  });
-  const LH=Math.max(10, CF*1.4), CPAD=7, MINROW=Math.max(30, lo('h'));
-  const rowH=T.map(()=>MINROW);
-  Object.entries(place).forEach(([k,p])=>{
-    const ti=Number(k.split('_')[1]);
-    const need=p.lines.length*LH+CPAD*2;
-    const cur=rowH.slice(ti,ti+p.span).reduce((s,x)=>s+x,0);
-    if(need>cur){ const add=Math.ceil((need-cur)/p.span); for(let j=ti;j<ti+p.span&&j<T.length;j++) rowH[j]+=add; }
-  });
-  const _hasVenue = !!((mode!=='en'&&SET.venueZh) || (mode!=='zh'&&SET.venueEn));
-  const H_TITLE=Math.max(44, lo('hh')), H_LEG=Math.max(34, lo('lf')*3.6),
-        H_VENUE=_hasVenue ? Math.max(44, lo('vf')*3.4) : 0,
-        H_HEAD=34, H_FOOT=Math.max(38, lo('ff')*3.8);
-  const BGPAD = _bgImg ? Math.max(0, Number(th('bgPad'))||46) : 0;
-  const gridH=rowH.reduce((s,x)=>s+x,0);
-  const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+PAD;
-  const FW = W + BGPAD*2, FH = totalH + BGPAD*2;
-  const SC=2, cv=document.createElement('canvas');
-  cv.width=FW*SC; cv.height=FH*SC;
-  const ctx=cv.getContext('2d'); ctx.scale(SC,SC);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,FW,FH);
-  /* 底圖鋪滿整張輸出，表格再疊上去 */
-  if(_bgImg){
-    ctx.save();
-    ctx.globalAlpha=(TH.bgOp!=null?TH.bgOp:100)/100;
-    const iw=_bgImg.width, ih=_bgImg.height, sz=th('bgSize');
-    let sc = sz==='contain' ? Math.min(FW/iw,FH/ih)
-           : sz==='auto'    ? 1
-           : sz==='200%'    ? 2
-           : sz==='400%'    ? 4
-           : Math.max(FW/iw,FH/ih);
-    const dw=iw*sc, dh=ih*sc;
-    const pos=String(th('bgPos')||'center');
-    const hx = pos.includes('left')?0 : pos.includes('right')?(FW-dw) : (FW-dw)/2;
-    const vy = pos.includes('top')?0  : pos.includes('bottom')?(FH-dh) : (FH-dh)/2;
-    ctx.drawImage(_bgImg, hx, vy, dw, dh);
-    ctx.restore();
-    ctx.fillStyle='#ffffff';
-    ctx.fillRect(BGPAD+PAD-4, BGPAD+PAD-4, W-PAD*2+8, totalH-PAD*2+8);
-  }
-  ctx.translate(BGPAD, BGPAD);
-  ctx.textBaseline='middle';
-  let y=PAD;
-  // 頁首品牌／報名區
-  let _brandImg=null;
-  if(brandOn){
-    ctx.fillStyle=th('brandBg'); ctx.fillRect(PAD,y,W-PAD*2,H_BRAND);
-    ctx.textAlign='left'; ctx.fillStyle=th('brandText'); ctx.font='bold 17px '+FONT_ZH;
-    if(SET.brandLogo){
-      try{
-        _brandImg = await new Promise((res,rej)=>{ const im=new Image();
-          im.crossOrigin='anonymous';
-          im.onload=()=>res(im); im.onerror=()=>rej(new Error('logo load'));
-          im.src=SET.brandLogo; });
-        const mh=Math.max(24,H_BRAND-22);
-        const sc=Math.min(mh/_brandImg.height, 240/_brandImg.width);
-        ctx.drawImage(_brandImg,PAD+14,y+(H_BRAND-_brandImg.height*sc)/2,
-                      _brandImg.width*sc,_brandImg.height*sc);
-      }catch(_){ if(SET.brandName) ctx.fillText(SET.brandName,PAD+14,y+H_BRAND/2); }
-    } else if(SET.brandName) ctx.fillText(SET.brandName,PAD+14,y+H_BRAND/2);
-    if(SET.ctaText){
-      ctx.font='bold 13px '+FONT_ZH;
-      const tw=ctx.measureText(SET.ctaText).width;
-      const bw=tw+36, bx=W-PAD-14-bw, by=y+H_BRAND/2-16;
-      ctx.strokeStyle=th('brandText'); ctx.lineWidth=2;
-      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx,by,bw,32,16); ctx.stroke(); }
-      else ctx.strokeRect(bx,by,bw,32);
-      ctx.fillStyle=th('brandText'); ctx.textAlign='center';
-      ctx.fillText(SET.ctaText,bx+bw/2,by+16);
-    }
-    y+=H_BRAND;
-  }
-  // 標題
-  ctx.fillStyle = headFill(ctx,PAD,y,W-PAD*2,H_TITLE);
-  ctx.fillRect(PAD,y,W-PAD*2,H_TITLE);
-  ctx.textAlign='center'; ctx.fillStyle=th('titleColor'); ctx.font='bold '+lo('hf')+'px '+FONT_ZH;
-  const stageName=effStages()[STAGE]?.name||'';
-  const tzh=(SET.titleZh||'大會舞台一覽表')+(stageName?`　${stageName}`:'');
-  const ten=SET.titleEn||'Tentative Stage Event Schedule';
-  const hfEn = Math.max(9, lo('hf')*0.7);
-  if(mode==='en'){ ctx.font='bold '+Math.round(lo('hf')*0.9)+'px '+FONT_EN; ctx.fillText(ten,W/2,y+H_TITLE/2); }
-  else { ctx.fillText(tzh,W/2,y+H_TITLE/2-hfEn*0.75);
-         if(mode==='bi'){ ctx.fillStyle=th('subColor'); ctx.font=hfEn+'px '+FONT_EN; ctx.fillText(ten,W/2,y+H_TITLE/2+hfEn*0.95); } }
-  y+=H_TITLE;
-  // 圖例
-  const lw=Math.min(lo('lw'),(W-PAD*2)/C.length);
-  let lx=W-PAD-lw*C.length;
-  ctx.fillStyle='#f7f4ee'; ctx.fillRect(PAD,y,W-PAD*2,H_LEG);
-  C.forEach(c=>{
-    ctx.fillStyle=c.color; ctx.fillRect(lx,y+5,lw-4,H_LEG-10);
-    ctx.fillStyle='#1a1a1a'; ctx.textAlign='center';
-    ctx.font='bold '+lo('lf')+'px '+FONT_ZH;
-    if(mode!=='en') ctx.fillText(c.zh.slice(0,16),lx+lw/2-2,y+H_LEG/2-(mode==='bi'?7:0));
-    if(mode!=='zh'){ ctx.font=Math.max(6.5,lo('lf')*0.88)+'px '+FONT_EN; ctx.fillText(c.en.slice(0,34),lx+lw/2-2,y+H_LEG/2+(mode==='bi'?8:0)); }
-    lx+=lw;
-  });
-  y+=H_LEG;
-  // 地點（沒填就整條不畫，不留空色帶）
-  if(_hasVenue){
-    ctx.fillStyle=th('venueBg'); ctx.fillRect(PAD,y,W-PAD*2,H_VENUE);
-    ctx.textAlign='left'; ctx.font=lo('vf')+'px '+FONT_ZH;
-    if(mode!=='en'&&SET.venueZh){ ctx.fillStyle=th('venueZhColor'); ctx.fillText('地點：'+SET.venueZh,PAD+12,y+(mode==='bi'?15:H_VENUE/2)); }
-    if(mode!=='zh'&&SET.venueEn){ ctx.fillStyle=th('venueEnColor'); ctx.font=Math.max(7,lo('vf')*0.92)+'px '+FONT_EN; ctx.fillText('Venue: '+SET.venueEn,PAD+12,y+(mode==='bi'?31:H_VENUE/2)); }
-    y+=H_VENUE;
-  }
-  // 表頭
-  const gx=PAD;
-  ctx.fillStyle='#efe9dc'; ctx.fillRect(gx,y,W-PAD*2,H_HEAD);
-  ctx.strokeStyle='#ddd5c5'; ctx.lineWidth=1;
-  ctx.textAlign='center'; ctx.fillStyle=th('dateColor'); ctx.font='bold 12.5px '+FONT_ZH;
-  ctx.fillText(mode==='en'?'Time':'時間 Time',gx+TCOL/2,y+H_HEAD/2);
-  ctx.strokeRect(gx,y,TCOL,H_HEAD);
-  D.forEach((d,di)=>{
-    const x=gx+TCOL+DCOL*di;
-    ctx.strokeRect(x,y,DCOL,H_HEAD);
-    ctx.fillStyle=th('dateColor');
-    ctx.fillText(mode==='zh'?labelZh(d.iso):dateLabel(d),x+DCOL/2,y+H_HEAD/2);
-  });
-  y+=H_HEAD;
-  // 格線與內容
-  const rowY=[]; let yy=y;
-  rowH.forEach(h=>{ rowY.push(yy); yy+=h; });
-  T.forEach((t,ti)=>{
-    const ry=rowY[ti], rh=rowH[ti];
-    ctx.fillStyle='#fafafa'; ctx.fillRect(gx,ry,TCOL,rh);
-    ctx.strokeRect(gx,ry,TCOL,rh);
-    ctx.fillStyle=th('timeColor'); ctx.font='bold '+lo('tf')+'px '+FONT_ZH; ctx.textAlign='center';
-    ctx.fillText(t,gx+TCOL/2,ry+rh/2);
-    D.forEach((d,di)=>{
-      if(occupied[di][ti]) return;
-      const x=gx+TCOL+DCOL*di;
-      const p=place[`${di}_${ti}`];
-      const h=p?rowH.slice(ti,ti+p.span).reduce((s,v)=>s+v,0):rh;
-      const blocked = !p && isBlocked(d.iso, t);
-      ctx.fillStyle=p?((C[Number(p.a.cat)]||{}).color||'#ffffff'):(blocked?'#d6d6d6':'#ffffff');
-      ctx.fillRect(x,ry,DCOL,h);
-      ctx.strokeRect(x,ry,DCOL,h);
-      if(!p) return;
-      let ly=ry+h/2-(p.lines.length-1)*LH/2;
-      p.lines.forEach(ln=>{
-        ctx.fillStyle=ln.c; ctx.font=(ln.b?'bold ':'')+ln.s+'px '+ln.f;
-        ctx.fillText(ln.t,x+DCOL/2,ly); ly+=LH;
-      });
-    });
-  });
-  y=rowY[rowY.length-1]+rowH[rowH.length-1];
-  // 頁尾（漸層 → 底圖 → 文字）
-  if(th('footGrad')){
-    const [fx0,fy0,fx1,fy1]=dirPoints(th('footDir'),PAD,y,W-PAD*2,H_FOOT);
-    const fg=ctx.createLinearGradient(fx0,fy0,fx1,fy1);
-    fg.addColorStop(0,th('footBg')); fg.addColorStop(1,th('footGrad'));
-    ctx.fillStyle=fg;
-  } else ctx.fillStyle=th('footBg');
-  ctx.fillRect(PAD,y,W-PAD*2,H_FOOT);
-  ctx.textAlign='left'; ctx.fillStyle=th('footColor'); ctx.font=lo('ff')+'px '+FONT_ZH;
-  if(mode!=='en') ctx.fillText((SET.footZh||DEF_FOOT_ZH).slice(0,120),PAD+12,y+(mode==='bi'?14:H_FOOT/2));
-  if(mode!=='zh'){ ctx.font=Math.max(6,lo('ff')*0.9)+'px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
-  y+=H_FOOT;
 
+  const src = $('board');
+  if(!src){ alert('表格還沒畫出來，請稍候再試'); return; }
 
-  const now=new Date();
-  const ts=`${_pad2(now.getMonth()+1)}${_pad2(now.getDate())}_${_pad2(now.getHours())}${_pad2(now.getMinutes())}`;
-  const suffix={zh:'中文',en:'英文',bi:'雙語'}[mode];
-  const _sn=(effStages()[STAGE]?.name||'').replace(/[\\/:*?"<>|]/g,'').trim();
-  const _base=(SET.titleZh||'大會舞台一覽表')+(_sn?'_'+_sn:'');
-  cv.toBlob(b=>{
-    if(!b){ alert('PNG 產生失敗。若有上傳 Logo，請改用 PNG/JPG 檔重新上傳一次。'); return; }
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(b);
-    a.download=`${_base}_${suffix}_${ts}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-    toast('✓ PNG 已下載');
-  },'image/png');
+  toast('產生 PNG 中…');
+  await loadHtml2Canvas();
+
+  /* 複製一份到畫面外，用設定的實際寬度固定住，
+     這樣不論螢幕多大、有沒有捲動，輸出都一致。 */
+  const fullW = lo('t') + lo('w') * D.length;
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed; left:-99999px; top:0; z-index:-1;'
+    + 'padding:' + (TH.bgImg ? Math.max(0, Number(th('bgPad'))||46) : 0) + 'px;'
+    + (TH.bgImg
+        ? `background-image:url('${TH.bgImg}');background-position:${th('bgPos')};`
+          + `background-size:${th('bgSize')};background-repeat:no-repeat;`
+        : 'background:#ffffff;');
+
+  const clone = src.cloneNode(true);
+  clone.style.width = fullW + 'px';
+  clone.style.maxWidth = 'none';
+  /* 拿掉只有編輯時才需要的東西，輸出要乾淨 */
+  clone.querySelectorAll('.rowx, .blkx').forEach(el=>el.remove());
+  clone.querySelectorAll('.slot.empty').forEach(el=>{
+    el.classList.remove('empty');
+    el.style.cursor='default';
+  });
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+
+  try{
+    const canvas = await window.html2canvas(holder, {
+      scale: 2,                 // 2 倍解析度，印出來不糊
+      backgroundColor: null,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      windowWidth: holder.scrollWidth,
+      windowHeight: holder.scrollHeight
+    });
+
+    const now=new Date();
+    const ts=`${_pad2(now.getMonth()+1)}${_pad2(now.getDate())}_${_pad2(now.getHours())}${_pad2(now.getMinutes())}`;
+    const suffix={zh:'中文',en:'英文',bi:'雙語'}[mode] || '雙語';
+    const _sn=(effStages()[STAGE]?.name||'').replace(/[\\\/:*?"<>|]/g,'').trim();
+    const _base=(SET.titleZh||'大會舞台一覽表')+(_sn?'_'+_sn:'');
+
+    await new Promise(res=>{
+      canvas.toBlob(b=>{
+        if(!b){ alert('PNG 產生失敗。若有上傳 Logo 或底圖，請改用 PNG/JPG 重新上傳一次。'); res(); return; }
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(b);
+        a.download=`${_base}_${suffix}_${ts}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+        toast('✓ PNG 已下載');
+        res();
+      },'image/png');
+    });
+  } finally {
+    holder.remove();
+  }
 }
 
 /* ── 即時同步 ── */
