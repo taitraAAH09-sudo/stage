@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v18">
+<meta name="build" content="v19">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -217,10 +217,10 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v18</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v19</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
-        <button class="newtab" id="btn-newtab" title="清空本頁活動內容，交給下一位使用（時段／日期／配色會保留）">開新頁</button>
+        <button class="newtab" id="btn-newtab" title="整個舞台清空歸零，交給下一位使用（活動、時段、日期、配色、Logo 全部清掉，無法復原）">開新頁</button>
       </div>
     </div>
     <div class="dl-panel">
@@ -1432,10 +1432,30 @@ function renderSlots(){
 /* 開新頁：另開分頁，並帶上目前舞台，避免 F5 後跳到別人正在編的內容 */
 const _nt = $('btn-newtab');
 if(_nt) _nt.addEventListener('click', ()=>requirePw(async ()=>{
-  if(!confirm('開新頁會把目前舞台的活動內容全部清空，交給下一位使用。\n\n（時段／日期／分類／配色都會保留，只清活動）\n\n沒存過的內容會不見，確定嗎？')) return;
+  const n = Object.keys(ACT).length;
+  if(!confirm(
+    '【開新頁】會把這個舞台整個清空，回到第一次開啟的樣子。\n\n'
+    + '會被清掉：\n'
+    + '　• 活動內容（目前 ' + n + ' 筆）\n'
+    + '　• 時段、日期、分類設定\n'
+    + '　• 色塊配色、KV 色票、版面縮放\n'
+    + '　• 標題、地點、底部聲明\n'
+    + '　• 頁首 Logo 與報名連結\n'
+    + '　• 表格下方大底圖\n\n'
+    + '沒存過檔就救不回來了。\n'
+    + '建議先按「💾 存 1／2／3」留一份再清。\n\n'
+    + '確定要全部清空嗎？'
+  )) return;
+  if(!confirm('再確認一次：這個動作無法復原。\n\n真的要清空「'
+      + (effStages()[STAGE]?.name || '這個舞台') + '」嗎？')) return;
   try{
-    await set(ref(db, SBASE()+'/activities'), {});
-    toast('✓ 已清空，可交給下一位');
+    /* 整個舞台節點砍掉：settings 與 activities 一起沒了，
+       監聽會收到 null，程式自動套回 DEF_* 預設值。 */
+    await remove(ref(db, SBASE()));
+    /* 本機殘留的暫存也一起清，免得畫面還留著舊配色 */
+    LO={}; TH={}; KV=null; KVDIR='to right'; SET={};
+    TIMES=null; DATES=null; CATS=null;
+    toast('✓ 已全部清空，可交給下一位');
   }catch(e){ toast('✗ 清空失敗：'+e.message); }
 }));
 
