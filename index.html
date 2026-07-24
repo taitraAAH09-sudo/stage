@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v14">
+<meta name="build" content="v16">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -210,10 +210,10 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v14</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v16</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
-        <button class="newtab" id="btn-newtab" title="用自己的工作格開一個新分頁，F5 不會跑到別人的檔">開新頁</button>
+        <button class="newtab" id="btn-newtab" title="清空本頁活動內容，交給下一位使用（時段／日期／配色會保留）">開新頁</button>
       </div>
     </div>
     <div class="dl-panel">
@@ -437,6 +437,38 @@
 
     <div class="thsec">③ 頁尾色塊</div>
     <div class="throw"><span>底色</span><input type="color" id="t-footBg"><input type="text" id="t-footBg-x"><button class="pick" data-pick="t-footBg">滴管</button></div>
+    <div class="throw"><span>底色漸層</span><input type="color" id="t-footGrad"><input type="text" id="t-footGrad-x" placeholder="留空=單色"><button class="pick" data-pick="t-footGrad">滴管</button><button class="pick" id="t-footGrad-off">清除</button></div>
+    <div class="throw"><span>漸層方向</span><select class="f-sel" id="t-footDir" style="flex:1;"></select></div>
+
+    <div style="border-top:1px dashed var(--paper-line);margin:14px 0 8px;"></div>
+    <div class="f-label">底部背景圖（可蓋過上面的顏色）</div>
+    <div class="hint" style="margin-bottom:8px;">丟 PNG／JPG 進來當頁尾底圖。若原圖是漸層，可用下面的「取圖位置」挑你要的那一角。</div>
+    <div class="throw" style="gap:8px;">
+      <button class="btn btn--ghost" id="foot-img-pick">📁 選擇圖檔</button>
+      <button class="btn btn--ghost" id="foot-img-clear">✕ 移除底圖</button>
+      <input type="file" id="foot-img-input" accept=".png,.jpg,.jpeg,.webp" style="display:none">
+    </div>
+    <div class="throw"><span>取圖位置</span><select class="f-sel" id="t-footPos" style="flex:1;">
+      <option value="center">置中</option>
+      <option value="left top">左上</option>
+      <option value="center top">上方置中</option>
+      <option value="right top">右上</option>
+      <option value="left center">左側</option>
+      <option value="right center">右側</option>
+      <option value="left bottom">左下</option>
+      <option value="center bottom">下方置中</option>
+      <option value="right bottom">右下</option>
+    </select></div>
+    <div class="throw"><span>縮放方式</span><select class="f-sel" id="t-footSize" style="flex:1;">
+      <option value="cover">填滿（可能裁切）</option>
+      <option value="contain">完整顯示</option>
+      <option value="auto">原尺寸</option>
+      <option value="200%">放大 200%</option>
+      <option value="400%">放大 400%</option>
+    </select></div>
+    <div class="f-label">底圖不透明度 <span id="t-footOp-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="t-footOp" min="10" max="100" step="5" value="100">
+    <div id="foot-img-prev" style="margin-top:8px;"></div>
     <div class="throw"><span>文字</span><input type="color" id="t-footColor"><input type="text" id="t-footColor-x"><button class="pick" data-pick="t-footColor">滴管</button></div>
 
     <div class="thsec">④ 頁首連結區</div>
@@ -610,7 +642,8 @@ const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, 
 /* 三段色塊各自獨立：head=標題列, venue=地點列, foot=頁尾 */
 const DEF_TH = {
   headBg:'#1c2b3a', headGrad:'', headDir:'to right',
-  venueBg:'#12202c', footBg:'#12202c',
+  venueBg:'#12202c', footBg:'#12202c', footGrad:'', footDir:'to right',
+  footImg:'', footPos:'center', footSize:'cover', footOp:100,
   titleColor:'#ffffff', subColor:'#d8b25f',
   venueZhColor:'#ffffff', venueEnColor:'#9fb4c6',
   footColor:'#8fa6ba',
@@ -641,6 +674,15 @@ function dirPoints(dir, x, y, w, h){
     case '315deg':    return [x+w, y+h, x, y];
     default:          return [x, y, x+w, y];
   }
+}
+/* 頁尾背景：色 → 漸層 → 圖檔（圖蓋在最上層，可選位置與不透明度） */
+function footBgCss(){
+  const base = th('footGrad')
+    ? `linear-gradient(${th('footDir')}, ${th('footBg')}, ${th('footGrad')})`
+    : th('footBg');
+  const img = TH.footImg || '';
+  if(!img) return { bg: base, img: '' };
+  return { bg: base, img: img };
 }
 function cssGrad(cols, dir){
   if(!cols || !cols.length) return '';
@@ -885,9 +927,12 @@ function render(){
         <div style="color:${th('venueEnColor')};">Venue: ${esc(SET.venueEn||'')}</div>
       </div>
       <table class="grid">${head}${body}</table>
-      <div class="board-foot" style="background:${th('footBg')};color:${th('footColor')};font-size:${lo('ff')}px;">
-        <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
-        <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
+      <div class="board-foot" style="background:${footBgCss().bg};color:${th('footColor')};font-size:${lo('ff')}px;position:relative;">
+        ${TH.footImg?`<div style="position:absolute;inset:0;background-image:url('${TH.footImg}');background-position:${th('footPos')};background-size:${th('footSize')};background-repeat:no-repeat;opacity:${(TH.footOp!=null?TH.footOp:100)/100};pointer-events:none;"></div>`:''}
+        <div style="position:relative;">
+          <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
+          <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
+        </div>
       </div>
     </div>`;
 
@@ -1368,12 +1413,13 @@ function renderSlots(){
 
 /* 開新頁：另開分頁，並帶上目前舞台，避免 F5 後跳到別人正在編的內容 */
 const _nt = $('btn-newtab');
-if(_nt) _nt.addEventListener('click', ()=>{
-  const u = new URL(location.href);
-  u.searchParams.set('stage', STAGE);
-  u.searchParams.set('t', Date.now());
-  window.open(u.toString(), '_blank');
-});
+if(_nt) _nt.addEventListener('click', ()=>requirePw(async ()=>{
+  if(!confirm('開新頁會把目前舞台的活動內容全部清空，交給下一位使用。\n\n（時段／日期／分類／配色都會保留，只清活動）\n\n沒存過的內容會不見，確定嗎？')) return;
+  try{
+    await set(ref(db, SBASE()+'/activities'), {});
+    toast('✓ 已清空，可交給下一位');
+  }catch(e){ toast('✗ 清空失敗：'+e.message); }
+}));
 
 /* 開頁立刻畫出三格，不等 Firebase、不受後續錯誤影響 */
 renderSlots();
@@ -1429,7 +1475,7 @@ function recommendTheme(cols, dir){
 }
 
 /* ── 🎨 色塊／文字配色 ── */
-const TH_KEYS = ['headBg','headGrad','venueBg','footBg','titleColor','subColor',
+const TH_KEYS = ['headBg','headGrad','venueBg','footBg','footGrad','titleColor','subColor',
                  'venueZhColor','venueEnColor','footColor','brandBg','brandText'];
 let TH_EDIT = {};
 function thBind(k){
@@ -1457,6 +1503,19 @@ function openTheme(){
   });
   $('t-headDir').innerHTML = DIRS.map(d=>`<option value="${d.k}">${d.zh}</option>`).join('');
   $('t-headDir').value = TH_EDIT.headDir;
+  TH_EDIT.footGrad = TH.footGrad || '';
+  TH_EDIT.footDir  = th('footDir');
+  TH_EDIT.footImg  = TH.footImg || '';
+  TH_EDIT.footPos  = th('footPos');
+  TH_EDIT.footSize = th('footSize');
+  TH_EDIT.footOp   = TH.footOp != null ? TH.footOp : 100;
+  $('t-footDir').innerHTML = DIRS.map(d=>`<option value="${d.k}">${d.zh}</option>`).join('');
+  $('t-footDir').value  = TH_EDIT.footDir;
+  $('t-footPos').value  = TH_EDIT.footPos;
+  $('t-footSize').value = TH_EDIT.footSize;
+  $('t-footOp').value   = TH_EDIT.footOp;
+  $('t-footOp-v').textContent = TH_EDIT.footOp+' %';
+  renderFootPrev();
   renderThKvChips();
   $('mask-theme').classList.add('show');
 }
@@ -1464,6 +1523,48 @@ TH_KEYS.forEach(thBind);
 $('t-headDir').addEventListener('change', e=>{ TH_EDIT.headDir=e.target.value; previewTheme(); });
 $('t-headGrad-off').addEventListener('click', ()=>{
   TH_EDIT.headGrad=''; $('t-headGrad-x').value=''; previewTheme();
+});
+$('t-footGrad-off').addEventListener('click', ()=>{
+  TH_EDIT.footGrad=''; $('t-footGrad-x').value=''; previewTheme();
+});
+$('t-footDir').addEventListener('change', e=>{ TH_EDIT.footDir=e.target.value; previewTheme(); });
+$('t-footPos').addEventListener('change', e=>{ TH_EDIT.footPos=e.target.value; previewTheme(); renderFootPrev(); });
+$('t-footSize').addEventListener('change', e=>{ TH_EDIT.footSize=e.target.value; previewTheme(); renderFootPrev(); });
+$('t-footOp').addEventListener('input', e=>{
+  TH_EDIT.footOp=Number(e.target.value);
+  $('t-footOp-v').textContent=e.target.value+' %'; previewTheme();
+});
+function renderFootPrev(){
+  const box=$('foot-img-prev'); if(!box) return;
+  if(!TH_EDIT.footImg){ box.innerHTML='<span style="font-size:12px;color:var(--navy-light);">尚未載入底圖</span>'; return; }
+  box.innerHTML=`<div style="height:56px;border-radius:6px;border:1px solid var(--paper-line);
+    background-image:url('${TH_EDIT.footImg}');background-position:${TH_EDIT.footPos};
+    background-size:${TH_EDIT.footSize};background-repeat:no-repeat;opacity:${(TH_EDIT.footOp||100)/100};"></div>`;
+}
+$('foot-img-pick').addEventListener('click', ()=>$('foot-img-input').click());
+$('foot-img-clear').addEventListener('click', ()=>{
+  TH_EDIT.footImg=''; renderFootPrev(); previewTheme();
+});
+$('foot-img-input').addEventListener('change', async function(){
+  const f=this.files[0]; this.value='';
+  if(!f) return;
+  try{
+    /* 壓到合理尺寸再存，Firebase 單筆有大小限制 */
+    const img=await new Promise((res,rej)=>{
+      const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('圖檔讀取失敗'));
+      i.src=URL.createObjectURL(f);
+    });
+    const MAXW=1400, sc=Math.min(1, MAXW/img.width);
+    const cv=document.createElement('canvas');
+    cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    URL.revokeObjectURL(img.src);
+    let out=cv.toDataURL('image/jpeg',0.85);
+    if(out.length>900000) out=cv.toDataURL('image/jpeg',0.6);
+    if(out.length>900000){ alert('這張圖太大了，請先壓縮或換一張'); return; }
+    TH_EDIT.footImg=out; renderFootPrev(); previewTheme();
+    toast('✓ 底圖已載入');
+  }catch(e){ alert('載入失敗：'+(e.message||e)); }
 });
 $('btn-theme').addEventListener('click', ()=>requirePw(openTheme));
 $('theme-cancel').addEventListener('click', ()=>{
@@ -1474,6 +1575,11 @@ $('theme-reset').addEventListener('click', ()=>{
   TH_KEYS.forEach(k=>{ const c=$('t-'+k),x=$('t-'+k+'-x');
     if(c){ c.value=DEF_TH[k]||'#ffffff'; x.value=DEF_TH[k]||''; } });
   $('t-headDir').value = DEF_TH.headDir;
+  TH_EDIT.footImg=''; TH_EDIT.footGrad='';
+  TH_EDIT.footPos='center'; TH_EDIT.footSize='cover'; TH_EDIT.footOp=100;
+  $('t-footDir').value=DEF_TH.footDir; $('t-footPos').value='center';
+  $('t-footSize').value='cover'; $('t-footOp').value=100; $('t-footOp-v').textContent='100 %';
+  renderFootPrev();
   previewTheme();
 });
 $('theme-save').addEventListener('click', async ()=>{
@@ -1775,6 +1881,11 @@ function buildHtmlExport(mode){
   const CW=lo('w'), CH=lo('h'), CF=lo('f'), TW=lo('t'), HH=lo('hh'), HF=lo('hf');
   const LW=lo('lw'), LF=lo('lf'), BH=lo('bh');
   const TF=lo('tf'), VF=lo('vf'), FF=lo('ff');
+  const FOOTBG = th('footGrad')
+      ? `linear-gradient(${th('footDir')}, ${th('footBg')}, ${th('footGrad')})`
+      : th('footBg');
+  const FOOTIMG = TH.footImg || '';
+  const FOOTOP  = (TH.footOp != null ? TH.footOp : 100)/100;
   const headBgCss = th('headGrad')
       ? `linear-gradient(${th('headDir')}, ${th('headBg')}, ${th('headGrad')})`
       : th('headBg');
@@ -1836,8 +1947,8 @@ function buildHtmlExport(mode){
 *{box-sizing:border-box;}
 body{margin:0;padding:20px;background:#f4f4f6;
      font-family:"Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif;color:#22303c;}
-.board{max-width:${TW+CW*D.length+40}px;margin:0 auto;background:#fff;border-radius:10px;
-       overflow:hidden;box-shadow:0 4px 22px rgba(0,0,0,.12);}
+.board{max-width:${Math.max(TW+CW*D.length, LW*C.length+380)}px;margin:0 auto;background:#fff;
+       border-radius:10px;overflow:hidden;box-shadow:0 4px 22px rgba(0,0,0,.12);}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:16px;
        padding:10px 18px;min-height:${BH}px;background:${th('brandBg')};}
 .brand img{max-height:${Math.max(28,BH-22)}px;max-width:240px;display:block;}
@@ -1845,19 +1956,20 @@ body{margin:0;padding:20px;background:#f4f4f6;
 .cta{font-size:13px;font-weight:800;padding:8px 18px;border-radius:999px;
      border:2px solid ${th('brandText')};color:${th('brandText')};text-decoration:none;white-space:nowrap;}
 .cta:hover{opacity:.78;}
-.head{position:relative;display:flex;align-items:center;justify-content:center;
+.head{display:flex;align-items:center;justify-content:space-between;gap:14px;
       padding:14px 18px;min-height:${HH}px;background:${headBgCss};}
-.titles{width:100%;text-align:center;padding:0 8px;}
+.titles{flex:1;min-width:0;text-align:center;padding:0 8px;}
 .t-zh{font-size:${HF}px;font-weight:800;letter-spacing:.05em;color:${th('titleColor')};line-height:1.25;}
 .t-en{font-size:${Math.max(9,HF*0.7)}px;font-weight:600;color:${th('subColor')};margin-top:2px;line-height:1.3;}
-.legend{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;border-radius:6px;overflow:hidden;}
+.legend{flex-shrink:0;display:flex;border-radius:6px;overflow:hidden;}
 .lg{width:${LW}px;padding:7px 6px;font-size:${LF}px;font-weight:700;color:#1a1a1a;
     text-align:center;line-height:1.25;word-break:keep-all;}
 .lg span{display:block;font-weight:500;font-size:${Math.max(6.5,LF*0.88)}px;margin-top:2px;}
 .venue{padding:9px 18px;font-size:${VF}px;line-height:1.5;background:${th('venueBg')};}
 .venue .v1{color:${th('venueZhColor')};}
 .venue .v2{color:${th('venueEnColor')};}
-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.tblwrap{width:100%;overflow-x:auto;}
+table{width:100%;min-width:${TW+CW*D.length}px;border-collapse:collapse;table-layout:fixed;}
 th{background:#efe9dc;font-size:12.5px;font-weight:800;padding:8px 6px;border:1px solid #ddd5c5;text-align:center;}
 th.tw{width:${TW}px;}
 td{border:1px solid #ddd5c5;vertical-align:middle;padding:6px 5px;height:${CH}px;
@@ -1867,11 +1979,18 @@ td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;wi
 .c-meta{font-size:${Math.max(7,CF*0.86)}px;color:#3a3a3a;}
 .c-zh{font-weight:700;color:#1a3550;margin-top:3px;}
 .c-en{color:#1a3550;font-size:${Math.max(7.5,CF*0.94)}px;}
-.foot{padding:10px 18px;font-size:${FF}px;line-height:1.5;background:${th('footBg')};color:${th('footColor')};}
+.foot{position:relative;padding:10px 18px;font-size:${FF}px;line-height:1.5;
+      background:${FOOTBG};color:${th('footColor')};}
+.foot-img{position:absolute;inset:0;background-image:url('${FOOTIMG}');
+      background-position:${th('footPos')};background-size:${th('footSize')};
+      background-repeat:no-repeat;opacity:${FOOTOP};pointer-events:none;}
+.foot-tx{position:relative;}
 @media(max-width:820px){
-  body{padding:8px;} .legend{position:static;transform:none;margin-top:10px;justify-content:center;}
-  .head{flex-direction:column;} .board{max-width:100%;}
-  table{display:block;overflow-x:auto;white-space:nowrap;}
+  body{padding:8px;}
+  .legend{margin-top:10px;justify-content:center;flex-wrap:wrap;}
+  .head{flex-direction:column;align-items:stretch;}
+  .titles{padding:0;}
+  .board{max-width:100%;}
 }
 </style>
 </head>
@@ -1889,10 +2008,13 @@ ${brand}
     ${mode!=='en'&&SET.venueZh?`<div class="v1">地點：${esc(SET.venueZh)}</div>`:''}
     ${mode!=='zh'&&SET.venueEn?`<div class="v2">Venue: ${esc(SET.venueEn)}</div>`:''}
   </div>
-  <table>${head}${body}</table>
+  <div class="tblwrap"><table>${head}${body}</table></div>
   <div class="foot">
-    ${mode!=='en'?`<div>${esc(SET.footZh||DEF_FOOT_ZH)}</div>`:''}
-    ${mode!=='zh'?`<div>${esc(SET.footEn||DEF_FOOT_EN)}</div>`:''}
+    ${FOOTIMG?`<div class="foot-img"></div>`:''}
+    <div class="foot-tx">
+      ${mode!=='en'?`<div>${esc(SET.footZh||DEF_FOOT_ZH)}</div>`:''}
+      ${mode!=='zh'?`<div>${esc(SET.footEn||DEF_FOOT_EN)}</div>`:''}
+    </div>
   </div>
 </div>
 </body>
@@ -1938,6 +2060,16 @@ async function buildLongImage(mode){
   }
   const brandOn = !!(SET.brandLogo || SET.ctaText);
   const H_BRAND = brandOn ? lo('bh') : 0;
+  /* 頁尾底圖先載好，canvas 不能等 */
+  let _footImg=null;
+  if(TH.footImg){
+    try{
+      _footImg = await new Promise((res,rej)=>{
+        const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('底圖載入失敗'));
+        i.src=TH.footImg;
+      });
+    }catch(_){ _footImg=null; }
+  }
   const W = PAD*2 + TCOL + DCOL*D.length;
   const meas=document.createElement('canvas').getContext('2d');
   function wrap(text,maxW,size,font){
@@ -2089,8 +2221,33 @@ async function buildLongImage(mode){
     });
   });
   y=rowY[rowY.length-1]+rowH[rowH.length-1];
-  // 頁尾
-  ctx.fillStyle=th('footBg'); ctx.fillRect(PAD,y,W-PAD*2,H_FOOT);
+  // 頁尾（漸層 → 底圖 → 文字）
+  if(th('footGrad')){
+    const [fx0,fy0,fx1,fy1]=dirPoints(th('footDir'),PAD,y,W-PAD*2,H_FOOT);
+    const fg=ctx.createLinearGradient(fx0,fy0,fx1,fy1);
+    fg.addColorStop(0,th('footBg')); fg.addColorStop(1,th('footGrad'));
+    ctx.fillStyle=fg;
+  } else ctx.fillStyle=th('footBg');
+  ctx.fillRect(PAD,y,W-PAD*2,H_FOOT);
+  if(_footImg){
+    const fw=W-PAD*2, fh=H_FOOT;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PAD,y,fw,fh); ctx.clip();
+    ctx.globalAlpha=(TH.footOp!=null?TH.footOp:100)/100;
+    const iw=_footImg.width, ih=_footImg.height;
+    const mode2=th('footSize');
+    let sc = mode2==='contain' ? Math.min(fw/iw,fh/ih)
+           : mode2==='auto'    ? 1
+           : mode2==='200%'    ? 2
+           : mode2==='400%'    ? 4
+           : Math.max(fw/iw,fh/ih);          // cover
+    const dw=iw*sc, dh=ih*sc;
+    const pos=String(th('footPos')||'center');
+    const hx = pos.includes('left')?0 : pos.includes('right')?(fw-dw) : (fw-dw)/2;
+    const vy = pos.includes('top')?0  : pos.includes('bottom')?(fh-dh) : (fh-dh)/2;
+    ctx.drawImage(_footImg, PAD+hx, y+vy, dw, dh);
+    ctx.restore();
+  }
   ctx.textAlign='left'; ctx.fillStyle=th('footColor'); ctx.font=lo('ff')+'px '+FONT_ZH;
   if(mode!=='en') ctx.fillText((SET.footZh||DEF_FOOT_ZH).slice(0,120),PAD+12,y+(mode==='bi'?14:H_FOOT/2));
   if(mode!=='zh'){ ctx.font=Math.max(6,lo('ff')*0.9)+'px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
