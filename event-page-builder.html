@@ -24,6 +24,17 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 .topActs{display:flex;gap:6px;padding:12px 16px 0}
 .topActs .btn{flex:1;padding:8px 2px;font-size:10.5px;letter-spacing:0}
 
+.undoBar{display:flex;gap:6px}
+.undoBar .btn{flex:1;margin-top:0;padding:9px 2px;font-size:11px}
+.undoBar .btn:disabled{opacity:.35;cursor:not-allowed}
+.tplPick{display:flex;gap:6px}
+.tplBtn{flex:1;background:#1D2230;border:1px solid var(--line);border-radius:9px;padding:10px 6px;cursor:pointer;font-family:inherit;color:#8A93A3;text-align:center;transition:.15s}
+.tplBtn b{display:block;font-size:11.5px;font-weight:900;color:#C3CBDA;margin-bottom:2px}
+.tplBtn i{font-style:normal;font-size:9px;letter-spacing:.04em}
+.tplBtn:hover{border-color:#3A4152}
+.tplBtn.active{border-color:var(--c2);background:#241E22}
+.tplBtn.active b{color:var(--c2)}
+
 /* ===== Firebase 存讀槽 ===== */
 .fbGrp{padding-bottom:4px}
 .slots{display:flex;flex-direction:column;gap:6px}
@@ -143,6 +154,10 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 .btn:hover{filter:brightness(1.12)}
 .hint{font-size:10px;color:#5C6577;line-height:1.6;padding:12px 16px}
 
+/* Alt 微調中的視覺回饋 */
+.nudging{outline:2px dashed var(--c2)!important;outline-offset:2px;opacity:.9;cursor:move!important}
+body.altdown .page *:not(.hnd):not(.rowTools):not(.slotDel):hover{outline:1px dashed rgba(232,85,45,.55);outline-offset:1px;cursor:move}
+
 /* ===== Preview page ===== */
 .page{max-width:1080px;margin:0 auto;background:var(--c4);color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
 [contenteditable]{outline:0}
@@ -198,8 +213,123 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 
 .foot{background:var(--ink);color:#fff;padding:44px 56px;font-size:12px;line-height:2;text-align:center;opacity:.92}
 
+
+/* ================= 版型 2：說明會 / 議程型（參考扣件展採購說明會） ================= */
+.page.tpl2{background:#F4F6F8}
+.tpl2 .hero2{position:relative;background:#fff;color:#0E4A57;padding:0;overflow:hidden;min-height:440px}
+/* 斜向色帶：模擬原版 Canva 的對角線構成 */
+.tpl2 .hero2 .ribbons{position:absolute;inset:0;overflow:hidden;z-index:0}
+.tpl2 .hero2 .ribbons i{position:absolute;display:block;transform:skewX(-28deg);transform-origin:top left}
+.tpl2 .hero2 .rb1{background:#EDE4CE;left:-4%;top:-25%;width:26%;height:170%}
+.tpl2 .hero2 .rb2{background:var(--c1);left:16%;top:-25%;width:44%;height:170%}
+.tpl2 .hero2 .rb3{background:#7FB6BE;left:57%;top:-25%;width:10%;height:170%;opacity:.85}
+.tpl2 .hero2 .rb4{background:#E8E8E8;left:66%;top:-25%;width:20%;height:170%}
+.tpl2 .hero2 .rb5{background:var(--c3);left:84%;top:30%;width:22%;height:115%}
+.tpl2 .hero2 .kvwrap{position:absolute;inset:0;z-index:1}
+/* 上傳 KV 後：內建斜色帶整組消失，只留你上傳的圖 */
+.tpl2 .hero2.has-kv{background:transparent}
+.tpl2 .hero2.has-kv .ribbons{display:none!important}
+.tpl2 .hero2.has-kv .kvwrap{position:relative;inset:auto;z-index:1}
+.tpl2 .hero2.has-kv .kvwrap img{opacity:1;height:auto;max-height:none;object-fit:contain}
+.tpl2 .hero2.has-kv .inner{position:absolute;inset:0}
+.tpl2 .hero2.has-kv .brandbar{display:none}
+.tpl2 .hero2 .kvwrap img{width:100%;height:100%;display:block;object-fit:cover;opacity:.34}
+.tpl2 .hero2 .kvph{display:none}
+.tpl2 .hero2 .inner{position:relative;z-index:2;padding:56px 56px 48px;display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:start}
+.tpl2 .hero2 .brandbar{position:absolute;top:26px;right:56px;z-index:3;font-size:13px;font-weight:900;color:#3A4A52;letter-spacing:.02em;text-align:right;line-height:1.5}
+.tpl2 .hero2 .brandbar small{display:block;font-size:9.5px;font-weight:700;color:#6E828C;letter-spacing:.06em}
+.tpl2 .hero2 h1{font-size:clamp(30px,4.3vw,58px);font-weight:900;line-height:1.06;letter-spacing:-.015em;color:#2E7F8C;margin-top:34px}
+.tpl2 .hero2 h1 em{font-style:normal;color:var(--c3)}
+.tpl2 .hero2 .zh{font-size:clamp(24px,3.2vw,40px);font-weight:900;margin-top:22px;color:#0B4FA0;line-height:1.28;letter-spacing:.01em}
+.tpl2 .hero2 .rightcol{text-align:right;padding-top:96px}
+.tpl2 .hero2 .cta2{display:inline-block;background:#0B4FA0;color:#fff;font-weight:900;font-size:clamp(17px,2vw,26px);padding:18px 46px;border-radius:60px;line-height:1.3;text-align:center;box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.tpl2 .hero2 .cta2 small{display:block;font-size:.72em;font-weight:900;margin-top:2px}
+.tpl2 .hero2 .when{margin-top:30px;font-size:clamp(18px,2.2vw,29px);font-weight:900;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.28)}
+.tpl2 .hero2 .where{margin-top:6px;font-size:clamp(13px,1.4vw,18px);font-weight:700;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.28)}
+.tpl2 .hero2 .seats{display:block;margin-top:26px;font-size:clamp(14px,1.7vw,21px);font-weight:900;color:#2E7F8C}
+
+/* 引言式活動說明 */
+.tpl2 .quote{position:relative;padding:0 8px 0 46px}
+.tpl2 .quote::before{content:"\201C";position:absolute;left:0;top:-14px;font-size:64px;line-height:1;color:var(--c3);font-family:Georgia,serif}
+.tpl2 .quote::after{content:"\201D";display:block;text-align:right;font-size:64px;line-height:.2;color:var(--c3);font-family:Georgia,serif;margin-top:18px}
+
+.tpl2 .wrap2{padding:52px 56px}
+.tpl2 .sechead{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-bottom:10px;border-bottom:0}
+.tpl2 .sechead::after{content:"";flex:1;height:1px;background:#DDE4E8}
+.tpl2 .sechead .n{font-size:11px;font-weight:900;letter-spacing:.3em;color:var(--c1);flex:0 0 auto}
+.tpl2 .sechead h2{font-size:23px;font-weight:900;color:#1B2A33;letter-spacing:-.01em;flex:0 0 auto}
+
+.tpl2 .intro p{font-size:14.5px;line-height:2.05;color:#33414A;margin-bottom:14px}
+.tpl2 .notebar{background:#FFF6E5;border-left:4px solid #F0B429;padding:14px 18px;font-size:13px;line-height:1.85;color:#6B4E12;border-radius:0 8px 8px 0}
+
+.tpl2 .dayTab{display:inline-block;background:#096471;color:#fff;font-weight:900;font-size:14px;padding:8px 20px;border-radius:8px 8px 0 0;letter-spacing:.05em}
+.tpl2 .agenda{background:#fff;border:1px solid #E1E7EB;border-radius:0 10px 10px 10px;overflow:hidden;margin-bottom:26px}
+.tpl2 .ag{display:grid;grid-template-columns:150px 1fr;gap:0;border-bottom:1px solid #EDF1F4}
+.tpl2 .ag:last-child{border-bottom:0}
+.tpl2 .ag .tm{background:#F7FAFB;padding:18px 16px;font-size:12.5px;font-weight:900;color:#096471;letter-spacing:.02em;line-height:1.6}
+.tpl2 .ag .bd{padding:18px 22px}
+.tpl2 .ag .ses{display:inline-block;background:#E8F4F6;color:#096471;font-size:10px;font-weight:900;letter-spacing:.14em;padding:3px 9px;border-radius:4px;margin-bottom:8px}
+.tpl2 .ag .ttl{font-size:15px;font-weight:700;line-height:1.65;color:#1B2A33;margin-bottom:6px}
+.tpl2 .ag .spk{font-size:12.5px;color:#5B6B75;line-height:1.7}
+.tpl2 .ag .spk b{color:#043d82;font-weight:900}
+
+.tpl2 .spks{display:block}
+.tpl2 .spk-row{display:grid;grid-template-columns:170px 1fr;gap:26px;padding:22px 0 8px;align-items:start;position:relative}
+.tpl2 .org-row{display:grid;grid-template-columns:170px 1fr;gap:26px;align-items:start;padding:6px 0 24px;border-bottom:1px solid #E4E9EC;position:relative}
+.tpl2 .org-row:last-of-type{border-bottom:0}
+
+.tpl2 .photo{position:relative;background:#F2F5F6;border:1px solid #E0E6E9;border-radius:4px;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.tpl2 .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.tpl2 .logo-slot{position:relative;background:#F2F5F6;border:1px solid #E0E6E9;border-radius:4px;min-height:92px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.tpl2 .logo-slot img{max-width:88%;max-height:88px;object-fit:contain;display:block}
+.tpl2 .photo .ph,.tpl2 .logo-slot .ph{font-size:11px;color:#A9B4BA;text-align:center;line-height:1.7;padding:8px;pointer-events:none;font-weight:500}
+.tpl2 .photo:hover,.tpl2 .logo-slot:hover{border-color:var(--c2);background:#EDF4F5}
+
+.tpl2 .spk-body .nm{font-size:21px;font-weight:900;color:#0E7A88;margin-bottom:5px;letter-spacing:.01em;line-height:1.3}
+.tpl2 .spk-body .rl{font-size:14px;color:#33414A;margin-bottom:10px;line-height:1.6}
+.tpl2 .spk-body h4{font-size:14px;font-weight:900;color:#1B2A33;text-decoration:underline;text-underline-offset:3px;margin:12px 0 6px}
+.tpl2 .spk-body ul{list-style:none;padding:0;margin:0 0 2px}
+.tpl2 .spk-body li{font-size:14px;line-height:1.75;color:#33414A;padding-left:18px;position:relative;margin-bottom:3px}
+.tpl2 .spk-body li::before{content:"";position:absolute;left:4px;top:10px;width:5px;height:5px;border-radius:50%;background:#33414A}
+
+.tpl2 .org-body .ab{font-size:15.5px;font-weight:900;color:#0B4FA0;margin-bottom:3px;line-height:1.4}
+.tpl2 .org-body .zh2{font-size:15px;font-weight:900;color:#0B4FA0;margin-bottom:8px}
+.tpl2 .org-body p{font-size:14px;line-height:1.8;color:#33414A}
+
+.tpl2 .rowTools{position:absolute;top:6px;right:0;display:flex;gap:4px;opacity:0;transition:.15s;z-index:9}
+.tpl2 .spk-row:hover .rowTools,.tpl2 .org-row:hover .rowTools{opacity:1}
+.tpl2 .rowTools button{width:24px;height:24px;border:0;border-radius:6px;background:rgba(20,24,33,.8);color:#fff;font-size:12px;line-height:24px;padding:0;cursor:pointer;font-family:inherit}
+.tpl2 .rowTools button:hover{background:var(--c2)}
+.tpl2 .slotDel{position:absolute;top:4px;right:4px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:10px;line-height:20px;padding:0;cursor:pointer;z-index:3}
+
+.tpl2 .notice{background:#0E2A33;color:#fff;padding:46px 56px}
+.tpl2 .notice .sechead{border-bottom-color:rgba(255,255,255,.25)}
+.tpl2 .notice .sechead h2{color:#fff}
+.tpl2 .notice .sechead .n{color:#8FE3EC}
+.tpl2 .nlist{display:grid;gap:16px}
+.tpl2 .nitem{display:grid;grid-template-columns:38px 1fr;gap:14px;align-items:start}
+.tpl2 .nitem .ic{font-size:20px;line-height:1.4}
+.tpl2 .nitem .nh{font-size:14.5px;font-weight:900;margin-bottom:5px;color:#A9E7EF}
+.tpl2 .nitem p{font-size:12.5px;line-height:1.85;color:#CBD9DE}
+
+.tpl2 .gift{background:linear-gradient(120deg,#265a36,#1E7A4A);color:#fff;padding:40px 56px;border-radius:0}
+.tpl2 .gift h2{font-size:22px;font-weight:900;margin-bottom:12px}
+.tpl2 .gift p{font-size:13px;line-height:1.9;color:#DCF3E4;margin-bottom:8px}
+
+.tpl2 .orgfoot{background:#fff;padding:36px 56px;border-top:1px solid #E1E7EB}
+.tpl2 .orgfoot .lbl{font-size:10px;letter-spacing:.24em;font-weight:900;color:#4a939c;margin-bottom:10px}
+.tpl2 .orgfoot .lg{display:flex;flex-wrap:wrap;gap:10px}
+.tpl2 .orgfoot .lg div{background:#F4F6F8;border:1px solid #E1E7EB;border-radius:8px;padding:12px 20px;font-size:12.5px;font-weight:700;color:#33414A}
+.tpl2 .foot2{background:#0B1F26;color:#fff;padding:34px 56px;text-align:center;font-size:12px;line-height:2;opacity:.94}
+
+@media(max-width:820px){
+  .tpl2 .hero2 .inner{grid-template-columns:1fr;padding:38px 26px}
+  .tpl2 .wrap2,.tpl2 .notice,.tpl2 .gift,.tpl2 .orgfoot,.tpl2 .foot2{padding-left:26px;padding-right:26px}
+  .tpl2 .ag{grid-template-columns:1fr}
+}
+
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{display:none}}
-@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}.fhandle,.fdel,.fresize,.fadd,.secResize,.mtool,.resize-handle,.dropClear{display:none!important}}
+@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}.fhandle,.fdel,.fresize,.fadd,.secResize,.mtool,.resize-handle,.dropClear,.rowTools,.slotDel{display:none!important}}
 </style>
 </head>
 <body>
@@ -217,13 +347,17 @@ window.__hardReset=function(silent){
   }catch(e){ go(); }
 };
 if(location.search.indexOf('reset')>-1){ window.__hardReset(true); }
+/* 主程式若沒載入成功（例如記憶體不足），這裡當保險：15 秒後仍未接手就用硬重設 */
 document.addEventListener('DOMContentLoaded',function(){
-  var b=document.getElementById('btnFactory');
-  if(b) b.onclick=function(){
-    if(!confirm('確定要回到原廠初始版型嗎？\n目前所有編輯內容與媒體庫都會清空，此動作無法復原。\n（Firebase 上已存的檔案不受影響）')) return;
-    if(!confirm('再確認一次：真的要全部清空？')) return;
-    window.__hardReset();
-  };
+  setTimeout(function(){
+    var b=document.getElementById('btnFactory');
+    if(b && !b.dataset.bound){
+      b.onclick=function(){
+        if(!confirm('主程式似乎未正常載入。\n要清空全部資料回到原廠嗎？')) return;
+        window.__hardReset();
+      };
+    }
+  }, 15000);
 });
 </script>
 <div id="fsBar">
@@ -239,6 +373,19 @@ document.addEventListener('DOMContentLoaded',function(){
 <aside class="side">
   <h1>活動頁面<span>版型產生器</span></h1>
 
+  <div class="grp tplGrp">
+    <label>編輯</label>
+    <div class="undoBar">
+      <button class="btn g" id="btnUndo" type="button" title="復原 (Ctrl+Z)" disabled>↩ 復原</button>
+      <button class="btn g" id="btnRedo" type="button" title="重做 (Ctrl+Shift+Z)" disabled>↪ 重做</button>
+    </div>
+    <label style="margin-top:14px">版型選擇</label>
+    <div class="tplPick">
+      <button class="tplBtn active" data-tpl="1" type="button"><b>版型 1</b><i>展覽形象頁</i></button>
+      <button class="tplBtn" data-tpl="2" type="button"><b>版型 2</b><i>說明會 / 議程</i></button>
+    </div>
+  </div>
+
   <div class="grp fbGrp">
     <label>工作檔存讀（Firebase）</label>
     <div class="slots" id="slots"></div>
@@ -248,7 +395,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="fbActs">
       <button class="btn g" id="btnSaveFile" type="button" title="另存成 .json 檔備份">💾 下載備份</button>
       <button class="btn g" id="btnLoadFile" type="button" title="讀取 .json 備份檔">📂 匯入</button>
-      <button class="btn g" id="btnResetTop" type="button" title="清空目前編輯，回到初始版型">🔄 重設</button>
+      <button class="btn g" id="btnResetTop" type="button" title="只重設目前所選的版型，回到該版型的初始內容">🔄 重設</button>
     </div>
   </div>
 
@@ -298,9 +445,14 @@ document.addEventListener('DOMContentLoaded',function(){
 
   <div class="grp">
     <button class="btn" onclick="save()">匯出 HTML 檔</button>
-    <button class="btn g" id="btnFactory" type="button">🏭 重設版型（回原廠）</button>
+    <button class="btn g" id="btnFactory" type="button">🔄 重設目前版型</button>
+    <button class="btn g" id="btnWipeLocal" type="button" style="border:1px dashed #3A4152;background:transparent;color:#7A879C">🧹 清空全部本機資料</button>
   </div>
-  <p class="hint">所有文字點一下即可直接修改。<br>拖曳左側項目或頁面左上角標籤可調整區塊順序；👁 隱藏、＋ 複製整個區塊、🗑 永久刪除區塊。<br>頁面內的資訊格、卡片、單位、議程列與插入的媒體，滑鼠移上去出現「⠿」即可任意拖曳到想要的位置。<br>編輯內容自動儲存於瀏覽器。</p>
+  <p class="hint">
+    <b style="color:#C3CBDA">編輯</b>：頁面上任何文字點一下就能直接改；選取文字會浮出「字級」工具列調大小。<br>
+    <b style="color:#C3CBDA">微調位置</b>：按住 <b>Alt</b> 再拖曳任何元素即可移動；或點一下元素後按 <b>Alt + 方向鍵</b>（加 Shift 一次移 10px）。<br>
+    <b style="color:#C3CBDA">區塊</b>：拖曳左側項目或頁面左上標籤調順序；👁 隱藏、＋ 複製、🗑 刪除。<br>
+    編輯內容自動儲存於瀏覽器。</p>
 </aside>
 
 <main class="stage">
@@ -401,13 +553,13 @@ function build(){
       clone.dataset.k=s.dataset.k+'_'+Date.now();
       clone.dataset.n=s.dataset.n+'（複製）';
       s.parentNode.insertBefore(clone, s.nextSibling);
-      build(); bindPage(); initFreeGrids(); initMediaEmbeds(); persist();
+      build(); bindPage(); initFreeGrids(); initMediaEmbeds(); persist(); pushHistory();
     };
-    i.querySelector('.ey').onclick=e=>{e.stopPropagation();s.classList.toggle('hide');build();persist();};
+    i.querySelector('.ey').onclick=e=>{e.stopPropagation();s.classList.toggle('hide');build();persist();pushHistory();};
     i.querySelector('.del').onclick=e=>{
       e.stopPropagation();
       if(confirm(`確定要永久刪除「${s.dataset.n}」這個區塊嗎？此動作無法復原（如需還原可用「重設版型」回到初始狀態）。`)){
-        s.remove(); build(); persist();
+        s.remove(); build(); persist(); pushHistory();
       }
     };
     i.onclick=()=>s.scrollIntoView({behavior:'smooth',block:'center'});
@@ -494,14 +646,24 @@ function renderDropPreview(dropEl, durl, placeholderHTML, onClear){
     if(onClear)onClear();
   };
 }
+
+/* 版型2：有上傳 KV 就整張蓋掉內建斜色帶；沒有就顯示內建版型 */
+function syncHeroKV(){
+  const hero=page.querySelector('.hero2'); if(!hero) return;
+  const has=!!page.querySelector('#kvbox img');
+  hero.classList.toggle('has-kv', has);
+}
+
 function applyKV(durl){
   document.getElementById('kvbox').innerHTML=`<img class="kv" src="${durl}">`;
+  syncHeroKV();
   renderDropPreview(drop, durl, '點擊或拖曳上傳 KV<br>JPG / PNG / PDF', ()=>{
     document.getElementById('kvbox').innerHTML='';
+    syncHeroKV();
     persist();
   });
   const im=new Image(); im.onload=()=>palette(im); im.src=durl;
-  persist();
+  persist(); pushHistory();
 }
 
 /* ---------- ② 只取色上傳：不顯示於頁面，僅套用配色 ---------- */
@@ -743,7 +905,7 @@ function bindEmbedControls(wrap){
     bindEmbedControls(clone);
     persist();
   };
-  wrap.querySelector('.mdel').onclick=e=>{ e.stopPropagation(); wrap.remove(); persist(); };
+  wrap.querySelector('.mdel').onclick=e=>{ e.stopPropagation(); wrap.remove(); persist(); pushHistory(); };
   bindResizeHandle(wrap.querySelector('.resize-handle'), mediaEl);
 }
 function bindResizeHandle(handle, mediaEl){
@@ -781,6 +943,273 @@ function insertMedia(item){
 }
 
 /* ---------- 自動儲存 ---------- */
+
+/* ================================================================
+   版型切換：版型1（展覽形象頁）／版型2（說明會・議程型）
+   ================================================================ */
+const TPL1_HTML = document.getElementById('page').innerHTML;
+const TPL1_CSS  = ['#1B3A5C','#E8552D','#F5C518','#FAF7F2'];
+const TPL2_CSS  = ['#0E7A88','#0B4FA0','#C9A227','#F4F6F8'];
+
+const TPL2_HTML = `
+  <section class="sec hero2" data-k="hero" data-n="主視覺 KV">
+    <span class="hnd" draggable="true">⠿ 主視覺</span>
+    <div class="ribbons"><i class="rb1"></i><i class="rb2"></i><i class="rb3"></i><i class="rb4"></i><i class="rb5"></i></div>
+    <div class="kvwrap" id="kvbox"><div class="kvph"></div></div>
+    <div class="brandbar" contenteditable>台灣國際扣件展<small>Taiwan International Fastener Show</small></div>
+    <div class="inner">
+      <div>
+        <h1 contenteditable>Procurement Policy<br>and <em>Market Briefing</em>:<br>Europe Focus</h1>
+        <div class="zh" contenteditable>採購政策說明會：<br>歐洲專場</div>
+      </div>
+      <div class="rightcol">
+        <a class="cta2" contenteditable>立即報名<small>Register Now</small></a>
+        <div class="when" contenteditable>2026. 4. 22-23（三-四）</div>
+        <div class="where" contenteditable>@ 高雄展覽館 S1542 攤位</div>
+        <span class="seats" contenteditable>名額有限｜歐洲重量級講者親臨展場分享</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" data-k="intro" data-n="活動說明">
+    <span class="hnd" draggable="true">⠿ 活動說明</span>
+    <div class="wrap2">
+      <div class="sechead"><span class="n">ABOUT</span><h2 contenteditable>活動說明</h2></div>
+      <div class="intro quote">
+        <p contenteditable>據統計，2025年台灣螺絲出口總值達 43.77 億美元。前十大出口國中包含德國、荷蘭、英國、西班牙、波蘭及義大利等 6 個歐洲國家，合計佔出口總值達 22.47%，顯示歐洲市場為台灣扣件產業最關鍵且具成長潛力的市場之一。</p>
+        <p contenteditable>台灣國際扣件展將於展期舉辦【採購政策說明會：歐洲專場】，特別邀請歐洲主要扣件經銷商協會高階代表來台，第一線解析歐盟法規、採購策略與市場商機，涵蓋德國、英國及歐洲整體市場。</p>
+      </div>
+      <div class="notebar" contenteditable>提醒：本活動將以全英文進行，現場不提供翻譯。<br>Notice: Conducted in English only. No translation provided.</div>
+    </div>
+  </section>
+
+  <section class="sec" data-k="agenda" data-n="議程 Agenda">
+    <span class="hnd" draggable="true">⠿ 議程</span>
+    <div class="wrap2" style="padding-top:0">
+      <div class="sechead"><span class="n">AGENDA</span><h2 contenteditable>議程</h2></div>
+
+      <div class="dayTab" contenteditable>04.22 Wednesday</div>
+      <div class="agenda">
+        <div class="ag">
+          <div class="tm" contenteditable>10:30 – 11:00 am</div>
+          <div class="bd">
+            <span class="ses" contenteditable>SESSION 1</span>
+            <div class="ttl" contenteditable>The Compliance Bridge: How the wave of EU supply chain regulations will further strengthen ties between Europe and Taiwan</div>
+            <div class="spk" contenteditable>Speaker：<b>Mr. Andreas Bertaggia</b>, President of EFDA</div>
+          </div>
+        </div>
+        <div class="ag">
+          <div class="tm" contenteditable>11:00 – 11:10 am</div>
+          <div class="bd"><div class="ttl" contenteditable>Q&amp;A</div></div>
+        </div>
+        <div class="ag">
+          <div class="tm" contenteditable>02:30 – 03:00 pm</div>
+          <div class="bd">
+            <span class="ses" contenteditable>SESSION 2</span>
+            <div class="ttl" contenteditable>How to find fastener opportunities in the United Kingdom</div>
+            <div class="spk" contenteditable>Speaker：<b>Mr. Gary Henderson</b>, President of BIAFD</div>
+          </div>
+        </div>
+        <div class="ag">
+          <div class="tm" contenteditable>03:00 – 03:10 pm</div>
+          <div class="bd"><div class="ttl" contenteditable>Q&amp;A</div></div>
+        </div>
+      </div>
+
+      <div class="dayTab" contenteditable>04.23 Thursday</div>
+      <div class="agenda">
+        <div class="ag">
+          <div class="tm" contenteditable>10:30 – 11:00 am</div>
+          <div class="bd">
+            <span class="ses" contenteditable>SESSION 3</span>
+            <div class="ttl" contenteditable>Germany and its Economy: Challenging Times for Fastener Wholesalers</div>
+            <div class="spk" contenteditable>Speaker：<b>Dr. Volker Lederer</b>, President of FDS</div>
+          </div>
+        </div>
+        <div class="ag">
+          <div class="tm" contenteditable>11:00 – 11:10 am</div>
+          <div class="bd"><div class="ttl" contenteditable>Q&amp;A</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" data-k="speakers" data-n="講師及單位介紹">
+    <span class="hnd" draggable="true">⠿ 講師及單位介紹</span>
+    <div class="wrap2" style="padding-top:0">
+      <div class="sechead"><span class="n">SPEAKERS</span><h2 contenteditable>Speakers and Organization／講師及單位介紹</h2></div>
+      <div class="spks">
+
+        <div class="spk-row">
+          <div class="photo"><div class="ph">講者照片</div></div>
+          <div class="spk-body">
+            <div class="nm" contenteditable>Mr. Andreas Bertaggia</div>
+            <div class="rl" contenteditable>President of the European Fastener Distributor Association (EFDA)</div>
+            <h4 contenteditable>Current Roles</h4>
+            <ul>
+              <li contenteditable>President, European Fastener Distributor Association (EFDA)</li>
+              <li contenteditable>Vice-President of Purchasing &amp; Logistics, Bossard Group</li>
+            </ul>
+            <h4 contenteditable>Professional Experience</h4>
+            <ul>
+              <li contenteditable>Head of Supply Chain Management, Bossard Europe</li>
+              <li contenteditable>Member of the EFDA Board &amp; Head of EFDA Task Force</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="org-row">
+          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="org-body">
+            <div class="ab" contenteditable>EFDA (European Fastener Distributor Association)</div>
+            <div class="zh2" contenteditable>歐洲扣件經銷商協會</div>
+            <p contenteditable>The unified voice of 2,500 major importers, wholesalers, and distributors across Europe.</p>
+          </div>
+        </div>
+
+        <div class="spk-row">
+          <div class="photo"><div class="ph">講者照片</div></div>
+          <div class="spk-body">
+            <div class="nm" contenteditable>Mr. Gary Henderson</div>
+            <div class="rl" contenteditable>Chair of the British &amp; Irish Association of Fastener Distributors (BIAFD)</div>
+            <h4 contenteditable>Current Roles</h4>
+            <ul>
+              <li contenteditable>Chair, British Industrial Fasteners Federation (BIAFD)</li>
+              <li contenteditable>Managing Director, Grampian Fasteners</li>
+            </ul>
+            <h4 contenteditable>Professional Experience</h4>
+            <ul>
+              <li contenteditable>Strategic Leadership: Focused on establishing stronger relationships between BIAFD, government, industry, and global fastener organizations.</li>
+              <li contenteditable>Business Development: Dedicated to the continuous growth and expansion of Grampian Fasteners.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="org-row">
+          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="org-body">
+            <div class="ab" contenteditable>BIAFD (British Industrial Fasteners Federation)</div>
+            <div class="zh2" contenteditable>英國暨愛爾蘭扣件批發商協會</div>
+            <p contenteditable>A diverse network representing the UK's entire fastener supply chain, from global suppliers to major OEMs.</p>
+          </div>
+        </div>
+
+        <div class="spk-row">
+          <div class="photo"><div class="ph">講者照片</div></div>
+          <div class="spk-body">
+            <div class="nm" contenteditable>Dr. Volker Lederer</div>
+            <div class="rl" contenteditable>President of the Association of German Fastener Wholesalers (FDS)</div>
+            <h4 contenteditable>Current Roles</h4>
+            <ul>
+              <li contenteditable>President, Association of German Fastener Wholesalers (FDS) (Since 2019)</li>
+              <li contenteditable>Managing Director &amp; Sole Shareholder, Lederer GmbH (Since 2012)</li>
+              <li contenteditable>Executive Board Member, European Fastener Distributor Association (EFDA) (Since 2011)</li>
+            </ul>
+            <h4 contenteditable>Professional Experience</h4>
+            <ul>
+              <li contenteditable>Former President, European Fastener Distributor Association (EFDA) (2012–2022)</li>
+              <li contenteditable>Managing Director, Lederer GmbH (Joined 1998; Shareholder since 2004)</li>
+              <li contenteditable>Industry Leadership: Spearheading a company with an annual turnover of approximately $100M USD, specializing in stainless steel and inventory management.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="org-row">
+          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="org-body">
+            <div class="ab" contenteditable>FDS (Association of German Fastener Wholesalers)</div>
+            <div class="zh2" contenteditable>德國扣件批發商協會</div>
+            <p contenteditable>The primary advocacy group for Germany—Europe's most critical market—providing technical expertise on legislation and standardization.</p>
+          </div>
+        </div>
+
+      </div>
+      <button class="fadd" data-add="spk" type="button">＋ 新增講師</button>
+      <button class="fadd" data-add="org" type="button">＋ 新增協會</button>
+    </div>
+  </section>
+  <section class="sec gift" data-k="gift" data-n="活動好禮">
+    <span class="hnd" draggable="true">⠿ 活動好禮</span>
+    <div>
+      <h2 contenteditable>🎁 活動專屬好禮｜Exclusive Guest Rewards</h2>
+      <p contenteditable><b>【如何領取】</b>預先完成「線上報名」與現場「手機報到」，並於會後填寫「滿意度問卷」，就能把精美小禮物帶回家！數量有限，先到先領。（每人限領一次，送完為止）</p>
+      <p contenteditable><b>【How to Claim】</b>Simply pre-register online, check in onsite, and complete our Satisfaction Survey to snag a special gift! First-come, first-served. (Limit one per person.)</p>
+    </div>
+  </section>
+
+  <section class="sec notice" data-k="notice" data-n="報名須知">
+    <span class="hnd" draggable="true">⠿ 報名須知</span>
+    <div class="sechead"><span class="n">NOTES</span><h2 contenteditable>報名須知與注意事項</h2></div>
+    <div class="nlist">
+      <div class="nitem">
+        <div class="ic">🎟️</div>
+        <div>
+          <div class="nh" contenteditable>全程免費，席次有限｜Free Admission &amp; Limited Seating</div>
+          <p contenteditable>本活動不收取任何費用。因名額有限，將依報名順序額滿為止，建議您盡早預約。<br>This event is free of charge, but seats are limited. We recommend registering early.</p>
+        </div>
+      </div>
+      <div class="nitem">
+        <div class="ic">📱</div>
+        <div>
+          <div class="nh" contenteditable>快速報到，輕鬆入場｜Quick Entry &amp; Easy Check-in</div>
+          <p contenteditable>請先完成線上報名，活動當天僅需提供「手機後四碼」即可完成報到。<br>On the day of the event, provide the last 4 digits of your phone number for a hassle-free check-in.</p>
+        </div>
+      </div>
+      <div class="nitem">
+        <div class="ic">🔔</div>
+        <div>
+          <div class="nh" contenteditable>重要提醒｜Important Notice</div>
+          <p contenteditable>主辦單位保留修改、變更、活動解釋及取消本活動之權利，相關變更將公告於網站，恕不另外通知。<br>The organizer reserves the right to adjust event details. Please stay tuned to this website for updates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec orgfoot" data-k="org" data-n="主辦單位">
+    <span class="hnd" draggable="true">⠿ 主辦單位</span>
+    <div class="lbl" contenteditable>主辦單位　Organized by</div>
+    <div class="lg">
+      <div contenteditable>經濟部國際貿易署</div>
+      <div contenteditable>中華民國對外貿易發展協會（TAITRA）</div>
+    </div>
+    <div class="lbl" style="margin-top:20px" contenteditable>執行單位　Implemented by</div>
+    <div class="lg">
+      <div contenteditable>台灣國際扣件展 執行單位</div>
+    </div>
+  </section>
+
+  <section class="sec foot2" data-k="foot" data-n="聯絡footer">
+    <span class="hnd" draggable="true">⠿ 頁尾</span>
+    <div contenteditable>活動聯絡窗口｜TAITRA 展覽組<br>TEL +886-2-2725-5200　EMAIL exhibit@taitra.org.tw<br>© 2026 Taiwan External Trade Development Council</div>
+  </section>
+`;
+
+let curTpl = '1';
+
+function applyTemplate(n, ask){
+  if(ask && !confirm(`切換到版型 ${n}？\n目前頁面上的編輯內容會被替換成該版型的預設內容。\n（媒體庫與 Firebase 存檔不受影響，建議先存檔）`)) return;
+  curTpl = String(n);
+  page.classList.toggle('tpl2', curTpl === '2');
+  page.innerHTML = (curTpl === '2') ? TPL2_HTML : TPL1_HTML;
+  const cs = (curTpl === '2') ? TPL2_CSS : TPL1_CSS;
+  ['--c1','--c2','--c3','--c4'].forEach((v,i)=>set(v, cs[i]));
+  document.querySelectorAll('#sw input').forEach(inp=>{
+    const idx = ['--c1','--c2','--c3','--c4'].indexOf(inp.dataset.v);
+    if(idx>-1) inp.value = cs[idx];
+  });
+  paintTplBtns();
+  drop.innerHTML='點擊或拖曳上傳 KV<br>JPG / PNG / PDF';
+  drop.classList.remove('has-img');
+  build(); bindPage(); initFreeGrids(); initMediaEmbeds(); syncHeroKV(); persist(); pushHistory();
+  page.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function paintTplBtns(){
+  document.querySelectorAll('.tplBtn').forEach(b=>b.classList.toggle('active', b.dataset.tpl===curTpl));
+}
+document.querySelectorAll('.tplBtn').forEach(b=>{
+  b.onclick=()=>{ if(b.dataset.tpl===curTpl) return; applyTemplate(b.dataset.tpl, true); };
+});
+
 /* ================================================================
    本機自動保存：改用 IndexedDB（localStorage 只有 ~5MB，
    放 base64 圖片會爆掉，F5 後就整個不見）
@@ -805,6 +1234,7 @@ window.resetAll=async function(){
 
 function snapshot(){
   return {
+    tpl: curTpl,
     html: page.innerHTML,
     css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim()),
     lib: mediaLib   /* ← 媒體庫也一起存，F5 才不會不見 */
@@ -829,6 +1259,9 @@ page.addEventListener('input',persist);
 window.addEventListener('beforeunload',()=>{ try{ idbSet('evtpg', snapshot()); }catch(e){} });
 
 function applyState(o, rebuild){
+  curTpl = String(o.tpl || '1');
+  page.classList.toggle('tpl2', curTpl === '2');
+  paintTplBtns();
   page.innerHTML=o.html;
   ['--c1','--c2','--c3','--c4'].forEach((v,i)=>set(v,(o.css[i]||'').trim()));
   if(Array.isArray(o.lib)){ mediaLib=o.lib; renderMediaLib(); }
@@ -836,7 +1269,7 @@ function applyState(o, rebuild){
   if(k){ renderDropPreview(drop,k.src,'點擊或拖曳上傳 KV<br>JPG / PNG / PDF',()=>{document.getElementById('kvbox').innerHTML='';persist();}); }
   else { drop.innerHTML='點擊或拖曳上傳 KV<br>JPG / PNG / PDF'; drop.classList.remove('has-img'); }
   gradToggle.checked=!!page.querySelector('.hero.grad');
-  if(rebuild){ build(); bindPage(); initFreeGrids(); initMediaEmbeds(); persist(); }
+  if(rebuild){ build(); bindPage(); initFreeGrids(); initMediaEmbeds(); syncHeroKV(); persist(); pushHistory(); }
 }
 
 (async function restore(){
@@ -1005,10 +1438,18 @@ document.getElementById('btnLoadFile').onclick=()=>{
   };
   inp.click();
 };
-document.getElementById('btnResetTop').onclick=()=>{
-  if(confirm('確定要重設版型嗎？目前編輯的內容都會清空（建議先按「💾 存檔」備份）。')){
-    resetAll();
-  }
+function resetCurrentTemplate(){
+  const n = curTpl === '2' ? '2（說明會 / 議程）' : '1（展覽形象頁）';
+  if(!confirm(`確定要重設「版型 ${n}」嗎？\n\n這一版的編輯內容會回到初始狀態。\n媒體庫、Firebase 存檔都不受影響。`)) return;
+  applyTemplate(curTpl, false);
+}
+document.getElementById('btnResetTop').onclick=resetCurrentTemplate;
+document.getElementById('btnFactory').dataset.bound='1';
+document.getElementById('btnFactory').onclick=resetCurrentTemplate;
+document.getElementById('btnWipeLocal').onclick=()=>{
+  if(!confirm('這會清空「本機」所有資料：兩個版型的編輯內容、媒體庫、自動存檔。\n\nFirebase 上已存的 3 格檔案不受影響。\n確定嗎？')) return;
+  if(!confirm('再確認一次：真的要全部清空？')) return;
+  window.__hardReset();
 };
 
 /* ---------- 匯出乾淨 HTML ---------- */
@@ -1016,8 +1457,10 @@ function save(){
   const cl=page.cloneNode(true);
   cl.querySelectorAll('.hnd').forEach(e=>e.remove());
   cl.querySelectorAll('.hide').forEach(e=>e.remove());
-  cl.querySelectorAll('.mtool,.resize-handle,.fhandle,.fdel,.fresize,.fadd,.secResize').forEach(e=>e.remove());
+  cl.querySelectorAll('.mtool,.resize-handle,.fhandle,.fdel,.fresize,.fadd,.secResize,.rowTools,.slotDel').forEach(e=>e.remove());
+  cl.querySelectorAll('.photo,.logo-slot').forEach(el=>{ if(!el.querySelector('img')) el.remove(); else { el.style.border='0'; el.style.background='transparent'; } });
   cl.querySelectorAll('[contenteditable]').forEach(e=>e.removeAttribute('contenteditable'));
+  cl.querySelectorAll('.nudging').forEach(e=>e.classList.remove('nudging'));
   const cs=getComputedStyle(document.documentElement);
   const vars=['--c1','--c2','--c3','--c4','--ink'].map(v=>`${v}:${cs.getPropertyValue(v).trim()}`).join(';');
   const css=[...document.styleSheets[document.styleSheets.length-1].cssRules].map(r=>r.cssText).join('\n');
@@ -1025,7 +1468,7 @@ function save(){
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <style>:root{${vars}}body{margin:0;font-family:"Noto Sans TC",sans-serif;background:var(--c4)}
 ${css}
-.page{max-width:1080px;margin:0 auto;box-shadow:none;border-radius:0}</style></head><body><div class="page">${cl.innerHTML}</div></body></html>`;
+.page{max-width:1080px;margin:0 auto;box-shadow:none;border-radius:0}</style></head><body><div class="${page.className||'page'}">${cl.innerHTML}</div></body></html>`;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));
   a.download='event-page.html'; a.click();
@@ -1175,7 +1618,236 @@ function addSecResizeHandle(sec){
     document.addEventListener('mouseup',onUp);
   };
 }
+
+/* ================================================================
+   版型2 講師區：照片槽 + 新增／刪除／上下移
+   ================================================================ */
+function bindPhotoSlot(el){
+  if(el.dataset.bound) return; el.dataset.bound='1';
+  el.contentEditable='false';
+  el.onclick=e=>{
+    if(e.target.classList.contains('slotDel')) return;
+    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    inp.onchange=async ev=>{
+      const f=ev.target.files[0]; if(!f)return;
+      const isLogo=el.classList.contains('logo-slot');
+      const d=await compressImage(f, isLogo?600:900, 0.85);
+      if(!d)return;
+      el.innerHTML=`<img src="${d}"><button type="button" class="slotDel" title="移除圖片">✕</button>`;
+      bindSlotDel(el);
+      persist(); pushHistory();
+    };
+    inp.click();
+  };
+  bindSlotDel(el);
+}
+function bindSlotDel(el){
+  const b=el.querySelector('.slotDel');
+  if(b) b.onclick=e=>{
+    e.stopPropagation();
+    const isLogo=el.classList.contains('logo-slot');
+    el.innerHTML=`<div class="ph">${isLogo?'公司 LOGO':'講者照片'}</div>`;
+    persist(); pushHistory();
+  };
+}
+function bindRowTools(row){
+  if(row.querySelector(':scope > .rowTools')) return;
+  const t=document.createElement('div');
+  t.className='rowTools'; t.contentEditable='false';
+  t.innerHTML='<button type="button" data-a="up" title="上移">↑</button>'+
+              '<button type="button" data-a="dn" title="下移">↓</button>'+
+              '<button type="button" data-a="cp" title="複製一份">＋</button>'+
+              '<button type="button" data-a="rm" title="刪除這一列">✕</button>';
+  row.appendChild(t);
+  t.querySelectorAll('button').forEach(b=>{
+    b.onclick=e=>{
+      e.stopPropagation();
+      const a=b.dataset.a, par=row.parentNode;
+      if(a==='up' && row.previousElementSibling) par.insertBefore(row, row.previousElementSibling);
+      if(a==='dn' && row.nextElementSibling) par.insertBefore(row.nextElementSibling, row);
+      if(a==='cp'){
+        const c=row.cloneNode(true);
+        c.querySelectorAll('.rowTools').forEach(x=>x.remove());
+        par.insertBefore(c, row.nextSibling);
+        initSpeakerRows();
+        c.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+      if(a==='rm'){
+        if(!confirm('確定刪除這一列嗎？')) return;
+        row.remove();
+      }
+      persist(); pushHistory();
+    };
+  });
+}
+function initSpeakerRows(){
+  page.querySelectorAll('.photo, .logo-slot').forEach(bindPhotoSlot);
+  page.querySelectorAll('.spk-row, .org-row').forEach(bindRowTools);
+  page.querySelectorAll('.fadd[data-add]').forEach(btn=>{
+    if(btn.dataset.bound) return; btn.dataset.bound='1';
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const kind=btn.dataset.add;
+      const box=btn.closest('.wrap2').querySelector('.spks');
+      const last=[...box.querySelectorAll(kind==='spk'?'.spk-row':'.org-row')].pop();
+      if(!last) return;
+      const c=last.cloneNode(true);
+      c.querySelectorAll('.rowTools').forEach(x=>x.remove());
+      /* 清空成空白列，方便直接填新的人 */
+      const slot=c.querySelector('.photo,.logo-slot');
+      if(slot){ slot.removeAttribute('data-bound');
+        slot.innerHTML = slot.classList.contains('logo-slot')
+          ? '<div class="ph">公司 LOGO</div>'
+          : '<div class="ph">講者照片</div>'; }
+      box.appendChild(c);
+      initSpeakerRows();
+      c.scrollIntoView({behavior:'smooth',block:'center'});
+      const f=c.querySelector('[contenteditable]'); if(f)f.focus();
+      persist(); pushHistory();
+    };
+  });
+}
+
+
+/* ================================================================
+   全頁自由編輯／微調：
+   1) 所有有文字的元素自動加 contenteditable
+   2) 任何元素 Alt+拖曳 可微調位置（relative 位移，不破壞排版）
+   ================================================================ */
+const NO_EDIT = '.hnd,.rowTools,.slotDel,.mtool,.fhandle,.fdel,.fresize,.secResize,.resize-handle,.fadd,.ph,.ribbons,.kvwrap';
+
+function makeAllEditable(){
+  page.querySelectorAll('*').forEach(el=>{
+    if(el.closest(NO_EDIT)) return;
+    if(el.hasAttribute('contenteditable')) return;
+    if(el.querySelector('*')) return;                 /* 只處理最內層 */
+    const txt=(el.textContent||'').trim();
+    if(!txt) return;
+    if(['IMG','BR','HR','INPUT','BUTTON','I'].includes(el.tagName)) return;
+    el.setAttribute('contenteditable','');
+  });
+}
+
+document.addEventListener('keydown',e=>{ if(e.key==='Alt') document.body.classList.add('altdown'); });
+document.addEventListener('keyup',  e=>{ if(e.key==='Alt') document.body.classList.remove('altdown'); });
+window.addEventListener('blur',()=>document.body.classList.remove('altdown'));
+
+/* ---------- Alt + 拖曳微調任何元素 ---------- */
+let nudgeEl=null, nudgeSX=0, nudgeSY=0, nudgeOX=0, nudgeOY=0;
+function nudgeTarget(t){
+  while(t && t!==page){
+    if(t.nodeType===1 && !t.closest(NO_EDIT) && !t.classList.contains('page')) return t;
+    t=t.parentNode;
+  }
+  return null;
+}
+page.addEventListener('mousedown', e=>{
+  if(!e.altKey) return;
+  const t=nudgeTarget(e.target); if(!t) return;
+  e.preventDefault(); e.stopPropagation();
+  nudgeEl=t;
+  const cs=getComputedStyle(t);
+  if(cs.position==='static') t.style.position='relative';
+  nudgeOX=parseFloat(t.style.left)||0;
+  nudgeOY=parseFloat(t.style.top)||0;
+  nudgeSX=e.clientX; nudgeSY=e.clientY;
+  t.classList.add('nudging');
+  document.addEventListener('mousemove', onNudge);
+  document.addEventListener('mouseup', endNudge);
+}, true);
+function onNudge(e){
+  if(!nudgeEl) return;
+  nudgeEl.style.left=(nudgeOX + e.clientX - nudgeSX)+'px';
+  nudgeEl.style.top =(nudgeOY + e.clientY - nudgeSY)+'px';
+}
+function endNudge(){
+  if(nudgeEl) nudgeEl.classList.remove('nudging');
+  if(nudgeEl) pushHistory();
+  nudgeEl=null;
+  document.removeEventListener('mousemove', onNudge);
+  document.removeEventListener('mouseup', endNudge);
+  persist();
+}
+/* 方向鍵微調：先點一下元素，按住 Alt + 方向鍵 */
+document.addEventListener('keydown', e=>{
+  if(!e.altKey) return;
+  const k=e.key;
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)) return;
+  const t=nudgeTarget(document.activeElement); if(!t) return;
+  e.preventDefault();
+  const cs=getComputedStyle(t);
+  if(cs.position==='static') t.style.position='relative';
+  const step=e.shiftKey?10:1;
+  let x=parseFloat(t.style.left)||0, y=parseFloat(t.style.top)||0;
+  if(k==='ArrowLeft')x-=step; if(k==='ArrowRight')x+=step;
+  if(k==='ArrowUp')y-=step;   if(k==='ArrowDown')y+=step;
+  t.style.left=x+'px'; t.style.top=y+'px';
+  clearTimeout(typeT); typeT=setTimeout(pushHistory,500);
+  persist();
+});
+
+
+/* ================================================================
+   復原 / 重做（Ctrl+Z / Ctrl+Shift+Z 或 Ctrl+Y）
+   ================================================================ */
+var UNDO_MAX = 60;
+var undoStack = [], redoStack = [], undoLock = false;
+
+function historyState(){
+  return { tpl: curTpl, html: page.innerHTML, cls: page.className };
+}
+function pushHistory(){
+  if(undoLock) return;
+  const st = historyState();
+  const last = undoStack[undoStack.length-1];
+  if(last && last.html === st.html && last.cls === st.cls) return;
+  undoStack.push(st);
+  if(undoStack.length > UNDO_MAX) undoStack.shift();
+  redoStack.length = 0;
+  paintUndoBtns();
+}
+function restoreHistory(st){
+  undoLock = true;
+  curTpl = st.tpl || '1';
+  page.className = st.cls;
+  page.innerHTML = st.html;
+  paintTplBtns();
+  build(); bindPage(); initFreeGrids(); initMediaEmbeds(); syncHeroKV();
+  undoLock = false;
+  persist();
+  paintUndoBtns();
+}
+function doUndo(){
+  if(undoStack.length < 2) return;
+  redoStack.push(undoStack.pop());
+  restoreHistory(undoStack[undoStack.length-1]);
+}
+function doRedo(){
+  if(!redoStack.length) return;
+  const st = redoStack.pop();
+  undoStack.push(st);
+  restoreHistory(st);
+}
+function paintUndoBtns(){
+  const u=document.getElementById('btnUndo'), r=document.getElementById('btnRedo');
+  if(u) u.disabled = undoStack.length < 2;
+  if(r) r.disabled = !redoStack.length;
+}
+document.getElementById('btnUndo').onclick=doUndo;
+document.getElementById('btnRedo').onclick=doRedo;
+document.addEventListener('keydown', e=>{
+  if(!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if(k === 'z' && !e.shiftKey){ e.preventDefault(); doUndo(); }
+  else if((k === 'z' && e.shiftKey) || k === 'y'){ e.preventDefault(); doRedo(); }
+});
+/* 打字時：停手 700ms 才記一個還原點，避免每個字都存一次 */
+var typeT;
+page.addEventListener('input', ()=>{ clearTimeout(typeT); typeT=setTimeout(pushHistory, 700); });
+
 function initFreeGrids(){
+  initSpeakerRows();
+  makeAllEditable();
   ['.info','.cards','.logos','.sched'].forEach(sel=>{
     document.querySelectorAll(sel).forEach(container=>{
       enableFreeCanvas(container);
@@ -1294,7 +1966,7 @@ document.addEventListener('keydown',e=>{
 });
 
 build(); bindPage();
-function readyInit(){ initFreeGrids(); initMediaEmbeds(); }
+function readyInit(){ initFreeGrids(); initMediaEmbeds(); syncHeroKV(); pushHistory(); }
 if(document.fonts && document.fonts.ready){
   document.fonts.ready.then(()=>requestAnimationFrame(()=>requestAnimationFrame(readyInit)));
 }else{
