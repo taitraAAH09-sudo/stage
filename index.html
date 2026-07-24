@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v13">
+<meta name="build" content="v14">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -42,6 +42,13 @@
 
   /* ── 舞台切換列 ── */
   .filebar{ display:flex; flex-direction:column; gap:6px; margin-top:11px; align-items:flex-start; }
+  .slotwrap{ display:flex; align-items:stretch; gap:8px; margin-top:11px; }
+  .slotcol{ display:flex; flex-direction:column; gap:6px; }
+  .newtab{ writing-mode:vertical-rl; text-orientation:upright; letter-spacing:.22em;
+           font-family:inherit; font-size:12.5px; font-weight:800; padding:10px 7px;
+           border-radius:8px; border:1.5px solid var(--gold); background:#fff;
+           color:var(--gold); cursor:pointer; white-space:nowrap; line-height:1; }
+  .newtab:hover{ background:var(--gold); color:#fff; }
   .stagetab.add{ background:#fff; border-color:var(--gold); color:var(--gold); font-weight:800; }
   .stagetab.add:hover{ background:var(--gold); color:#fff; }
   .stagebar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:14px 0 4px; }
@@ -106,8 +113,13 @@
          justify-content:center; padding:40px 16px; overflow:auto; z-index:50; }
   .mask.show{ display:flex; }
   .modal{ background:#fff; border-radius:12px; width:640px; max-width:100%; padding:22px 24px;
-          box-shadow:0 12px 40px rgba(0,0,0,.25); }
-  .modal h2{ margin:0 0 14px; font-size:18px; color:var(--navy); }
+          box-shadow:0 12px 40px rgba(0,0,0,.25); position:relative; }
+  .modal h2{ margin:0 0 14px; font-size:18px; color:var(--navy);
+             cursor:move; user-select:none; padding-right:70px; }
+  .modal h2::after{ content:'⣿ 可拖曳'; float:right; font-size:10.5px; font-weight:600;
+                    color:var(--paper-line); letter-spacing:.05em; margin-top:5px; }
+  .mask.dragging{ align-items:flex-start; }
+  .modal.moved{ margin:0; position:fixed; }
   .f-label{ font-size:12.5px; font-weight:800; color:var(--navy-light); margin:12px 0 4px; }
   .f-input, .f-ta, .f-sel{ width:100%; font-family:inherit; font-size:14px; padding:9px 11px;
         border:1px solid var(--paper-line); border-radius:6px; background:var(--paper); color:var(--ink); outline:none; }
@@ -198,8 +210,11 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v13</span></div>
-      <div class="filebar" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v14</span></div>
+      <div class="slotwrap">
+        <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
+        <button class="newtab" id="btn-newtab" title="用自己的工作格開一個新分頁，F5 不會跑到別人的檔">開新頁</button>
+      </div>
     </div>
     <div class="dl-panel">
       <div class="dl-grid" id="dl-grid">
@@ -355,6 +370,17 @@
 
     <div class="f-label">分類圖例：字級 <span id="lo-lf-v" class="lo-val"></span></div>
     <input type="range" class="f-range" id="lo-lf" min="7" max="18" step="0.5">
+
+    <div style="border-top:1px dashed var(--paper-line); margin:16px 0 4px;"></div>
+
+    <div class="f-label">時間欄字級 <span id="lo-tf-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="lo-tf" min="7" max="22" step="0.5">
+
+    <div class="f-label">地點列字級 <span id="lo-vf-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="lo-vf" min="8" max="24" step="0.5">
+
+    <div class="f-label">底部聲明字級 <span id="lo-ff-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="lo-ff" min="6" max="18" step="0.5">
 
     <div class="m-actions">
       <button class="btn" id="lo-reset" style="margin-right:auto;">恢復預設</button>
@@ -545,7 +571,8 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const ROOT = 'stageTool';
-let STAGE = localStorage.getItem('stageCur') || 's1';
+let STAGE = (new URLSearchParams(location.search).get('stage'))
+          || localStorage.getItem('stageCur') || 's1';
 const SBASE = () => ROOT + '/stages/' + STAGE;
 
 let STAGES = null;          // { s1:{name:'光廊 Light Gallery'}, ... }
@@ -579,7 +606,7 @@ const DEF_CATS = [
 const DEF_FOOT_ZH = '＊主辦單位保留修改、變更、活動解釋及取消本活動之權利，屆時變更公告於網站，恕不另外通知。';
 const DEF_FOOT_EN = '*THE ORGANIZER RESERVES THE RIGHT TO MODIFY, ALTER, INTERPRET, OR CANCEL THE EVENT. ANY CHANGES WILL BE ANNOUNCED ON THE OFFICIAL WEBSITE WITHOUT PRIOR NOTICE.';
 
-const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60 };
+const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, tf:11.5, vf:12.5, ff:9.5 };
 /* 三段色塊各自獨立：head=標題列, venue=地點列, foot=頁尾 */
 const DEF_TH = {
   headBg:'#1c2b3a', headGrad:'', headDir:'to right',
@@ -650,10 +677,63 @@ function pwSubmit(){
 }
 function doLogout(){ sessionStorage.removeItem('stagePwOk'); render(); toast('已登出'); }
 
+const _pad2 = n => String(n).padStart(2,'0');
+
 function toast(msg){
   const t = $('toast'); t.textContent = msg; t.style.display = 'block';
   clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', 2200);
 }
+
+/* ── 彈窗拖曳：抓標題列可整個視窗移動，避免擋住後面內容 ── */
+function makeDraggable(modal){
+  const h = modal.querySelector('h2');
+  if(!h || h.dataset.dragBound) return;
+  h.dataset.dragBound = '1';
+  let sx=0, sy=0, ox=0, oy=0, on=false;
+  const down = e=>{
+    const pt = e.touches ? e.touches[0] : e;
+    const r = modal.getBoundingClientRect();
+    if(!modal.classList.contains('moved')){
+      modal.classList.add('moved');
+      modal.style.left = r.left+'px';
+      modal.style.top  = r.top+'px';
+    }
+    ox = parseFloat(modal.style.left)||r.left;
+    oy = parseFloat(modal.style.top)||r.top;
+    sx = pt.clientX; sy = pt.clientY; on = true;
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  };
+  const move = e=>{
+    if(!on) return;
+    const pt = e.touches ? e.touches[0] : e;
+    let nx = ox + (pt.clientX - sx);
+    let ny = oy + (pt.clientY - sy);
+    const w = modal.offsetWidth, hh = modal.offsetHeight;
+    nx = Math.max(8 - w + 120, Math.min(nx, window.innerWidth - 120));
+    ny = Math.max(0, Math.min(ny, window.innerHeight - 44));
+    modal.style.left = nx+'px';
+    modal.style.top  = ny+'px';
+  };
+  const up = ()=>{ on=false; document.body.style.userSelect=''; };
+  h.addEventListener('mousedown', down);
+  h.addEventListener('touchstart', down, {passive:false});
+  window.addEventListener('mousemove', move);
+  window.addEventListener('touchmove', move, {passive:false});
+  window.addEventListener('mouseup', up);
+  window.addEventListener('touchend', up);
+}
+document.querySelectorAll('.mask .modal').forEach(makeDraggable);
+/* 每次開窗把位置歸零，免得上次拖到角落找不到 */
+new MutationObserver(muts=>{
+  muts.forEach(m=>{
+    const el = m.target;
+    if(el.classList && el.classList.contains('mask') && el.classList.contains('show')){
+      const md = el.querySelector('.modal');
+      if(md){ md.classList.remove('moved'); md.style.left=''; md.style.top=''; }
+    }
+  });
+}).observe(document.body, {subtree:true, attributes:true, attributeFilter:['class']});
 
 /* ── 中英自動拆分（沿用活動一覽表的邏輯） ── */
 const hasCJK = t => /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(t);
@@ -749,7 +829,7 @@ function render(){
 
   let body = '';
   T.forEach((t,ti)=>{
-    body += `<tr style="height:${CH}px;"><td class="tcell" style="width:${TW}px;">${esc(t)}</td>`;
+    body += `<tr style="height:${CH}px;"><td class="tcell" style="width:${TW}px;font-size:${lo('tf')}px;">${esc(t)}</td>`;
     D.forEach((d,di)=>{
       if (occupied[di][ti]) return;               // 被合併吃掉，不輸出 td
       const p = place[`${di}_${ti}`];
@@ -800,12 +880,12 @@ function render(){
         </div>
         <div class="legend">${legendHtml}</div>
       </div>
-      <div class="venueband" style="background:${th('venueBg')};">
+      <div class="venueband" style="background:${th('venueBg')};font-size:${lo('vf')}px;">
         <div style="color:${th('venueZhColor')};">地點：${esc(SET.venueZh||'')}</div>
         <div style="color:${th('venueEnColor')};">Venue: ${esc(SET.venueEn||'')}</div>
       </div>
       <table class="grid">${head}${body}</table>
-      <div class="board-foot" style="background:${th('footBg')};color:${th('footColor')};">
+      <div class="board-foot" style="background:${th('footBg')};color:${th('footColor')};font-size:${lo('ff')}px;">
         <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
         <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
       </div>
@@ -1165,7 +1245,7 @@ const darkenHex = (h,t) => mixHex(h,'#000000',t);
 const lightenHex = (h,t) => mixHex(h,'#ffffff',t);
 
 /* ── 📐 版面縮放 ── */
-const LO_KEYS = ['w','h','f','t','hh','hf','lw','lf'];
+const LO_KEYS = ['w','h','f','t','hh','hf','lw','lf','tf','vf','ff'];
 function syncLoLabels(){
   LO_KEYS.forEach(k=>{ const el=$('lo-'+k+'-v'); if(el) el.textContent = $('lo-'+k).value + ' px'; });
 }
@@ -1285,6 +1365,15 @@ function renderSlots(){
   }
  }catch(e){ console.error('renderSlots 失敗', e); }
 }
+
+/* 開新頁：另開分頁，並帶上目前舞台，避免 F5 後跳到別人正在編的內容 */
+const _nt = $('btn-newtab');
+if(_nt) _nt.addEventListener('click', ()=>{
+  const u = new URL(location.href);
+  u.searchParams.set('stage', STAGE);
+  u.searchParams.set('t', Date.now());
+  window.open(u.toString(), '_blank');
+});
 
 /* 開頁立刻畫出三格，不等 Firebase、不受後續錯誤影響 */
 renderSlots();
@@ -1685,6 +1774,7 @@ function buildHtmlExport(mode){
   const stageName = effStages()[STAGE]?.name || '';
   const CW=lo('w'), CH=lo('h'), CF=lo('f'), TW=lo('t'), HH=lo('hh'), HF=lo('hf');
   const LW=lo('lw'), LF=lo('lf'), BH=lo('bh');
+  const TF=lo('tf'), VF=lo('vf'), FF=lo('ff');
   const headBgCss = th('headGrad')
       ? `linear-gradient(${th('headDir')}, ${th('headBg')}, ${th('headGrad')})`
       : th('headBg');
@@ -1764,7 +1854,7 @@ body{margin:0;padding:20px;background:#f4f4f6;
 .lg{width:${LW}px;padding:7px 6px;font-size:${LF}px;font-weight:700;color:#1a1a1a;
     text-align:center;line-height:1.25;word-break:keep-all;}
 .lg span{display:block;font-weight:500;font-size:${Math.max(6.5,LF*0.88)}px;margin-top:2px;}
-.venue{padding:9px 18px;font-size:12.5px;line-height:1.5;background:${th('venueBg')};}
+.venue{padding:9px 18px;font-size:${VF}px;line-height:1.5;background:${th('venueBg')};}
 .venue .v1{color:${th('venueZhColor')};}
 .venue .v2{color:${th('venueEnColor')};}
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
@@ -1772,12 +1862,12 @@ th{background:#efe9dc;font-size:12.5px;font-weight:800;padding:8px 6px;border:1p
 th.tw{width:${TW}px;}
 td{border:1px solid #ddd5c5;vertical-align:middle;padding:6px 5px;height:${CH}px;
    text-align:center;font-size:${CF}px;line-height:1.4;}
-td.tc{background:#fafafa;font-weight:700;font-size:11.5px;white-space:nowrap;width:${TW}px;}
+td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;width:${TW}px;}
 .c-co{font-weight:800;color:#111;}
 .c-meta{font-size:${Math.max(7,CF*0.86)}px;color:#3a3a3a;}
 .c-zh{font-weight:700;color:#1a3550;margin-top:3px;}
 .c-en{color:#1a3550;font-size:${Math.max(7.5,CF*0.94)}px;}
-.foot{padding:10px 18px;font-size:9.5px;line-height:1.5;background:${th('footBg')};color:${th('footColor')};}
+.foot{padding:10px 18px;font-size:${FF}px;line-height:1.5;background:${th('footBg')};color:${th('footColor')};}
 @media(max-width:820px){
   body{padding:8px;} .legend{position:static;transform:none;margin-top:10px;justify-content:center;}
   .head{flex-direction:column;} .board{max-width:100%;}
@@ -1889,7 +1979,8 @@ async function buildLongImage(mode){
     const cur=rowH.slice(ti,ti+p.span).reduce((s,x)=>s+x,0);
     if(need>cur){ const add=Math.ceil((need-cur)/p.span); for(let j=ti;j<ti+p.span&&j<T.length;j++) rowH[j]+=add; }
   });
-  const H_TITLE=Math.max(60, lo('hh')+12), H_LEG=Math.max(38, lo('lf')*4.2), H_VENUE=44, H_HEAD=34, H_FOOT=42;
+  const H_TITLE=Math.max(60, lo('hh')+12), H_LEG=Math.max(38, lo('lf')*4.2),
+        H_VENUE=Math.max(44, lo('vf')*3.4), H_HEAD=34, H_FOOT=Math.max(42, lo('ff')*4.2);
   const gridH=rowH.reduce((s,x)=>s+x,0);
   const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+PAD;
   const SC=2, cv=document.createElement('canvas');
@@ -1954,9 +2045,9 @@ async function buildLongImage(mode){
   y+=H_LEG;
   // 地點
   ctx.fillStyle=th('venueBg'); ctx.fillRect(PAD,y,W-PAD*2,H_VENUE);
-  ctx.textAlign='left'; ctx.font='12.5px '+FONT_ZH;
+  ctx.textAlign='left'; ctx.font=lo('vf')+'px '+FONT_ZH;
   if(mode!=='en'&&SET.venueZh){ ctx.fillStyle=th('venueZhColor'); ctx.fillText('地點：'+SET.venueZh,PAD+12,y+(mode==='bi'?15:H_VENUE/2)); }
-  if(mode!=='zh'&&SET.venueEn){ ctx.fillStyle=th('venueEnColor'); ctx.font='11.5px '+FONT_EN; ctx.fillText('Venue: '+SET.venueEn,PAD+12,y+(mode==='bi'?31:H_VENUE/2)); }
+  if(mode!=='zh'&&SET.venueEn){ ctx.fillStyle=th('venueEnColor'); ctx.font=Math.max(7,lo('vf')*0.92)+'px '+FONT_EN; ctx.fillText('Venue: '+SET.venueEn,PAD+12,y+(mode==='bi'?31:H_VENUE/2)); }
   y+=H_VENUE;
   // 表頭
   const gx=PAD;
@@ -1979,7 +2070,7 @@ async function buildLongImage(mode){
     const ry=rowY[ti], rh=rowH[ti];
     ctx.fillStyle='#fafafa'; ctx.fillRect(gx,ry,TCOL,rh);
     ctx.strokeRect(gx,ry,TCOL,rh);
-    ctx.fillStyle='#1c2b3a'; ctx.font='bold 11.5px '+FONT_ZH; ctx.textAlign='center';
+    ctx.fillStyle='#1c2b3a'; ctx.font='bold '+lo('tf')+'px '+FONT_ZH; ctx.textAlign='center';
     ctx.fillText(t,gx+TCOL/2,ry+rh/2);
     D.forEach((d,di)=>{
       if(occupied[di][ti]) return;
@@ -2000,9 +2091,9 @@ async function buildLongImage(mode){
   y=rowY[rowY.length-1]+rowH[rowH.length-1];
   // 頁尾
   ctx.fillStyle=th('footBg'); ctx.fillRect(PAD,y,W-PAD*2,H_FOOT);
-  ctx.textAlign='left'; ctx.fillStyle=th('footColor'); ctx.font='9.5px '+FONT_ZH;
+  ctx.textAlign='left'; ctx.fillStyle=th('footColor'); ctx.font=lo('ff')+'px '+FONT_ZH;
   if(mode!=='en') ctx.fillText((SET.footZh||DEF_FOOT_ZH).slice(0,120),PAD+12,y+(mode==='bi'?14:H_FOOT/2));
-  if(mode!=='zh'){ ctx.font='8.5px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
+  if(mode!=='zh'){ ctx.font=Math.max(6,lo('ff')*0.9)+'px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
 
   const now=new Date();
   const ts=`${_pad2(now.getMonth()+1)}${_pad2(now.getDate())}_${_pad2(now.getHours())}${_pad2(now.getMinutes())}`;
