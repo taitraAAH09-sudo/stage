@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v21">
+<meta name="build" content="v22">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -96,9 +96,7 @@
   /* 標成「不使用」的格子：整格反灰、不能點進去新增 */
   td.slot.blocked{ background:#d6d6d6; cursor:pointer; }
   td.slot.blocked:hover{ background:#c9c9c9; }
-  td.slot.blocked::after{ content:'不使用'; position:absolute; inset:0; display:flex;
-        align-items:center; justify-content:center; color:#7d7d7d;
-        font-size:11px; font-weight:800; letter-spacing:.08em; }
+
   .blkx{ display:none; position:absolute; top:2px; left:3px; font-size:12px; font-weight:800;
          color:#8a8a8a; background:rgba(255,255,255,.92); border-radius:3px; padding:0 4px; z-index:2; }
   td.slot.empty:hover .blkx{ display:block; }
@@ -228,7 +226,7 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v21</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v22</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
         <button class="newtab" id="btn-newtab" title="整個舞台清空歸零，交給下一位使用（活動、時段、日期、配色、Logo 全部清掉，無法復原）">開新頁</button>
@@ -2087,8 +2085,7 @@ th.tw{width:${TW}px;}
 td{border:1px solid #ddd5c5;vertical-align:middle;padding:6px 5px;height:${CH}px;
    text-align:center;font-size:${CF}px;line-height:1.4;}
 td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;width:${TW}px;color:${th('timeColor')};}
-td.blk{background:#d6d6d6;color:#7d7d7d;font-size:11px;font-weight:800;letter-spacing:.08em;}
-td.blk::after{content:'不使用';}
+td.blk{background:#d6d6d6;}
 .c-co{font-weight:800;color:${th('cellCo')};}
 .c-meta{font-size:${Math.max(7,CF*0.86)}px;color:${th('cellMeta')};}
 .c-zh{font-weight:700;color:${th('cellZh')};margin-top:3px;}
@@ -2155,7 +2152,8 @@ async function buildLongImage(mode){
   if(!D.length){ alert('還沒有設定日期，請先到「📅 日期設定」加入展期日期'); return; }
   const FONT_ZH='"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif';
   const FONT_EN='"Times New Roman",Times,serif';
-  const PAD=30, TCOL=Math.round(lo('t')*1.15), DCOL=Math.round(lo('w'));
+  const PAD=30, TCOL=Math.round(lo('t')), DCOL=Math.round(lo('w'));
+  const CF = lo('f');
   const FSC = lo('f')/DEF_LO.f;
   const HEADBG=th('headBg'), HEADG=th('headGrad');
   function headFill(ctx,x,y,w,h){
@@ -2193,14 +2191,16 @@ async function buildLongImage(mode){
   }
   function cellLines(a){
     const L=[]; const nm=splitZhEn(a.name||'');
-    if(a.co) L.push({t:`【${a.co}】`,f:FONT_ZH,s:13*FSC,b:true,c:th('cellCo')});
+    /* 字級直接對應畫面：.ev-co 等於格內字級，其餘照畫面的相對比例 */
+    const SCO=CF, SMETA=Math.max(7,CF*0.86), SZH=CF, SEN=Math.max(7.5,CF*0.94);
+    if(a.co) L.push({t:`【${a.co}】`,f:FONT_ZH,s:SCO,b:true,c:th('cellCo')});
     const meta=[a.booth?`（攤位號：${a.booth}）`:'',a.lang?`（${a.lang}）`:''].filter(Boolean).join('');
-    if(meta) wrap(meta,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:th('cellMeta')}));
-    if(mode!=='en'&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,b:true,c:th('cellZh')}));
-    if(mode!=='zh'&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:th('cellEn')}));
-    if(mode==='en'&&!nm.en&&nm.zh) wrap(nm.zh,DCOL-24,12.5*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:12.5*FSC,c:th('cellZh')}));
-    if(mode==='zh'&&!nm.zh&&nm.en) wrap(nm.en,DCOL-24,12*FSC,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:12*FSC,c:th('cellEn')}));
-    if(a.note) wrap(a.note,DCOL-24,11*FSC,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:11*FSC,c:th('cellMeta')}));
+    if(meta) wrap(meta,DCOL-14,SMETA,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SMETA,c:th('cellMeta')}));
+    if(mode!=='en'&&nm.zh) wrap(nm.zh,DCOL-14,SZH,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SZH,b:true,c:th('cellZh')}));
+    if(mode!=='zh'&&nm.en) wrap(nm.en,DCOL-14,SEN,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:SEN,c:th('cellEn')}));
+    if(mode==='en'&&!nm.en&&nm.zh) wrap(nm.zh,DCOL-14,SZH,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SZH,c:th('cellZh')}));
+    if(mode==='zh'&&!nm.zh&&nm.en) wrap(nm.en,DCOL-14,SEN,FONT_EN).forEach(t=>L.push({t,f:FONT_EN,s:SEN,c:th('cellEn')}));
+    if(a.note) wrap(a.note,DCOL-14,SMETA,FONT_ZH).forEach(t=>L.push({t,f:FONT_ZH,s:SMETA,c:th('cellMeta')}));
     return L;
   }
   const occupied=D.map(()=>T.map(()=>false)), place={};
@@ -2210,7 +2210,7 @@ async function buildLongImage(mode){
     place[`${di}_${sp.i1}`]={a,span:sp.span,lines:cellLines(a)};
     for(let k=sp.i1+1;k<=sp.i2&&k<T.length;k++) occupied[di][k]=true;
   });
-  const LH=Math.max(11,17*FSC), CPAD=9, MINROW=Math.max(30, lo('h'));
+  const LH=Math.max(10, CF*1.4), CPAD=7, MINROW=Math.max(30, lo('h'));
   const rowH=T.map(()=>MINROW);
   Object.entries(place).forEach(([k,p])=>{
     const ti=Number(k.split('_')[1]);
@@ -2219,9 +2219,9 @@ async function buildLongImage(mode){
     if(need>cur){ const add=Math.ceil((need-cur)/p.span); for(let j=ti;j<ti+p.span&&j<T.length;j++) rowH[j]+=add; }
   });
   const _hasVenue = !!((mode!=='en'&&SET.venueZh) || (mode!=='zh'&&SET.venueEn));
-  const H_TITLE=Math.max(60, lo('hh')+12), H_LEG=Math.max(38, lo('lf')*4.2),
+  const H_TITLE=Math.max(44, lo('hh')), H_LEG=Math.max(34, lo('lf')*3.6),
         H_VENUE=_hasVenue ? Math.max(44, lo('vf')*3.4) : 0,
-        H_HEAD=34, H_FOOT=Math.max(42, lo('ff')*4.2);
+        H_HEAD=34, H_FOOT=Math.max(38, lo('ff')*3.8);
   const BGPAD = _bgImg ? Math.max(0, Number(th('bgPad'))||46) : 0;
   const gridH=rowH.reduce((s,x)=>s+x,0);
   const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+PAD;
@@ -2294,7 +2294,7 @@ async function buildLongImage(mode){
          if(mode==='bi'){ ctx.fillStyle=th('subColor'); ctx.font=hfEn+'px '+FONT_EN; ctx.fillText(ten,W/2,y+H_TITLE/2+hfEn*0.95); } }
   y+=H_TITLE;
   // 圖例
-  const lw=Math.min(lo('lw')*1.15,(W-PAD*2)/C.length);
+  const lw=Math.min(lo('lw'),(W-PAD*2)/C.length);
   let lx=W-PAD-lw*C.length;
   ctx.fillStyle='#f7f4ee'; ctx.fillRect(PAD,y,W-PAD*2,H_LEG);
   C.forEach(c=>{
@@ -2346,11 +2346,6 @@ async function buildLongImage(mode){
       ctx.fillStyle=p?((C[Number(p.a.cat)]||{}).color||'#ffffff'):(blocked?'#d6d6d6':'#ffffff');
       ctx.fillRect(x,ry,DCOL,h);
       ctx.strokeRect(x,ry,DCOL,h);
-      if(blocked){
-        ctx.fillStyle='#7d7d7d'; ctx.textAlign='center';
-        ctx.font='bold 11px '+FONT_ZH;
-        ctx.fillText('不使用', x+DCOL/2, ry+h/2);
-      }
       if(!p) return;
       let ly=ry+h/2-(p.lines.length-1)*LH/2;
       p.lines.forEach(ln=>{
