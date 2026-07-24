@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大會舞台一覽表</title>
-<meta name="build" content="v19">
+<meta name="build" content="v21">
 <style>
   :root{
     --paper:#f7f4ee; --paper-line:#ddd5c5; --ink:#22303c;
@@ -60,7 +60,8 @@
   .stagetab .x:hover{ opacity:1; color:var(--gold-light); }
 
   /* ── 網格主表：完全比照 TADTE 版面 ── */
-  .board{ margin-top:16px; border:1px solid var(--paper-line); border-radius:10px; overflow:hidden; background:#fff; }
+  .bgcanvas{ margin-top:16px; border-radius:12px; }
+  .board{ border:1px solid var(--paper-line); border-radius:10px; overflow:hidden; background:#fff; }
   .brandbar{ display:flex; align-items:center; justify-content:space-between; gap:16px;
              padding:10px 18px; border-bottom:1px solid rgba(0,0,0,.08); }
   .bb-logo img{ max-height:38px; max-width:220px; display:block; }
@@ -92,6 +93,16 @@
   td.slot.empty::after{ content:'＋'; position:absolute; inset:0; display:flex; align-items:center;
                         justify-content:center; color:var(--gold); font-size:17px; font-weight:800; opacity:0; }
   td.slot.empty:hover::after{ opacity:.55; }
+  /* 標成「不使用」的格子：整格反灰、不能點進去新增 */
+  td.slot.blocked{ background:#d6d6d6; cursor:pointer; }
+  td.slot.blocked:hover{ background:#c9c9c9; }
+  td.slot.blocked::after{ content:'不使用'; position:absolute; inset:0; display:flex;
+        align-items:center; justify-content:center; color:#7d7d7d;
+        font-size:11px; font-weight:800; letter-spacing:.08em; }
+  .blkx{ display:none; position:absolute; top:2px; left:3px; font-size:12px; font-weight:800;
+         color:#8a8a8a; background:rgba(255,255,255,.92); border-radius:3px; padding:0 4px; z-index:2; }
+  td.slot.empty:hover .blkx{ display:block; }
+  .blkx:hover{ color:var(--danger); }
   td.slot.filled[draggable="true"]{ cursor:grab; }
   td.slot.filled[draggable="true"]:active{ cursor:grabbing; }
   td.slot.dragging{ opacity:.4; }
@@ -217,7 +228,7 @@
       <div class="eyebrow" id="ui-en">TENTATIVE STAGE EVENT SCHEDULE</div>
       <h1 id="ui-zh">大會舞台一覽表</h1>
       <div class="sub">時段 × 日期網格排程．時段／分類／舞台／欄位全部可自由編輯．全隊即時同步
-        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v19</span></div>
+        <span style="font-size:11px;color:#b98a2f;font-weight:800;margin-left:6px;">build v21</span></div>
       <div class="slotwrap">
         <div class="slotcol" id="slots-list"><span style="font-size:12px;color:#999;">工作檔載入中…</span></div>
         <button class="newtab" id="btn-newtab" title="整個舞台清空歸零，交給下一位使用（活動、時段、日期、配色、Logo 全部清掉，無法復原）">開新頁</button>
@@ -448,7 +459,7 @@
     <div class="throw"><span>漸層方向</span><select class="f-sel" id="t-footDir" style="flex:1;"></select></div>
 
     <div class="thsec"><span class="n">4</span>表格下方大底圖（PNG 匯出用）</div>
-    <div class="hint" style="margin-bottom:9px;">丟一張圖進來，PNG 匯出時會加在整張表格的<b>最下方</b>當橫幅。若原圖是漸層，用「取圖位置」挑你要的那一角（例如右下角）。</div>
+    <div class="hint" style="margin-bottom:9px;">丟一張圖進來當<b>整張輸出的背景</b>，表格會浮在上面、四周露出底圖。若原圖是漸層，用「取圖位置」挑你要的那一角（例如右下角）。</div>
     <div class="throw" style="gap:8px;">
       <button class="btn btn--ghost" id="bg-img-pick">📁 選擇圖檔</button>
       <button class="btn btn--ghost" id="bg-img-clear">✕ 移除底圖</button>
@@ -472,8 +483,9 @@
       <option value="200%">放大 200%</option>
       <option value="400%">放大 400%</option>
     </select></div>
-    <div class="f-label">底圖高度 <span id="t-bgH-v" class="lo-val"></span></div>
-    <input type="range" class="f-range" id="t-bgH" min="60" max="700" step="10" value="260">
+    <div class="f-label">表格四周留白 <span id="t-bgPad-v" class="lo-val"></span></div>
+    <div class="hint" style="margin:-2px 0 4px;">留白越大，露出的底圖越多。</div>
+    <input type="range" class="f-range" id="t-bgPad" min="0" max="200" step="2" value="46">
     <div class="f-label">底圖不透明度 <span id="t-bgOp-v" class="lo-val"></span></div>
     <input type="range" class="f-range" id="t-bgOp" min="10" max="100" step="5" value="100">
     <div id="bg-img-prev" style="margin-top:8px;"></div>
@@ -631,6 +643,7 @@ let TIMES = null;           // ['10:30 - 11:00', ...]
 let DATES = null;           // [{iso:'2026-09-18', label:'9/18 (Thu.)'}, ...]
 let CATS = null;            // [{zh,en,color}]
 let SET = {};               // titleZh/titleEn/venueZh/venueEn/footZh/footEn
+let BLOCK = {};             // 「不使用」的格子 { '2026-09-18_10:30 - 11:00': true }
 let LO = {};                // 版面縮放 {w,h,f,t}
 let KV = null;              // KV 色票 ['#xxxxxx',...]
 let KVDIR = 'to right';     // 漸層方向
@@ -661,7 +674,7 @@ const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, 
 const DEF_TH = {
   headBg:'#1c2b3a', headGrad:'', headDir:'to right',
   venueBg:'#12202c', footBg:'#12202c', footGrad:'', footDir:'to right',
-  bgImg:'', bgPos:'center', bgSize:'cover', bgOp:100, bgH:260,
+  bgImg:'', bgPos:'center', bgSize:'cover', bgOp:100, bgPad:46,
   titleColor:'#ffffff', subColor:'#d8b25f',
   venueZhColor:'#ffffff', venueEnColor:'#9fb4c6',
   footColor:'#8fa6ba',
@@ -844,6 +857,9 @@ function spanOf(a){
   return { i1, i2, span: i2 - i1 + 1 };
 }
 const catColor = i => { const c = effCats()[i]; return c ? c.color : '#ffffff'; };
+/* 「不使用」格子的 key：日期＋時段。Firebase 的 key 不能有 . # $ [ ] /，先換掉 */
+const blkKey = (iso, t) => String(iso+'_'+t).replace(/[.#$\[\]\/]/g, '-');
+const isBlocked = (iso, t) => !!BLOCK[blkKey(iso, t)];
 
 /* ── 畫面：時段 × 日期 網格 ── */
 function render(){
@@ -893,12 +909,19 @@ function render(){
       if (occupied[di][ti]) return;               // 被合併吃掉，不輸出 td
       const p = place[`${di}_${ti}`];
       if (!p){
-        body += `<td class="slot empty" style="height:${CH}px;" data-new="${di}_${ti}" data-drop="${di}_${ti}"></td>`;
+        if (isBlocked(D[di].iso, t)){
+          body += `<td class="slot blocked" style="height:${CH}px;" data-unblock="${di}_${ti}"
+                       title="這格標為不使用。點一下可以恢復"></td>`;
+        } else {
+          body += `<td class="slot empty" style="height:${CH}px;" data-new="${di}_${ti}" data-drop="${di}_${ti}">
+            ${isLoggedIn()?`<span class="blkx" data-block="${di}_${ti}" title="把這格標成不使用">⊘</span>`:''}
+          </td>`;
+        }
         return;
       }
       const a = p.a;
       const nm = splitZhEn(a.name||'');
-      const bg = catColor(Number(a.cat)||0);
+      const bg = catColor(Number(a.cat));
       const delBtn = isLoggedIn() ? `<span class="rowx" data-del="${p.id}">✕</span>` : '';
       body += `<td class="slot filled" rowspan="${p.span}" style="background:${esc(bg)};" data-edit="${p.id}" data-drop="${di}_${ti}" ${isLoggedIn()?`draggable="true" data-drag="${p.id}"`:''}>
         ${delBtn}
@@ -929,7 +952,14 @@ function render(){
              style="color:${th('brandText')};border-color:${th('brandText')};">${esc(SET.ctaText)}</span>` : ''}
       </div>` : '';
 
+  const bgWrapStyle = TH.bgImg
+    ? `background-image:url('${TH.bgImg}');background-position:${th('bgPos')};`
+      + `background-size:${th('bgSize')};background-repeat:no-repeat;`
+      + `padding:${Math.max(0,Number(th('bgPad'))||46)}px;`
+    : '';
+
   host.innerHTML = `
+    <div class="bgcanvas" style="${bgWrapStyle}">
     <div class="board" id="board">
       ${brandHtml}
       <div class="board-head" style="background:${headBgCss};min-height:${HH}px;">
@@ -948,11 +978,24 @@ function render(){
         <div>${esc(SET.footZh || DEF_FOOT_ZH)}</div>
         <div>${esc(SET.footEn || DEF_FOOT_EN)}</div>
       </div>
-      ${TH.bgImg?`<div style="height:${Math.max(60,Number(th('bgH'))||260)}px;
-        background-image:url('${TH.bgImg}');background-position:${th('bgPos')};
-        background-size:${th('bgSize')};background-repeat:no-repeat;
-        opacity:${(TH.bgOp!=null?TH.bgOp:100)/100};"></div>`:''}
+    </div>
     </div>`;
+
+  /* ⊘ 把空格標成不使用 */
+  host.querySelectorAll('[data-block]').forEach(b=>b.addEventListener('click', e=>{
+    e.stopPropagation();
+    requirePw(async ()=>{
+      const [di,ti] = b.dataset.block.split('_').map(Number);
+      try{ await update(ref(db, SBASE()+'/blocked'), { [blkKey(D[di].iso, T[ti])]: true }); }
+      catch(err){ toast('✗ 設定失敗：'+err.message); }
+    });
+  }));
+  /* 點反灰格子 → 恢復可用 */
+  host.querySelectorAll('[data-unblock]').forEach(td=>td.addEventListener('click', ()=>requirePw(async ()=>{
+    const [di,ti] = td.dataset.unblock.split('_').map(Number);
+    try{ await remove(ref(db, SBASE()+'/blocked/'+blkKey(D[di].iso, T[ti]))); }
+    catch(err){ toast('✗ 恢復失敗：'+err.message); }
+  })));
 
   host.querySelectorAll('[data-new]').forEach(td=>td.addEventListener('click', ()=>requirePw(()=>{
     const [di,ti] = td.dataset.new.split('_').map(Number);
@@ -1356,6 +1399,7 @@ function snapshot(){
       brandLogo: SET.brandLogo||null, brandName: SET.brandName||'',
       ctaText: SET.ctaText||''
     },
+    blocked: BLOCK || {},
     activities: ACT || {}
   };
 }
@@ -1406,6 +1450,7 @@ function renderSlots(){
       try{
         await set(ref(db, SBASE()+'/settings'), {...(sl.data?.settings||{}), updatedAt:Date.now()});
         await set(ref(db, SBASE()+'/activities'), sl.data?.activities || {});
+        await set(ref(db, SBASE()+'/blocked'), sl.data?.blocked || {});
         toast(`✓ 已讀取第 ${i} 格（${n} 筆）`);
       }catch(e){ toast('✗ 讀檔失敗：'+e.message); }
     }));
@@ -1557,16 +1602,16 @@ function openTheme(){
   TH_EDIT.bgImg  = TH.bgImg || '';
   TH_EDIT.bgPos  = th('bgPos');
   TH_EDIT.bgSize = th('bgSize');
-  TH_EDIT.bgOp   = TH.bgOp != null ? TH.bgOp : 100;
-  TH_EDIT.bgH    = TH.bgH  != null ? TH.bgH  : 260;
+  TH_EDIT.bgOp   = TH.bgOp  != null ? TH.bgOp  : 100;
+  TH_EDIT.bgPad  = TH.bgPad != null ? TH.bgPad : 46;
   $('t-footDir').innerHTML = DIRS.map(d=>`<option value="${d.k}">${d.zh}</option>`).join('');
   $('t-footDir').value  = TH_EDIT.footDir;
   $('t-bgPos').value  = TH_EDIT.bgPos;
   $('t-bgSize').value = TH_EDIT.bgSize;
   $('t-bgOp').value   = TH_EDIT.bgOp;
   $('t-bgOp-v').textContent = TH_EDIT.bgOp+' %';
-  $('t-bgH').value    = TH_EDIT.bgH;
-  $('t-bgH-v').textContent = TH_EDIT.bgH+' px';
+  $('t-bgPad').value  = TH_EDIT.bgPad;
+  $('t-bgPad-v').textContent = TH_EDIT.bgPad+' px';
   renderBgPrev();
   renderThKvChips();
   $('mask-theme').classList.add('show');
@@ -1582,9 +1627,9 @@ $('t-footGrad-off').addEventListener('click', ()=>{
 $('t-footDir').addEventListener('change', e=>{ TH_EDIT.footDir=e.target.value; previewTheme(); });
 $('t-bgPos').addEventListener('change', e=>{ TH_EDIT.bgPos=e.target.value; previewTheme(); renderBgPrev(); });
 $('t-bgSize').addEventListener('change', e=>{ TH_EDIT.bgSize=e.target.value; previewTheme(); renderBgPrev(); });
-$('t-bgH').addEventListener('input', e=>{
-  TH_EDIT.bgH=Number(e.target.value);
-  $('t-bgH-v').textContent=e.target.value+' px'; renderBgPrev();
+$('t-bgPad').addEventListener('input', e=>{
+  TH_EDIT.bgPad=Number(e.target.value);
+  $('t-bgPad-v').textContent=e.target.value+' px'; previewTheme(); renderBgPrev();
 });
 $('t-bgOp').addEventListener('input', e=>{
   TH_EDIT.bgOp=Number(e.target.value);
@@ -1593,11 +1638,15 @@ $('t-bgOp').addEventListener('input', e=>{
 function renderBgPrev(){
   const box=$('bg-img-prev'); if(!box) return;
   if(!TH_EDIT.bgImg){ box.innerHTML='<span style="font-size:12px;color:var(--navy-light);">尚未載入底圖</span>'; return; }
-  const h=Math.max(50, Math.min(160, (TH_EDIT.bgH||260)/2));
-  box.innerHTML=`<div style="height:${h}px;border-radius:6px;border:1px solid var(--paper-line);
+  const pd=Math.round((TH_EDIT.bgPad!=null?TH_EDIT.bgPad:46)/3);
+  box.innerHTML=`<div style="height:150px;border-radius:6px;border:1px solid var(--paper-line);
     background-image:url('${TH_EDIT.bgImg}');background-position:${TH_EDIT.bgPos};
-    background-size:${TH_EDIT.bgSize};background-repeat:no-repeat;opacity:${(TH_EDIT.bgOp||100)/100};"></div>
-    <div class="hint" style="margin-top:5px;">↑ 這就是 PNG 最下方會出現的樣子（預覽為實際高度的一半）</div>`;
+    background-size:${TH_EDIT.bgSize};background-repeat:no-repeat;opacity:${(TH_EDIT.bgOp||100)/100};
+    padding:${pd}px;">
+      <div style="height:100%;background:#fff;border-radius:4px;display:flex;align-items:center;
+        justify-content:center;font-size:11px;color:#999;font-weight:700;">表格位置</div>
+    </div>
+    <div class="hint" style="margin-top:5px;">↑ 表格會像這樣浮在底圖上（縮小示意）</div>`;
 }
 $('bg-img-pick').addEventListener('click', ()=>$('bg-img-input').click());
 $('bg-img-clear').addEventListener('click', ()=>{
@@ -1634,10 +1683,10 @@ $('theme-reset').addEventListener('click', ()=>{
     if(c){ c.value=DEF_TH[k]||'#ffffff'; x.value=DEF_TH[k]||''; } });
   $('t-headDir').value = DEF_TH.headDir;
   TH_EDIT.bgImg=''; TH_EDIT.footGrad='';
-  TH_EDIT.bgPos='center'; TH_EDIT.bgSize='cover'; TH_EDIT.bgOp=100; TH_EDIT.bgH=260;
+  TH_EDIT.bgPos='center'; TH_EDIT.bgSize='cover'; TH_EDIT.bgOp=100; TH_EDIT.bgPad=46;
   $('t-footDir').value=DEF_TH.footDir; $('t-bgPos').value='center';
   $('t-bgSize').value='cover'; $('t-bgOp').value=100; $('t-bgOp-v').textContent='100 %';
-  $('t-bgH').value=260; $('t-bgH-v').textContent='260 px';
+  $('t-bgPad').value=46; $('t-bgPad-v').textContent='46 px';
   renderBgPrev();
   previewTheme();
 });
@@ -1944,8 +1993,7 @@ function buildHtmlExport(mode){
       ? `linear-gradient(${th('footDir')}, ${th('footBg')}, ${th('footGrad')})`
       : th('footBg');
   const BGIMG = TH.bgImg || '';
-  const BGOP  = (TH.bgOp != null ? TH.bgOp : 100)/100;
-  const BGH   = Math.max(60, Number(th('bgH'))||260);
+  const BGPAD = Math.max(0, Number(th('bgPad'))||46);
   const headBgCss = th('headGrad')
       ? `linear-gradient(${th('headDir')}, ${th('headBg')}, ${th('headGrad')})`
       : th('headBg');
@@ -1979,8 +2027,11 @@ function buildHtmlExport(mode){
     D.forEach((d,di)=>{
       if(occupied[di][ti]) return;
       const p=place[`${di}_${ti}`];
-      if(!p){ body+=`<td></td>`; return; }
-      const bg=(C[Number(p.a.cat)||0]||{}).color||'#fff';
+      if(!p){
+        body += isBlocked(d.iso, t) ? `<td class="blk"></td>` : `<td></td>`;
+        return;
+      }
+      const bg=(C[Number(p.a.cat)]||{}).color||'#ffffff';
       body+=`<td rowspan="${p.span}" style="background:${bg};">${cellIn(p.a)}</td>`;
     });
     body+=`</tr>`;
@@ -2005,7 +2056,8 @@ function buildHtmlExport(mode){
 <title>${esc(titleZh)}${stageName?' - '+esc(stageName):''}</title>
 <style>
 *{box-sizing:border-box;}
-body{margin:0;padding:20px;background:#f4f4f6;
+body{margin:0;padding:${BGIMG?BGPAD:20}px;
+     ${BGIMG ? `background-image:url('${BGIMG}');background-position:${th('bgPos')};background-size:${th('bgSize')};background-repeat:no-repeat;background-attachment:fixed;` : 'background:#f4f4f6;'}
      font-family:"Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif;color:#22303c;}
 .board{max-width:${Math.max(TW+CW*D.length, LW*C.length+380)}px;margin:0 auto;background:#fff;
        border-radius:10px;overflow:hidden;box-shadow:0 4px 22px rgba(0,0,0,.12);}
@@ -2035,14 +2087,14 @@ th.tw{width:${TW}px;}
 td{border:1px solid #ddd5c5;vertical-align:middle;padding:6px 5px;height:${CH}px;
    text-align:center;font-size:${CF}px;line-height:1.4;}
 td.tc{background:#fafafa;font-weight:700;font-size:${TF}px;white-space:nowrap;width:${TW}px;color:${th('timeColor')};}
+td.blk{background:#d6d6d6;color:#7d7d7d;font-size:11px;font-weight:800;letter-spacing:.08em;}
+td.blk::after{content:'不使用';}
 .c-co{font-weight:800;color:${th('cellCo')};}
 .c-meta{font-size:${Math.max(7,CF*0.86)}px;color:${th('cellMeta')};}
 .c-zh{font-weight:700;color:${th('cellZh')};margin-top:3px;}
 .c-en{color:${th('cellEn')};font-size:${Math.max(7.5,CF*0.94)}px;}
 .foot{padding:10px 18px;font-size:${FF}px;line-height:1.5;
       background:${FOOTBG};color:${th('footColor')};}
-.bgband{height:${BGH}px;background-image:url('${BGIMG}');background-position:${th('bgPos')};
-      background-size:${th('bgSize')};background-repeat:no-repeat;opacity:${BGOP};}
 @media(max-width:820px){
   body{padding:8px;}
   .legend{margin-top:10px;justify-content:center;flex-wrap:wrap;}
@@ -2071,7 +2123,6 @@ ${brand}
     ${mode!=='en'?`<div>${esc(SET.footZh||DEF_FOOT_ZH)}</div>`:''}
     ${mode!=='zh'?`<div>${esc(SET.footEn||DEF_FOOT_EN)}</div>`:''}
   </div>
-  ${BGIMG?`<div class="bgband"></div>`:''}
 </div>
 </body>
 </html>`;
@@ -2171,13 +2222,34 @@ async function buildLongImage(mode){
   const H_TITLE=Math.max(60, lo('hh')+12), H_LEG=Math.max(38, lo('lf')*4.2),
         H_VENUE=_hasVenue ? Math.max(44, lo('vf')*3.4) : 0,
         H_HEAD=34, H_FOOT=Math.max(42, lo('ff')*4.2);
-  const H_BG = _bgImg ? Math.max(60, Number(th('bgH'))||260) : 0;
+  const BGPAD = _bgImg ? Math.max(0, Number(th('bgPad'))||46) : 0;
   const gridH=rowH.reduce((s,x)=>s+x,0);
-  const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+H_BG+PAD;
+  const totalH=PAD+H_BRAND+H_TITLE+H_LEG+H_VENUE+H_HEAD+gridH+H_FOOT+PAD;
+  const FW = W + BGPAD*2, FH = totalH + BGPAD*2;
   const SC=2, cv=document.createElement('canvas');
-  cv.width=W*SC; cv.height=totalH*SC;
+  cv.width=FW*SC; cv.height=FH*SC;
   const ctx=cv.getContext('2d'); ctx.scale(SC,SC);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,totalH);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,FW,FH);
+  /* 底圖鋪滿整張輸出，表格再疊上去 */
+  if(_bgImg){
+    ctx.save();
+    ctx.globalAlpha=(TH.bgOp!=null?TH.bgOp:100)/100;
+    const iw=_bgImg.width, ih=_bgImg.height, sz=th('bgSize');
+    let sc = sz==='contain' ? Math.min(FW/iw,FH/ih)
+           : sz==='auto'    ? 1
+           : sz==='200%'    ? 2
+           : sz==='400%'    ? 4
+           : Math.max(FW/iw,FH/ih);
+    const dw=iw*sc, dh=ih*sc;
+    const pos=String(th('bgPos')||'center');
+    const hx = pos.includes('left')?0 : pos.includes('right')?(FW-dw) : (FW-dw)/2;
+    const vy = pos.includes('top')?0  : pos.includes('bottom')?(FH-dh) : (FH-dh)/2;
+    ctx.drawImage(_bgImg, hx, vy, dw, dh);
+    ctx.restore();
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(BGPAD+PAD-4, BGPAD+PAD-4, W-PAD*2+8, totalH-PAD*2+8);
+  }
+  ctx.translate(BGPAD, BGPAD);
   ctx.textBaseline='middle';
   let y=PAD;
   // 頁首品牌／報名區
@@ -2270,9 +2342,15 @@ async function buildLongImage(mode){
       const x=gx+TCOL+DCOL*di;
       const p=place[`${di}_${ti}`];
       const h=p?rowH.slice(ti,ti+p.span).reduce((s,v)=>s+v,0):rh;
-      ctx.fillStyle=p?((C[Number(p.a.cat)||0]||{}).color||'#fff'):'#ffffff';
+      const blocked = !p && isBlocked(d.iso, t);
+      ctx.fillStyle=p?((C[Number(p.a.cat)]||{}).color||'#ffffff'):(blocked?'#d6d6d6':'#ffffff');
       ctx.fillRect(x,ry,DCOL,h);
       ctx.strokeRect(x,ry,DCOL,h);
+      if(blocked){
+        ctx.fillStyle='#7d7d7d'; ctx.textAlign='center';
+        ctx.font='bold 11px '+FONT_ZH;
+        ctx.fillText('不使用', x+DCOL/2, ry+h/2);
+      }
       if(!p) return;
       let ly=ry+h/2-(p.lines.length-1)*LH/2;
       p.lines.forEach(ln=>{
@@ -2295,26 +2373,6 @@ async function buildLongImage(mode){
   if(mode!=='zh'){ ctx.font=Math.max(6,lo('ff')*0.9)+'px '+FONT_EN; ctx.fillText((SET.footEn||DEF_FOOT_EN).slice(0,160),PAD+12,y+(mode==='bi'?30:H_FOOT/2)); }
   y+=H_FOOT;
 
-  /* ── 表格下方大底圖：整條橫幅，可挑要用原圖的哪一角 ── */
-  if(_bgImg && H_BG>0){
-    const bw=W-PAD*2, bh=H_BG;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(PAD,y,bw,bh); ctx.clip();
-    ctx.globalAlpha=(TH.bgOp!=null?TH.bgOp:100)/100;
-    const iw=_bgImg.width, ih=_bgImg.height;
-    const sz=th('bgSize');
-    let sc = sz==='contain' ? Math.min(bw/iw,bh/ih)
-           : sz==='auto'    ? 1
-           : sz==='200%'    ? 2
-           : sz==='400%'    ? 4
-           : Math.max(bw/iw,bh/ih);          // cover
-    const dw=iw*sc, dh=ih*sc;
-    const pos=String(th('bgPos')||'center');
-    const hx = pos.includes('left')?0 : pos.includes('right')?(bw-dw) : (bw-dw)/2;
-    const vy = pos.includes('top')?0  : pos.includes('bottom')?(bh-dh) : (bh-dh)/2;
-    ctx.drawImage(_bgImg, PAD+hx, y+vy, dw, dh);
-    ctx.restore();
-  }
 
   const now=new Date();
   const ts=`${_pad2(now.getMonth()+1)}${_pad2(now.getDate())}_${_pad2(now.getHours())}${_pad2(now.getMinutes())}`;
@@ -2357,7 +2415,7 @@ function bindStage(){
   _unsubs.forEach(u=>{ try{u();}catch(e){} });
   _unsubs=[];
   ACT={}; TIMES=null; DATES=null; CATS=null; SET={}; editId=null;
-  LO={}; KV=null; TH={};
+  LO={}; KV=null; TH={}; BLOCK={};
   /* 先畫一次，避免 Firebase 還沒回應時整頁空白 */
   renderStageBar(); render();
   _unsubs.push(onValue(ref(db, SBASE()+'/activities'), snap=>{
@@ -2366,6 +2424,10 @@ function bindStage(){
     $('sync-status').textContent = `● ${nm} 即時同步 · ${Object.keys(ACT).length} 筆`;
     render();
   }, err=>{ $('sync-status').textContent='✗ 連線失敗（請重新整理）'; console.error(err); render(); }));
+  _unsubs.push(onValue(ref(db, SBASE()+'/blocked'), snap=>{
+    BLOCK = snap.val() || {};
+    render();
+  }, err=>{ console.error(err); }));
   _unsubs.push(onValue(ref(db, SBASE()+'/settings'), snap=>{
     const s = snap.val() || {};
     SET = s;
