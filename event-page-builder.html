@@ -276,7 +276,7 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
   <div class="grp">
     <button class="btn" onclick="save()">匯出 HTML 檔</button>
     <button class="btn g" onclick="print()">列印 / 存成 PDF</button>
-    <button class="btn g" onclick="if(confirm('確定要重設版型嗎？目前編輯的內容都會清空（建議先按上方「💾 存檔」備份）。')){localStorage.removeItem('evtpg');location.reload();}">重設版型</button>
+    <button class="btn g" onclick="if(confirm('確定要重設版型嗎？目前編輯的內容都會清空（建議先按上方「💾 存檔」備份）。')){resetAll();}">重設版型</button>
   </div>
   <p class="hint">所有文字點一下即可直接修改。<br>拖曳左側項目或頁面左上角標籤可調整區塊順序；👁 隱藏、＋ 複製整個區塊、🗑 永久刪除區塊。<br>頁面內的資訊格、卡片、單位、議程列與插入的媒體，滑鼠移上去出現「⠿」即可任意拖曳到想要的位置。<br>編輯內容自動儲存於瀏覽器。</p>
 </aside>
@@ -639,18 +639,33 @@ document.getElementById('btnIcon').onclick=()=>pickFiles('image/*','icon');
 document.getElementById('btnVideo').onclick=()=>pickFiles('video/*','video');
 
 const mediaGrid=document.getElementById('mediaGrid');
+let mediaLib=[];   /* 媒體庫清單，會跟著存檔一起保存 */
+
+function renderMediaCell(item){
+  const cell=document.createElement('div'); cell.className='mcell kind-'+item.kind;
+  cell.innerHTML = item.kind==='video'
+    ? `<video src="${item.data}" muted></video><button class="mdel" type="button">✕</button>`
+    : `<img src="${item.data}"><button class="mdel" type="button">✕</button>`;
+  cell.querySelector('.mdel').onclick=e=>{
+    e.stopPropagation();
+    const i=mediaLib.indexOf(item); if(i>-1) mediaLib.splice(i,1);
+    cell.remove(); persist();
+  };
+  cell.onclick=e=>{ if(e.target.classList.contains('mdel'))return; insertMedia(item); };
+  mediaGrid.appendChild(cell);
+}
+function renderMediaLib(){
+  mediaGrid.innerHTML='';
+  mediaLib.forEach(renderMediaCell);
+}
 function addMedia(f,kind){
   if(!f)return;
   const r=new FileReader();
   r.onload=()=>{
     const item={kind,data:r.result};
-    const cell=document.createElement('div'); cell.className='mcell kind-'+kind;
-    cell.innerHTML = kind==='video'
-      ? `<video src="${r.result}" muted></video><button class="mdel" type="button">✕</button>`
-      : `<img src="${r.result}"><button class="mdel" type="button">✕</button>`;
-    cell.querySelector('.mdel').onclick=e=>{e.stopPropagation();cell.remove();};
-    cell.onclick=e=>{ if(e.target.classList.contains('mdel'))return; insertMedia(item); };
-    mediaGrid.appendChild(cell);
+    mediaLib.push(item);
+    renderMediaCell(item);
+    persist();          /* ← 上傳後立刻保存，F5 不會不見 */
   };
   r.readAsDataURL(f);
 }
@@ -719,16 +734,47 @@ function insertMedia(item){
 }
 
 /* ---------- 自動儲存 ---------- */
-let t; function persist(){clearTimeout(t);t=setTimeout(()=>{
-  localStorage.setItem('evtpg',JSON.stringify({
-    html:page.innerHTML,
-    css:['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v))
-  }));},400);}
+/* ================================================================
+   本機自動保存：改用 IndexedDB（localStorage 只有 ~5MB，
+   放 base64 圖片/影片會爆掉，F5 後就整個不見）
+   ================================================================ */
+const IDB_NAME='evtpgDB', IDB_STORE='state';
+function idb(){
+  return new Promise((res,rej)=>{
+    const q=indexedDB.open(IDB_NAME,1);
+    q.onupgradeneeded=()=>{ if(!q.result.objectStoreNames.contains(IDB_STORE)) q.result.createObjectStore(IDB_STORE); };
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  });
+}
+async function idbSet(k,v){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function idbGet(k){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readonly'); const r=tx.objectStore(IDB_STORE).get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbDel(k){ const db=await idb(); return new Promise(res=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete(k); tx.oncomplete=()=>res(); }); }
+
+window.resetAll=async function(){
+  try{ await idbDel('evtpg'); }catch(e){}
+  try{ localStorage.removeItem('evtpg'); }catch(e){}
+  location.reload();
+};
+
+function snapshot(){
+  return {
+    html: page.innerHTML,
+    css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim()),
+    lib: mediaLib   /* ← 媒體庫也一起存，F5 才不會不見 */
+  };
+}
+let t; function persist(){clearTimeout(t);t=setTimeout(async()=>{
+  try{ await idbSet('evtpg', snapshot()); }
+  catch(e){ console.warn('自動保存失敗',e); }
+},400);}
 page.addEventListener('input',persist);
+/* 關頁前再存一次，避免 400ms 內來不及寫入 */
+window.addEventListener('beforeunload',()=>{ try{ idbSet('evtpg', snapshot()); }catch(e){} });
 
 function applyState(o, rebuild){
   page.innerHTML=o.html;
   ['--c1','--c2','--c3','--c4'].forEach((v,i)=>set(v,(o.css[i]||'').trim()));
+  if(Array.isArray(o.lib)){ mediaLib=o.lib; renderMediaLib(); }
   const k=page.querySelector('.kv');
   if(k){ renderDropPreview(drop,k.src,'點擊或拖曳上傳 KV<br>JPG / PNG / PDF',()=>{document.getElementById('kvbox').innerHTML='';persist();}); }
   else { drop.innerHTML='點擊或拖曳上傳 KV<br>JPG / PNG / PDF'; drop.classList.remove('has-img'); }
@@ -736,9 +782,17 @@ function applyState(o, rebuild){
   if(rebuild){ build(); bindPage(); initFreeGrids(); initMediaEmbeds(); persist(); }
 }
 
-(function restore(){
-  const s=localStorage.getItem('evtpg'); if(!s)return;
-  try{ applyState(JSON.parse(s)); }catch(e){}
+(async function restore(){
+  try{
+    let s=await idbGet('evtpg');
+    if(!s){
+      /* 舊版資料搬家：localStorage → IndexedDB */
+      const old=localStorage.getItem('evtpg');
+      if(old){ try{ s=JSON.parse(old); await idbSet('evtpg',s); localStorage.removeItem('evtpg'); }catch(e){} }
+    }
+    if(!s) return;
+    applyState(s, true);
+  }catch(e){ console.warn('還原失敗',e); }
 })();
 
 /* ================================================================
@@ -795,12 +849,7 @@ function paintSlots(){
 }
 paintSlots();
 
-function currentData(){
-  return {
-    html: page.innerHTML,
-    css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim())
-  };
-}
+function currentData(){ return snapshot(); }
 
 async function initFB(){
   try{
@@ -830,9 +879,11 @@ async function saveSlot(i){
   if(!name){ name=prompt(`請幫檔${i}命名（展名／場次）：`,'')||''; name=name.trim(); row.querySelector('input').value=name; }
   if(slotMeta[i] && !confirm(`檔${i}「${slotMeta[i].name||'未命名'}」已有內容，確定覆蓋？`)) return;
   const d=currentData();
+  const mb=(JSON.stringify(d).length/1048576);
+  if(mb>8 && !confirm(`這份存檔約 ${mb.toFixed(1)} MB（圖片／影片是用 base64 內嵌）。\n檔案太大可能上傳失敗或很慢，建議先縮小圖片。\n仍要繼續嗎？`)) return;
   try{
     await fbDB.set(fbDB.ref(fbDB.db, `${FB_PATH}/${i}`), {
-      name, at:new Date().toLocaleString('zh-TW'), html:d.html, css:d.css
+      name, at:new Date().toLocaleString('zh-TW'), html:d.html, css:d.css, lib:d.lib||[]
     });
     alert(`已存入檔${i}${name?'：'+name:''}`);
   }catch(e){ alert('存檔失敗：'+e.message); }
@@ -845,7 +896,7 @@ async function loadSlot(i){
     const snap=await fbDB.get(fbDB.ref(fbDB.db, `${FB_PATH}/${i}`));
     const o=snap.val();
     if(!o||!o.html){ alert('這一格是空的。'); return; }
-    applyState({html:o.html, css:o.css}, true);
+    applyState({html:o.html, css:o.css, lib:o.lib||[]}, true);
     alert(`已讀取檔${i}${o.name?'：'+o.name:''}`);
   }catch(e){ alert('讀取失敗：'+e.message); }
 }
@@ -871,10 +922,7 @@ document.getElementById('btnWipeAll').onclick=async()=>{
 
 /* ---------- 本機備份：下載 .json ／ 匯入 ／ 重設 ---------- */
 document.getElementById('btnSaveFile').onclick=()=>{
-  const data={
-    html: page.innerHTML,
-    css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v))
-  };
+  const data=snapshot();
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -902,8 +950,7 @@ document.getElementById('btnLoadFile').onclick=()=>{
 };
 document.getElementById('btnResetTop').onclick=()=>{
   if(confirm('確定要重設版型嗎？目前編輯的內容都會清空（建議先按「💾 存檔」備份）。')){
-    localStorage.removeItem('evtpg');
-    location.reload();
+    resetAll();
   }
 };
 
