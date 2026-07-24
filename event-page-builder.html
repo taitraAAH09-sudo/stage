@@ -23,6 +23,32 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 .side h1 span{color:var(--c2)}
 .topActs{display:flex;gap:6px;padding:12px 16px 0}
 .topActs .btn{flex:1;padding:8px 2px;font-size:10.5px;letter-spacing:0}
+
+/* ===== Firebase 存讀槽 ===== */
+.fbGrp{padding-bottom:4px}
+.slots{display:flex;flex-direction:column;gap:6px}
+.slot{display:flex;align-items:center;gap:5px;background:#1D2230;border:1px solid var(--line);border-radius:8px;padding:5px 6px}
+.slot .sv,.slot .ld{border:0;border-radius:6px;padding:6px 7px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;background:#2B3444;color:#C3CBDA;white-space:nowrap}
+.slot .sv:hover,.slot .ld:hover{filter:brightness(1.25)}
+.slot .ld:disabled{opacity:.35;cursor:not-allowed}
+.slot input{flex:1;min-width:0;background:#141821;border:1px solid var(--line);border-radius:6px;color:#E6EAF2;font-family:inherit;font-size:11px;padding:6px 8px;outline:0}
+.slot input::placeholder{color:#5C6577}
+.slot .dot{width:9px;height:9px;border-radius:50%;background:#3A4152;flex:0 0 9px}
+.slot .dot.on{background:#E8552D}
+.slot .rm{border:0;background:transparent;color:#5C6577;font-size:13px;cursor:pointer;padding:0 2px;line-height:1}
+.slot .rm:hover{color:#ff6161}
+.slotSum{font-size:9px;color:#5C6577;line-height:1.7;margin-top:8px;word-break:break-all}
+.btn.wipe{border:1px dashed #3A4152;background:transparent;color:#8A93A3;margin-top:8px}
+.fbActs{display:flex;gap:6px;margin-top:10px}
+.fbActs .btn{flex:1;padding:8px 2px;font-size:10px;letter-spacing:0;margin-top:0}
+
+/* ===== 文字大小工具列 ===== */
+#fsBar{position:fixed;z-index:999;display:none;align-items:center;gap:4px;background:rgba(14,17,22,.96);border:1px solid var(--line);border-radius:9px;padding:5px 7px;box-shadow:0 8px 26px rgba(0,0,0,.5)}
+#fsBar button{border:0;border-radius:6px;background:#2B3444;color:#E6EAF2;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;padding:4px 9px;line-height:1.4}
+#fsBar button:hover{filter:brightness(1.3)}
+#fsBar .fsVal{min-width:44px;text-align:center;font-size:11px;color:#C3CBDA;font-weight:700}
+#fsBar .sep{width:1px;height:16px;background:var(--line);margin:0 2px}
+#fsBar .lbl{font-size:9px;color:#5C6577;letter-spacing:.1em;margin-right:2px}
 .grp{padding:14px 16px;border-bottom:1px solid var(--line)}
 .grp>label{display:block;font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:8px;font-weight:700}
 
@@ -173,18 +199,33 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 .foot{background:var(--ink);color:#fff;padding:44px 56px;font-size:12px;line-height:2;text-align:center;opacity:.92}
 
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{display:none}}
-@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}}
+@media print{.side{display:none}.app{grid-template-columns:1fr}.stage{padding:0;overflow:visible}.page{box-shadow:none;border-radius:0}.hnd{display:none}.fhandle,.fdel,.fresize,.fadd,.secResize,.mtool,.resize-handle,.dropClear{display:none!important}}
 </style>
 </head>
 <body>
+<div id="fsBar">
+  <span class="lbl">字級</span>
+  <button type="button" id="fsMinus">A−</button>
+  <span class="fsVal" id="fsVal">–</span>
+  <button type="button" id="fsPlus">A+</button>
+  <span class="sep"></span>
+  <button type="button" id="fsBold" title="粗細">B</button>
+  <button type="button" id="fsReset" title="還原原本大小">↺</button>
+</div>
 <div class="app">
 <aside class="side">
   <h1>活動頁面<span>版型產生器</span></h1>
 
-  <div class="topActs">
-    <button class="btn g" id="btnSaveFile" type="button" title="把目前編輯的內容存成檔案，之後可以匯入繼續編輯">💾 存檔</button>
-    <button class="btn g" id="btnLoadFile" type="button" title="讀取之前存的檔案">📂 匯入</button>
-    <button class="btn g" id="btnResetTop" type="button" title="清空目前編輯，回到初始版型">🔄 重設</button>
+  <div class="grp fbGrp">
+    <label>工作檔存讀（Firebase）</label>
+    <div class="slots" id="slots"></div>
+    <div class="slotSum" id="slotSum">連線中…</div>
+    <button class="btn g wipe" id="btnWipeAll" type="button">🧹 洗白全部</button>
+    <div class="fbActs">
+      <button class="btn g" id="btnSaveFile" type="button" title="另存成 .json 檔備份">💾 下載備份</button>
+      <button class="btn g" id="btnLoadFile" type="button" title="讀取 .json 備份檔">📂 匯入</button>
+      <button class="btn g" id="btnResetTop" type="button" title="清空目前編輯，回到初始版型">🔄 重設</button>
+    </div>
   </div>
 
   <div class="grp">
@@ -208,7 +249,10 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 
     <label class="chk"><input type="checkbox" id="gradToggle"> 主視覺改用漸層背景（不只純色）</label>
 
-    <label style="margin-top:14px">快速換一組配色</label>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+      <label style="margin:0">快速換一組配色</label>
+      <button class="btn g" id="btnRandom" type="button" style="width:auto;padding:6px 12px;font-size:11px">🎲 隨機配色</button>
+    </div>
     <div class="presets" id="presets"></div>
   </div>
 
@@ -309,9 +353,9 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
     </div>
   </section>
 
-  <section class="sec" data-k="foot" data-n="聯絡footer">
+  <section class="sec foot" data-k="foot" data-n="聯絡footer">
     <span class="hnd" draggable="true">⠿ 頁尾</span>
-    <div class="foot" contenteditable>展覽業務聯絡｜TAITRA 展覽組<br>TEL +886-2-2725-5200　EMAIL exhibit@taitra.org.tw<br>© 2026 Taiwan External Trade Development Council</div>
+    <div contenteditable>展覽業務聯絡｜TAITRA 展覽組<br>TEL +886-2-2725-5200　EMAIL exhibit@taitra.org.tw<br>© 2026 Taiwan External Trade Development Council</div>
   </section>
 
 </div>
@@ -562,6 +606,28 @@ PRESETS.forEach(p=>{
   presetsEl.appendChild(b);
 });
 
+/* ---------- 🎲 隨機配色：用 HSL 色彩理論算出協調配色，避免醜或重複 ---------- */
+function hsl2hex(h,s,l){
+  s/=100; l/=100;
+  const k=n=>(n+h/30)%12;
+  const a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  const toHex=x=>Math.round(255*x).toString(16).padStart(2,'0');
+  return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+}
+let lastHue=null;
+document.getElementById('btnRandom').onclick=()=>{
+  let hue;
+  do{ hue=Math.floor(Math.random()*360); }while(lastHue!==null && Math.min(Math.abs(hue-lastHue),360-Math.abs(hue-lastHue))<40);
+  lastHue=hue;
+  const c1=hsl2hex(hue, 42+Math.random()*16, 20+Math.random()*8);
+  const c2=hsl2hex((hue+150+Math.random()*60)%360, 65+Math.random()*20, 50+Math.random()*10);
+  const c3=hsl2hex((hue+30+Math.random()*30)%360, 60+Math.random()*25, 55+Math.random()*15);
+  const c4=hsl2hex(hue, 12+Math.random()*10, 94+Math.random()*4);
+  [c1,c2,c3,c4].forEach((h,i)=>set('--c'+(i+1),h));
+  persist();
+};
+
 /* ---------- 媒體庫：上傳圖片／ICON／影片，插入到目前游標處 ---------- */
 function pickFiles(accept,kind){
   const inp=document.createElement('input'); inp.type='file'; inp.accept=accept; inp.multiple=true;
@@ -591,12 +657,13 @@ function addMedia(f,kind){
 
 function buildEmbed(item){
   const wrap=document.createElement(item.kind==='icon' ? 'span' : 'div');
-  wrap.className='media-embed'+(item.kind==='icon'?' icon-embed':' block');
+  wrap.className='media-embed freeitem'+(item.kind==='icon'?' icon-embed':' block');
   wrap.contentEditable='false';
   wrap.dataset.kind=item.kind;
   const tag=item.kind==='video'?'video':'img';
   const startW=item.kind==='icon'?28:260;
   wrap.innerHTML =
+    `<span class="fhandle" contenteditable="false" title="拖曳搬移">⠿</span>`+
     `<${tag} src="${item.data}" ${item.kind==='video'?'controls':''} style="width:${startW}px;height:auto;display:block"></${tag}>`+
     `<span class="mtool" contenteditable="false"><button type="button" class="mdup" title="複製一份">＋</button><button type="button" class="mdel" title="刪除">✕</button></span>`+
     `<span class="resize-handle" contenteditable="false" title="拖曳調整大小"></span>`;
@@ -605,6 +672,8 @@ function buildEmbed(item){
 }
 function bindEmbedControls(wrap){
   const mediaEl=wrap.querySelector('img,video');
+  const handle=wrap.querySelector(':scope > .fhandle');
+  if(handle)makeDraggable(handle, wrap);
   wrap.querySelector('.mdup').onclick=e=>{
     e.stopPropagation();
     const clone=wrap.cloneNode(true);
@@ -640,12 +709,10 @@ function insertMedia(item){
   const targetSec = (activeSec && page.contains(activeSec)) ? activeSec : page.querySelector('.sec:not(.hide)');
   if(!targetSec.dataset.freeCanvas){ targetSec.dataset.freeCanvas='1'; targetSec.style.position='relative'; }
   const wrap=buildEmbed(item);
-  wrap.classList.add('freeitem');
   wrap.style.position='absolute';
   wrap.style.left='24px';
   wrap.style.top='24px';
   targetSec.appendChild(wrap);
-  bindFreeDrag(wrap, targetSec);
   targetSec.style.minHeight=Math.max(targetSec.offsetHeight, 24+wrap.offsetHeight+30)+'px';
   wrap.scrollIntoView({behavior:'smooth',block:'center'});
   persist();
@@ -674,7 +741,135 @@ function applyState(o, rebuild){
   try{ applyState(JSON.parse(s)); }catch(e){}
 })();
 
-/* ---------- 頂部：存檔／匯入／重設（存成檔案，可跨瀏覽器/跨裝置攜帶） ---------- */
+/* ================================================================
+   Firebase 工作檔存讀（3 格）— Presskit 專案
+   ================================================================ */
+const FB_PATH = 'eventPageBuilder/slots';   // Realtime Database 路徑，可自行改
+const SLOT_N  = 3;
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyADQgbpHc_KJNRqZ_XQ1Wk4Js3ZrX81LtY",
+  authDomain:        "presskit-96e01.firebaseapp.com",
+  databaseURL:       "https://presskit-96e01-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "presskit-96e01",
+  storageBucket:     "presskit-96e01.firebasestorage.app",
+  messagingSenderId: "1091006881935",
+  appId:             "1:1091006881935:web:5c5952175fd6744b9d50fa"
+};
+
+let fbDB=null, slotMeta={};
+const slotsEl=document.getElementById('slots');
+const slotSum=document.getElementById('slotSum');
+
+function buildSlotUI(){
+  slotsEl.innerHTML='';
+  for(let i=1;i<=SLOT_N;i++){
+    const row=document.createElement('div');
+    row.className='slot'; row.dataset.i=i;
+    row.innerHTML=`<button class="sv" type="button">💾 存${i}</button>
+      <button class="ld" type="button" disabled>📂 讀${i}</button>
+      <input type="text" placeholder="填入名／場次" maxlength="40">
+      <span class="dot"></span>
+      <button class="rm" type="button" title="清空這格">✕</button>`;
+    slotsEl.appendChild(row);
+    row.querySelector('.sv').onclick=()=>saveSlot(i);
+    row.querySelector('.ld').onclick=()=>loadSlot(i);
+    row.querySelector('.rm').onclick=()=>clearSlot(i);
+    row.querySelector('input').onchange=()=>renameSlot(i,row.querySelector('input').value.trim());
+  }
+}
+buildSlotUI();
+
+function paintSlots(){
+  const names=[];
+  for(let i=1;i<=SLOT_N;i++){
+    const row=slotsEl.querySelector(`.slot[data-i="${i}"]`);
+    const m=slotMeta[i];
+    row.querySelector('.dot').classList.toggle('on',!!m);
+    row.querySelector('.ld').disabled=!m;
+    const inp=row.querySelector('input');
+    if(document.activeElement!==inp) inp.value=m?(m.name||''):'';
+    names.push(`檔${i}:${m?(m.name||'未命名'):'空'}`);
+  }
+  slotSum.textContent=names.join('｜');
+}
+paintSlots();
+
+function currentData(){
+  return {
+    html: page.innerHTML,
+    css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim())
+  };
+}
+
+async function initFB(){
+  try{
+    const appMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const dbMod  = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+    const app = appMod.initializeApp(firebaseConfig);
+    const db  = dbMod.getDatabase(app);
+    fbDB = { db, ...dbMod };
+    fbDB.onValue(fbDB.ref(db, FB_PATH), snap=>{
+      const v=snap.val()||{};
+      slotMeta={};
+      for(let i=1;i<=SLOT_N;i++){ if(v[i]) slotMeta[i]={name:v[i].name||'', at:v[i].at||''}; }
+      paintSlots();
+    });
+    slotSum.textContent='已連線 Firebase';
+  }catch(e){
+    console.error(e);
+    slotSum.textContent='⚠ Firebase 未連線，請確認上方 firebaseConfig 已填寫正確。';
+  }
+}
+initFB();
+
+async function saveSlot(i){
+  if(!fbDB){ alert('Firebase 尚未連線，請先填好 firebaseConfig。'); return; }
+  const row=slotsEl.querySelector(`.slot[data-i="${i}"]`);
+  let name=row.querySelector('input').value.trim();
+  if(!name){ name=prompt(`請幫檔${i}命名（展名／場次）：`,'')||''; name=name.trim(); row.querySelector('input').value=name; }
+  if(slotMeta[i] && !confirm(`檔${i}「${slotMeta[i].name||'未命名'}」已有內容，確定覆蓋？`)) return;
+  const d=currentData();
+  try{
+    await fbDB.set(fbDB.ref(fbDB.db, `${FB_PATH}/${i}`), {
+      name, at:new Date().toLocaleString('zh-TW'), html:d.html, css:d.css
+    });
+    alert(`已存入檔${i}${name?'：'+name:''}`);
+  }catch(e){ alert('存檔失敗：'+e.message); }
+}
+
+async function loadSlot(i){
+  if(!fbDB) return;
+  if(!confirm(`讀取檔${i}「${slotMeta[i]?.name||'未命名'}」？目前編輯的內容會被取代。`)) return;
+  try{
+    const snap=await fbDB.get(fbDB.ref(fbDB.db, `${FB_PATH}/${i}`));
+    const o=snap.val();
+    if(!o||!o.html){ alert('這一格是空的。'); return; }
+    applyState({html:o.html, css:o.css}, true);
+    alert(`已讀取檔${i}${o.name?'：'+o.name:''}`);
+  }catch(e){ alert('讀取失敗：'+e.message); }
+}
+
+async function renameSlot(i,name){
+  if(!fbDB||!slotMeta[i]) return;
+  try{ await fbDB.set(fbDB.ref(fbDB.db, `${FB_PATH}/${i}/name`), name); }catch(e){}
+}
+
+async function clearSlot(i){
+  if(!fbDB) return;
+  if(!slotMeta[i]){ slotsEl.querySelector(`.slot[data-i="${i}"] input`).value=''; return; }
+  if(!confirm(`確定清空檔${i}「${slotMeta[i].name||'未命名'}」？此動作無法復原。`)) return;
+  try{ await fbDB.remove(fbDB.ref(fbDB.db, `${FB_PATH}/${i}`)); }catch(e){ alert('清除失敗：'+e.message); }
+}
+
+document.getElementById('btnWipeAll').onclick=async()=>{
+  if(!fbDB) return;
+  if(!confirm('確定要清空全部 3 格存檔嗎？此動作無法復原。')) return;
+  if(!confirm('再確認一次：全部存檔都會消失，確定執行？')) return;
+  try{ await fbDB.remove(fbDB.ref(fbDB.db, FB_PATH)); alert('已全部清空。'); }catch(e){ alert('清除失敗：'+e.message); }
+};
+
+/* ---------- 本機備份：下載 .json ／ 匯入 ／ 重設 ---------- */
 document.getElementById('btnSaveFile').onclick=()=>{
   const data={
     html: page.innerHTML,
@@ -765,8 +960,7 @@ function growContainer(container){
   });
   container.style.minHeight=(maxBottom+50)+'px';
 }
-function bindFreeDrag(item, container){
-  const {handle, del, resize}=ensureControls(item);
+function makeDraggable(handle, item, container){
   handle.onmousedown=e=>{
     e.preventDefault(); e.stopPropagation();
     item.classList.add('dragging');
@@ -780,12 +974,16 @@ function bindFreeDrag(item, container){
       document.removeEventListener('mousemove',onMove);
       document.removeEventListener('mouseup',onUp);
       item.classList.remove('dragging');
-      growContainer(container);
+      if(container)growContainer(container);
       persist();
     }
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
   };
+}
+function bindFreeDrag(item, container){
+  const {handle, del, resize}=ensureControls(item);
+  makeDraggable(handle, item, container);
   del.onclick=e=>{
     e.stopPropagation(); e.preventDefault();
     if(container.querySelectorAll(':scope > .freeitem').length<=1){
@@ -887,6 +1085,109 @@ function initFreeGrids(){
   });
   document.querySelectorAll('.sec').forEach(addSecResizeHandle);
 }
+
+/* ================================================================
+   全站文字大小調整：選取任何文字 → 浮出「字級」工具列
+   ================================================================ */
+const fsBar=document.getElementById('fsBar'), fsVal=document.getElementById('fsVal');
+let fsTarget=null;
+
+function editableAncestor(n){
+  while(n && n!==page){
+    if(n.nodeType===1 && n.hasAttribute && n.hasAttribute('contenteditable')) return n;
+    n=n.parentNode;
+  }
+  return null;
+}
+/* 找出這次要調整的元素：優先用「選取範圍所在的最小行內/區塊元素」 */
+function pickTarget(sel){
+  if(!sel||sel.rangeCount===0) return null;
+  let n=sel.getRangeAt(0).commonAncestorContainer;
+  if(n.nodeType===3) n=n.parentNode;
+  if(!page.contains(n)) return null;
+  return n;
+}
+function curSize(el){ return Math.round(parseFloat(getComputedStyle(el).fontSize)); }
+
+function showBar(){
+  const sel=window.getSelection();
+  const el=pickTarget(sel);
+  if(!el || !editableAncestor(el)){ fsBar.style.display='none'; fsTarget=null; return; }
+  fsTarget=el;
+  fsVal.textContent=curSize(el)+'px';
+  const r=sel.getRangeAt(0).getBoundingClientRect();
+  const rect=(r.width||r.height)?r:el.getBoundingClientRect();
+  fsBar.style.display='flex';
+  const bw=fsBar.offsetWidth||240;
+  let left=rect.left+rect.width/2-bw/2;
+  left=Math.max(8,Math.min(left,innerWidth-bw-8));
+  let top=rect.top-fsBar.offsetHeight-8;
+  if(top<8) top=rect.bottom+8;
+  fsBar.style.left=left+'px';
+  fsBar.style.top=top+'px';
+}
+document.addEventListener('selectionchange',()=>{ setTimeout(showBar,0); });
+document.addEventListener('mousedown',e=>{ if(!fsBar.contains(e.target)) { /* 讓 selectionchange 處理 */ } });
+window.addEventListener('scroll',()=>{ if(fsBar.style.display==='flex') showBar(); },true);
+window.addEventListener('resize',()=>{ if(fsBar.style.display==='flex') showBar(); });
+
+/* 若選取的只是元素中的一段文字 → 包成 <span> 只改那一段 */
+function wrapSelection(){
+  const sel=window.getSelection();
+  if(!sel||sel.rangeCount===0) return null;
+  const range=sel.getRangeAt(0);
+  if(range.collapsed) return null;
+  const holder=fsTarget;
+  const wholeText = holder && holder.textContent.trim()===range.toString().trim();
+  if(wholeText) return holder;               // 整段都選 → 直接改該元素
+  try{
+    const span=document.createElement('span');
+    span.style.fontSize=curSize(holder)+'px';
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    const nr=document.createRange(); nr.selectNodeContents(span);
+    sel.removeAllRanges(); sel.addRange(nr);
+    fsTarget=span;
+    return span;
+  }catch(e){ return holder; }
+}
+function bump(delta){
+  if(!fsTarget) return;
+  const el=wrapSelection()||fsTarget;
+  const now=curSize(el);
+  const next=Math.max(6,Math.min(200,now+delta));
+  el.style.fontSize=next+'px';
+  el.style.lineHeight=el.style.lineHeight||'1.4';
+  fsVal.textContent=next+'px';
+  persist(); showBar();
+}
+document.getElementById('fsPlus').onmousedown=e=>e.preventDefault();
+document.getElementById('fsMinus').onmousedown=e=>e.preventDefault();
+document.getElementById('fsBold').onmousedown=e=>e.preventDefault();
+document.getElementById('fsReset').onmousedown=e=>e.preventDefault();
+document.getElementById('fsPlus').onclick=()=>bump(1);
+document.getElementById('fsMinus').onclick=()=>bump(-1);
+document.getElementById('fsBold').onclick=()=>{
+  if(!fsTarget) return;
+  document.execCommand('bold');
+  persist();
+};
+document.getElementById('fsReset').onclick=()=>{
+  if(!fsTarget) return;
+  const el=fsTarget;
+  el.style.fontSize=''; el.style.lineHeight='';
+  if(el.tagName==='SPAN' && !el.getAttribute('style') && !el.className){
+    const p=el.parentNode; while(el.firstChild) p.insertBefore(el.firstChild,el); el.remove(); fsTarget=p;
+  }
+  fsVal.textContent=curSize(fsTarget)+'px';
+  persist();
+};
+/* 快捷鍵：Ctrl/⌘ + [ 縮小 、 ] 放大 */
+document.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)) return;
+  if(e.key===']'){ e.preventDefault(); bump(1); }
+  if(e.key==='['){ e.preventDefault(); bump(-1); }
+});
 
 build(); bindPage();
 function readyInit(){ initFreeGrids(); initMediaEmbeds(); }
