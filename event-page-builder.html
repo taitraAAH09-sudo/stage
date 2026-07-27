@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V4</title>
+<title>活動頁面版型產生器 V10</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -58,6 +58,7 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 #fsBar{position:fixed;z-index:999;display:none;align-items:center;gap:4px;background:rgba(14,17,22,.96);border:1px solid var(--line);border-radius:9px;padding:5px 7px;box-shadow:0 8px 26px rgba(0,0,0,.5)}
 #fsBar button{border:0;border-radius:6px;background:#2B3444;color:#E6EAF2;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;padding:4px 9px;line-height:1.4}
 #fsBar button:hover{filter:brightness(1.3)}
+#fsBar #fsCopy{background:#1B5E3A;white-space:nowrap}
 #fsBar .fsVal{min-width:44px;text-align:center;font-size:11px;color:#C3CBDA;font-weight:700}
 #fsBar .sep{width:1px;height:16px;background:var(--line);margin:0 2px}
 #fsBar .lbl{font-size:9px;color:#5C6577;letter-spacing:.1em;margin-right:2px}
@@ -248,6 +249,23 @@ body.altdown .page *:not(.hnd):not(.rowTools):not(.slotDel):hover{outline:1px da
 .bGuide .bMove{cursor:move;font-size:12px;opacity:.8}
 .bGuide b{font-weight:800}
 
+/* 空的照片/LOGO 格：編輯時整欄收合，不影響排版；只留一個小小的提示條 */
+.tpl2 .spk-row:has(.photo:not(:has(img))){grid-template-columns:1fr}
+.tpl2 .org-row:has(.logo-slot:not(:has(img))){grid-template-columns:1fr}
+.tpl2 .photo:not(:has(img)),.tpl2 .logo-slot:not(:has(img)){aspect-ratio:auto;min-height:0;border:0;background:transparent}
+.tpl2 .photo:not(:has(img)) .ph,.tpl2 .logo-slot:not(:has(img)) .ph{display:inline-block;font-size:10px;color:#9AA7B0;border:1px dashed #CBD5DB;border-radius:5px;padding:5px 10px;background:#F7F9FA}
+.tpl2 .photo:not(:has(img)):hover .ph,.tpl2 .logo-slot:not(:has(img)):hover .ph{border-color:var(--c2);color:var(--c2)}
+
+#trashCan,#copyZone,.dropZone{position:fixed;z-index:9998;width:196px;height:78px;border-radius:12px;background:rgba(20,24,33,.94);border:2px dashed #4C566B;display:none;flex-direction:row;align-items:center;justify-content:center;gap:10px;color:#8A93A3;box-shadow:0 14px 40px rgba(0,0,0,.5);transition:background .15s,border-color .15s,transform .15s;pointer-events:none}
+#trashCan.on,#copyZone.on{display:flex}
+#trashCan.hot{background:#8A1F2E;border-color:#ff6b6b;color:#fff;transform:scale(1.06)}
+#copyZone.hot{background:#1B5E3A;border-color:#5Bdd93;color:#fff;transform:scale(1.06)}
+#trashCan .tcIcon,#copyZone .tcIcon{font-size:26px;line-height:1}
+#trashCan .tcTxt,#copyZone .tcTxt{font-size:12px;font-weight:800;letter-spacing:.04em}
+
+@keyframes copyFlashAnim{0%{outline-color:rgba(91,221,147,.95)}100%{outline-color:rgba(91,221,147,0)}}
+.copyFlash{outline:3px solid rgba(91,221,147,.95);outline-offset:3px;border-radius:8px;animation:copyFlashAnim .9s ease-out forwards}
+
 /* 使用者自行插入的元件 */
 .uBox{position:relative;display:inline-block;min-width:40px;padding:10px 14px;border-radius:8px;margin:4px}
 .uBox .uDel{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(20,24,33,.85);color:#fff;font-size:10px;line-height:20px;padding:0;cursor:pointer;opacity:0;transition:.15s;z-index:5}
@@ -381,6 +399,7 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 .tpl2 .logo-slot:has(img){border-style:solid;border-color:#E0E6E9;background:#F2F5F6}
 .tpl2 .logo-slot img{max-width:88%;max-height:88px;object-fit:contain;display:block}
 .tpl2 .photo .ph,.tpl2 .logo-slot .ph{font-size:11px;color:#A9B4BA;text-align:center;line-height:1.7;padding:8px;pointer-events:none;font-weight:500}
+.tpl2 .photo .ph small,.tpl2 .logo-slot .ph small{display:block;font-size:9px;color:#B8C2C8;margin-top:2px}
 .tpl2 .photo:hover,.tpl2 .logo-slot:hover{border-color:var(--c2);background:#EDF4F5}
 
 .tpl2 .spk-body .nm{font-size:21px;font-weight:900;color:#0E7A88;margin-bottom:5px;letter-spacing:.01em;line-height:1.3}
@@ -468,6 +487,8 @@ document.addEventListener('DOMContentLoaded',function(){
   <span class="sep"></span>
   <button type="button" id="fsBold" title="粗細">B</button>
   <button type="button" id="fsReset" title="還原原本大小">↺</button>
+  <span class="sep"></span>
+  <button type="button" id="fsCopy" title="複製這一塊（在下方疊一份）">⧉ 複製</button>
 </div>
 <div class="app">
 <div id="onb">
@@ -487,7 +508,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V4</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V10</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -615,7 +636,13 @@ document.addEventListener('DOMContentLoaded',function(){
     <button data-ins="line" type="button">＋ 分隔線</button>
   </div>
   <button class="full" data-ins="btn" type="button">＋ 按鈕</button>
-  <p class="tip">新增的元件可用 Alt+拖曳 移動，右上 ✕ 刪除。</p>
+
+  <h5 id="spkAddHead">版型2 專用</h5>
+  <div class="grid2" id="spkAddGrp">
+    <button data-add2="spk" type="button">＋ 新增講師</button>
+    <button data-add2="org" type="button">＋ 新增協會</button>
+  </div>
+  <p class="tip">新增的元件可用 Alt+拖曳 移動，右上 ✕ 刪除。「新增講師」會把整組（照片＋介紹＋協會）加到最後一位之後。</p>
 </div>
 <main class="stage">
 <div class="page" id="page">
@@ -1248,7 +1275,7 @@ const TPL2_HTML = `
         </div>
 
         <div class="org-row">
-          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="logo-slot"><div class="ph">公司 / 協會 LOGO<br><small>點此上傳</small></div></div>
           <div class="org-body">
             <div class="ab" contenteditable>EFDA (European Fastener Distributor Association)</div>
             <div class="zh2" contenteditable>歐洲扣件經銷商協會</div>
@@ -1275,7 +1302,7 @@ const TPL2_HTML = `
         </div>
 
         <div class="org-row">
-          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="logo-slot"><div class="ph">公司 / 協會 LOGO<br><small>點此上傳</small></div></div>
           <div class="org-body">
             <div class="ab" contenteditable>BIAFD (British Industrial Fasteners Federation)</div>
             <div class="zh2" contenteditable>英國暨愛爾蘭扣件批發商協會</div>
@@ -1304,7 +1331,7 @@ const TPL2_HTML = `
         </div>
 
         <div class="org-row">
-          <div class="logo-slot"><div class="ph">公司 LOGO</div></div>
+          <div class="logo-slot"><div class="ph">公司 / 協會 LOGO<br><small>點此上傳</small></div></div>
           <div class="org-body">
             <div class="ab" contenteditable>FDS (Association of German Fastener Wholesalers)</div>
             <div class="zh2" contenteditable>德國扣件批發商協會</div>
@@ -1313,8 +1340,6 @@ const TPL2_HTML = `
         </div>
 
       </div>
-      <button class="fadd" data-add="spk" type="button">＋ 新增講師</button>
-      <button class="fadd" data-add="org" type="button">＋ 新增協會</button>
     </div>
   </section>
   <section class="sec gift" data-k="gift" data-n="活動好禮">
@@ -1985,12 +2010,17 @@ function bindPhotoSlot(el){
     if(e.target.classList.contains('slotDel')) return;
     if(e.target.classList.contains('imgRz')) return;      /* 拉縮放手把不要開檔案框 */
     if(el.querySelector('img')) return;                    /* 已有圖：先按 ✕ 移除才能換 */
-    const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+    const inp=document.createElement('input');
+    inp.type='file'; inp.accept='image/*';
+    inp.style.cssText='position:fixed;left:-9999px';
+    document.body.appendChild(inp);
     inp.onchange=async ev=>{
-      const f=ev.target.files[0]; if(!f)return;
+      const f=ev.target.files&&ev.target.files[0];
+      inp.remove();
+      if(!f)return;
       const isLogo=el.classList.contains('logo-slot');
       const d=await compressImage(f, isLogo?600:900, 0.85);
-      if(!d)return;
+      if(!d){ alert('圖片讀取失敗，請換一張或確認格式（JPG/PNG）。'); return; }
       el.innerHTML=`<img src="${d}"><button type="button" class="slotDel" title="移除圖片">✕</button><span class="imgRz" title="拖曳縮放" contenteditable="false"></span>`;
       bindSlotDel(el); bindImgResize(el);
       persist(); pushHistory();
@@ -2002,9 +2032,12 @@ function bindPhotoSlot(el){
 function bindSlotDel(el){
   const b=el.querySelector('.slotDel');
   if(b) b.onclick=e=>{
-    e.stopPropagation();
+    e.stopPropagation(); e.preventDefault();
     const isLogo=el.classList.contains('logo-slot');
-    el.innerHTML=`<div class="ph">${isLogo?'公司 LOGO':'講者照片'}</div>`;
+    /* 清掉圖片、還原尺寸，回到空白可再上傳的狀態 */
+    el.removeAttribute('style');
+    el.style.width=''; el.style.flex='';
+    el.innerHTML=`<div class="ph">${isLogo?'公司 / 協會 LOGO<br><small>點此上傳</small>':'講者照片<br><small>點此上傳</small>'}</div>`;
     persist(); pushHistory();
   };
 }
@@ -2107,26 +2140,39 @@ function initBlockTools(){
 function initSpeakerRows(){
   page.querySelectorAll('.photo, .logo-slot').forEach(el=>{ bindPhotoSlot(el); if(el.querySelector('img')) bindImgResize(el); });
   page.querySelectorAll('.spk-row, .org-row').forEach(bindRowTools);
-  page.querySelectorAll('.fadd[data-add]').forEach(btn=>{
-    if(btn.dataset.bound) return; btn.dataset.bound='1';
-    btn.onclick=e=>{
-      e.stopPropagation();
-      const kind=btn.dataset.add;
-      const box=btn.closest('.wrap2').querySelector('.spks');
-      const last=[...box.querySelectorAll(kind==='spk'?'.spk-row':'.org-row')].pop();
-      if(!last) return;
-      const c=last.cloneNode(true);
-      c.querySelectorAll('.rowTools').forEach(x=>x.remove());
-      /* 清空成空白列，方便直接填新的人 */
-      const slot=c.querySelector('.photo,.logo-slot');
-      if(slot){ slot.removeAttribute('data-bound');
-        slot.innerHTML = slot.classList.contains('logo-slot')
-          ? '<div class="ph">公司 LOGO</div>'
-          : '<div class="ph">講者照片</div>'; }
-      box.appendChild(c);
-      initSpeakerRows();
-      c.scrollIntoView({behavior:'smooth',block:'center'});
-      const f=c.querySelector('[contenteditable]'); if(f)f.focus();
+}
+
+/* 版型2 專用：從工具盤新增講師 / 協會 */
+function blankRow(templateRow, isLogo){
+  const c=templateRow.cloneNode(true);
+  c.querySelectorAll('.rowTools,.blkTools').forEach(x=>x.remove());
+  const slot=c.querySelector('.photo,.logo-slot');
+  if(slot){ slot.removeAttribute('data-bound'); slot.removeAttribute('style');
+    slot.innerHTML = isLogo ? '<div class="ph">公司 / 協會 LOGO<br><small>點此上傳</small></div>' : '<div class="ph">講者照片<br><small>點此上傳</small></div>'; }
+  return c;
+}
+function bindPanelAddButtons(){
+  const grp=document.getElementById('spkAddGrp'), head=document.getElementById('spkAddHead');
+  const box=page.querySelector('.tpl2 .spks');
+  const show = curTpl==='2' && !!box;
+  if(grp) grp.style.display = show?'grid':'none';
+  if(head) head.style.display = show?'block':'none';
+  if(!show) return;
+  document.querySelectorAll('#spkAddGrp [data-add2]').forEach(btn=>{
+    btn.onclick=()=>{
+      const kind=btn.dataset.add2;
+      const spkT=box.querySelector('.spk-row'), orgT=box.querySelector('.org-row');
+      let anchor;
+      if(kind==='spk'){
+        /* 整組：講師列 + 協會列，加到最後一位講師那組之後 */
+        const c1=blankRow(spkT,false), c2=blankRow(orgT,true);
+        box.appendChild(c1); box.appendChild(c2); anchor=c1;
+      }else{
+        const c=blankRow(orgT,true); box.appendChild(c); anchor=c;
+      }
+      initSpeakerRows(); initBlockTools(); makeAllEditable();
+      anchor.scrollIntoView({behavior:'smooth',block:'center'});
+      const f=anchor.querySelector('[contenteditable]'); if(f)f.focus();
       persist(); pushHistory();
     };
   });
@@ -2176,21 +2222,66 @@ page.addEventListener('mousedown', e=>{
   nudgeOY=parseFloat(t.style.top)||0;
   nudgeSX=e.clientX; nudgeSY=e.clientY;
   t.classList.add('nudging');
+  showTrash(true);
   document.addEventListener('mousemove', onNudge);
   document.addEventListener('mouseup', endNudge);
 }, true);
+function overZone(e,id){
+  const z=document.getElementById(id); if(!z) return false;
+  const r=z.getBoundingClientRect();
+  return e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom;
+}
+function overTrash(e){ return overZone(e,'trashCan'); }
 function onNudge(e){
   if(!nudgeEl) return;
   nudgeEl.style.left=(nudgeOX + e.clientX - nudgeSX)+'px';
   nudgeEl.style.top =(nudgeOY + e.clientY - nudgeSY)+'px';
+  const tc=document.getElementById('trashCan'); if(tc) tc.classList.toggle('hot', overTrash(e));
 }
-function endNudge(){
-  if(nudgeEl) nudgeEl.classList.remove('nudging');
-  if(nudgeEl) pushHistory();
+function endNudge(e){
+  const dropTrash = e && overTrash(e);
+  if(nudgeEl){
+    nudgeEl.classList.remove('nudging');
+    if(dropTrash){
+      if(nudgeEl.classList.contains('sec')){
+        if(confirm('這是一個「區塊」，確定要整塊刪除嗎？')) nudgeEl.remove();
+        else { nudgeEl.style.left=nudgeOX+'px'; nudgeEl.style.top=nudgeOY+'px'; }
+      }else{
+        nudgeEl.remove();
+      }
+    }
+    pushHistory();
+  }
   nudgeEl=null;
+  showTrash(false);
+  const tc=document.getElementById('trashCan'); if(tc) tc.classList.remove('hot');
   document.removeEventListener('mousemove', onNudge);
   document.removeEventListener('mouseup', endNudge);
   persist();
+}
+function ensureZone(id, icon, txt){
+  let z=document.getElementById(id);
+  if(!z){
+    z=document.createElement('div'); z.id=id; z.className='dropZone';
+    z.innerHTML=`<div class="tcIcon">${icon}</div><div class="tcTxt">${txt}</div>`;
+    document.body.appendChild(z);
+  }
+  return z;
+}
+function showTrash(on){
+  const tc=ensureZone('trashCan','🗑','拖到這裡刪除');
+  if(on){
+    const tools=document.getElementById('tools');
+    if(tools && !tools.classList.contains('off')){
+      const r=tools.getBoundingClientRect();
+      let top=r.bottom+10;
+      if(top+78>innerHeight) top=Math.max(10, innerHeight-78);
+      tc.style.left=r.left+'px'; tc.style.width=r.width+'px'; tc.style.top=top+'px'; tc.style.right='auto'; tc.style.bottom='auto';
+    }else{
+      tc.style.right='28px'; tc.style.bottom='28px'; tc.style.left='auto'; tc.style.top='auto'; tc.style.width='196px';
+    }
+  }
+  tc.classList.toggle('on', !!on);
 }
 /* 方向鍵微調：先點一下元素，按住 Alt + 方向鍵 */
 document.addEventListener('keydown', e=>{
@@ -2463,6 +2554,7 @@ function initFreeGrids(){
   initSpeakerRows();
   initUBoxes();
   initBlockTools();
+  bindPanelAddButtons();
   makeAllEditable();
   ['.info','.cards','.logos','.sched'].forEach(sel=>{
     document.querySelectorAll(sel).forEach(container=>{
@@ -2574,7 +2666,27 @@ document.getElementById('fsReset').onclick=()=>{
   fsVal.textContent=curSize(fsTarget)+'px';
   persist();
 };
-/* 快捷鍵：Ctrl/⌘ + [ 縮小 、 ] 放大 */
+/* 複製整塊：找出游標所在的「有意義的區塊」，在其正下方 0.5cm 疊一份 */
+document.getElementById('fsCopy').onmousedown=e=>e.preventDefault();
+document.getElementById('fsCopy').onclick=()=>{
+  if(!fsTarget || !page.contains(fsTarget)) return;
+  /* 往上找到一個像樣的區塊：優先常見容器，否則用目前元素 */
+  const BLK='.spk-row,.org-row,.ag,.notebar,.intro,.agenda,.nitem,.metaCard,.org,.uBox,.dayTab,.spk-card,.info,.card,.sched,p,h1,h2,h3,h4,li,div';
+  let blk=fsTarget.closest(BLK) || fsTarget;
+  if(blk===page) return;
+  const clone=blk.cloneNode(true);
+  clone.querySelectorAll('.rowTools,.blkTools,.uDel,.imgRz,.bGuide,.slotDel').forEach(x=>x.remove());
+  clone.removeAttribute('data-bt'); clone.removeAttribute('data-bound');
+  clone.style.left=''; clone.style.top=''; clone.style.position='';
+  clone.style.marginTop='19px';   /* 約 0.5 公分 */
+  blk.parentNode.insertBefore(clone, blk.nextSibling);
+  initSpeakerRows(); initBlockTools(); initUBoxes(); makeAllEditable();
+  clone.classList.add('copyFlash');
+  setTimeout(()=>clone.classList.remove('copyFlash'),900);
+  clone.scrollIntoView({behavior:'smooth',block:'center'});
+  persist(); pushHistory();
+  fsBar.style.display='none';
+};
 document.addEventListener('keydown',e=>{
   if(!(e.ctrlKey||e.metaKey)) return;
   if(e.key===']'){ e.preventDefault(); bump(1); }
@@ -2598,7 +2710,7 @@ document.addEventListener('keydown',e=>{
     { sel:'#kvGroup', title:'第 2 步：上傳主視覺 / 配色',
       html:'<em>① 頂部主視覺 KV</em>：會顯示在頁面最上方當作底圖，<em>並自動抓圖配好整頁顏色</em>。<br><br><em>② 只取色</em>：圖不會顯示，只用來吸取顏色套用配色。' },
     { title:'第 3 步：編輯與移動',
-      html:'頁面上所有<em>文字與表格</em>：按住 <kbd>Alt</kbd>＋左鍵可<em>拖曳移動</em>；放開 Alt <em>再點一下</em>就能編輯內容。<br><br>打錯了隨時 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。' }
+      html:'頁面上所有<em>文字與表格</em>：按住 <kbd>Alt</kbd>＋左鍵可<em>拖曳移動</em>；放開 Alt <em>再點一下</em>就能編輯內容。<br><br>不要的東西：<em>Alt 拖著它</em>，<em>工具盤下方</em>會出現<em>垃圾桶</em>，放上去就刪除。<br>想複製：<em>點一下</em>文字，浮出的小工具列按 <em>⧉ 複製</em>，會在下方疊一份。<br>打錯了隨時 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原。' }
   ];
 
   function targetRect(sel){
@@ -2624,6 +2736,7 @@ document.addEventListener('keydown',e=>{
     const cw=card.offsetWidth, ch=card.offsetHeight;
     if(!rc){
       spot.style.display='none'; arrow.style.display='none';
+      /* 沒有指定高亮對象的步驟（例如第 3 步）→ 卡片置中 */
       card.style.left=Math.round((innerWidth-cw)/2)+'px';
       card.style.top=Math.round((innerHeight-ch)/2)+'px';
       return;
