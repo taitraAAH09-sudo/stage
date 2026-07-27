@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V10</title>
+<title>活動頁面版型產生器 V11</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V10</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V11</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -1474,10 +1474,10 @@ window.addEventListener('beforeunload',()=>{ try{ idbSet('evtpg', snapshot()); }
 
 function applyState(o, rebuild){
   curTpl = String(o.tpl || '1');
-  page.classList.toggle('tpl2', curTpl === '2');
+  page.className = 'page' + (curTpl === '2' ? ' tpl2' : '');
   paintTplBtns();
   page.innerHTML=o.html;
-  ['--c1','--c2','--c3','--c4'].forEach((v,i)=>set(v,(o.css[i]||'').trim()));
+  ['--c1','--c2','--c3','--c4'].forEach((v,i)=>set(v,((o.css&&o.css[i])||'').trim()));
   if(Array.isArray(o.lib)){ mediaLib=o.lib; renderMediaLib(); }
   const k=page.querySelector('.kv');
   if(k){ renderDropPreview(drop,k.src,'點擊或拖曳上傳 KV<br>JPG / PNG / PDF',()=>{document.getElementById('kvbox').innerHTML='';persist();}); }
@@ -1496,7 +1496,11 @@ function applyState(o, rebuild){
     }
     if(!s) return;
     applyState(s, true);
-  }catch(e){ console.warn('還原失敗',e); }
+  }catch(e){
+    console.warn('還原失敗，改用初始版型',e);
+    /* 還原失敗時，確保頁面回到乾淨的初始狀態而不是留下未套用樣式的原始碼 */
+    try{ page.className='page'; build(); bindPage(); initFreeGrids(); initMediaEmbeds(); syncHeroKV(); }catch(e2){}
+  }
 })();
 
 /* ================================================================
@@ -2324,7 +2328,7 @@ function pushHistory(){
 function restoreHistory(st){
   undoLock = true;
   curTpl = st.tpl || '1';
-  page.className = st.cls;
+  page.className = /\bpage\b/.test(st.cls||'') ? st.cls : ('page'+(curTpl==='2'?' tpl2':''));
   page.innerHTML = st.html;
   paintTplBtns();
   build(); bindPage(); initFreeGrids(); initMediaEmbeds(); syncHeroKV();
