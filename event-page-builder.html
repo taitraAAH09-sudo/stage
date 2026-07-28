@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V26</title>
+<title>活動頁面版型產生器 V35</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -121,12 +121,15 @@ body{font-family:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;background:var(
 .freeitem:hover .fresize{opacity:1}
 .fadd{display:inline-flex;align-items:center;gap:4px;margin:14px 0 4px;background:transparent;border:1.5px dashed var(--c2);color:var(--c2);border-radius:20px;padding:7px 16px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s}
 .fadd:hover{background:var(--c2);color:#fff}
-.secResize{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:80px;height:13px;border-radius:7px;background:rgba(120,130,150,.55);border:1px solid rgba(255,255,255,.4);cursor:ns-resize;opacity:0;transition:.15s;z-index:30}
-.secResize::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:3px;border-radius:2px;background:rgba(0,0,0,.35)}
-.sec:hover .secResize{opacity:1}
+.secResize{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);height:34px;padding:0 6px;border-radius:17px;background:#14181F;border:2px solid var(--c2);opacity:0;transition:.15s;z-index:45;display:flex;align-items:center;gap:4px;pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.secResize::before{content:"";width:0;height:0}
+.secResize .srLabel{font-size:12px;font-weight:900;color:#fff;letter-spacing:.05em;white-space:nowrap;cursor:ns-resize;padding:0 6px}
+.secResize .srBtn,.secResize .srReset{width:26px;height:26px;border:0;border-radius:50%;background:var(--c2);color:#fff;font-size:15px;font-weight:900;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.secResize .srReset{background:#3A4152;font-size:13px}
+.secResize .srBtn:hover,.secResize .srReset:hover{filter:brightness(1.2)}
+.sec:hover .secResize{opacity:.9}
+.secResize:hover{opacity:1!important}
 .secResize:hover{background:var(--c2)}
-.tpl2 .hero2 .secResize{opacity:.5;width:88px;height:13px}
-.tpl2 .hero2:hover .secResize{opacity:1}
 .secResize:hover{background:var(--c2)}
 
 .media-embed{position:relative;max-width:100%}
@@ -349,6 +352,7 @@ h2.t{font-size:29px;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
 .tpl2 .hero2 .kvwrap{position:absolute;inset:0;z-index:1}
 /* 上傳 KV 後：內建斜色帶整組消失，只留你上傳的圖 */
 .tpl2 .hero2.has-kv{background:transparent}
+.tpl2 .hero2.has-kv .secResize{bottom:8px;z-index:50}
 .tpl2 .hero2.has-kv .ribbons{display:none!important}
 .tpl2 .hero2.has-kv{min-height:360px}
 .tpl2 .hero2.has-kv .kvwrap{position:absolute;inset:0;z-index:1}
@@ -529,7 +533,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V26</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V35</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -953,7 +957,7 @@ function palette(im){
   })).filter(o=>o.n>4);
   if(!arr.length)return;
 
-  const hex=o=>'#'+[o.r,o.g,o.b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  const hex=o=>'#'+[o.r,o.g,o.b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
   const dist=(a,b)=>Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);
 
   // 主色：面積大且有彩度、亮度中低
@@ -1793,6 +1797,21 @@ function cleanClone(){
   cl.querySelectorAll('.sec').forEach(sec=>{
     if(!sec.classList.contains('hero') && !sec.classList.contains('hero2')) sec.style.minHeight='';
   });
+  /* 主視覺：鎖成「編輯畫面上目前的實際高度」並裁切，讓匯出所見即所得（KV 圖比例不影響版面） */
+  const liveHero=page.querySelector('.hero, .hero2');
+  const cloneHero=cl.querySelector('.hero, .hero2');
+  if(liveHero && cloneHero){
+    const lr=liveHero.getBoundingClientRect();
+    const liveW=lr.width||page.getBoundingClientRect().width||1080;
+    /* 換算到匯出固定寬度 1080px 的等比高度 */
+    const hpx=Math.round(lr.height * (1080/liveW));
+    if(hpx>0){
+      cloneHero.style.height=hpx+'px';
+      cloneHero.style.minHeight=hpx+'px';
+      cloneHero.style.maxHeight=hpx+'px';
+      cloneHero.style.overflow='hidden';
+    }
+  }
   return cl;
 }
 
@@ -1928,6 +1947,22 @@ function sanitizeForCanvas(root){
     if(cs.outlineColor) el.style.outlineColor = toRGB(cs.outlineColor);
     /* 文字裝飾色、fill（SVG）等偶爾也會帶 color() */
     if(cs.textDecorationColor && /color\(|color-mix/.test(cs.textDecorationColor)) el.style.textDecorationColor=toRGB(cs.textDecorationColor);
+    /* 安全網：只要背景圖最後還殘留 color()/color-mix()，直接移除避免 html2canvas 崩潰 */
+    if(el.style.backgroundImage && /color\(|color-mix/.test(el.style.backgroundImage)){
+      el.style.backgroundImage='none';
+      el.style.backgroundColor=toRGB(cs.backgroundColor);
+    }
+    /* 掃描 inline style 每個屬性，任何值含 color()/color-mix() 就換成 computed 轉出的 rgb */
+    try{
+      for(let k=el.style.length-1;k>=0;k--){
+        const prop=el.style[k];
+        const val=el.style.getPropertyValue(prop);
+        if(/color-mix|color\(/.test(val)){
+          if(/color/i.test(prop)) el.style.setProperty(prop, toRGB(val));
+          else el.style.removeProperty(prop);
+        }
+      }
+    }catch(_){}
   });
 }
 
@@ -1936,8 +1971,32 @@ document.getElementById('btnPNG').onclick=async()=>{
   const btn=document.getElementById('btnPNG'); const old=btn.textContent; btn.textContent='產生中…'; btn.disabled=true;
   document.body.classList.add('exporting');
 
+  /* 把顏色字串轉標準 rgb（解 color-mix/color()/oklch/var()） */
+  const rootCS=getComputedStyle(document.documentElement);
+  const varVal=n=>rootCS.getPropertyValue(n).trim();
+  function resolveColorMix(str){
+    return str.replace(/color-mix\(\s*in\s+srgb\s*,\s*([^,]+?)\s+(\d+)%\s*,\s*([^)]+?)\)/g,(m,a,pct,b)=>{
+      const ra=toRGB(a.replace(/var\(([^)]+)\)/g,(x,v)=>varVal(v.trim())));
+      const rb=toRGB(b.replace(/var\(([^)]+)\)/g,(x,v)=>varVal(v.trim())));
+      const pa=parseInt(pct)/100, pm=/(\d+),\s*(\d+),\s*(\d+)/, ma=ra.match(pm), mb=rb.match(pm);
+      if(ma&&mb){const r=Math.round(ma[1]*pa+mb[1]*(1-pa)),g=Math.round(ma[2]*pa+mb[2]*(1-pa)),bb=Math.round(ma[3]*pa+mb[3]*(1-pa));return `rgb(${r},${g},${bb})`;}
+      return '#888';
+    });
+  }
+
+  /* 暫時淨化所有 <style>：color-mix→rgb、oklch/oklab/color()→#888 */
+  const styleEls=[...document.querySelectorAll('style')];
+  const saved=styleEls.map(st=>st.textContent);
+  styleEls.forEach(st=>{
+    if(st.textContent && /color-mix|oklch|oklab|\bcolor\(/.test(st.textContent)){
+      let css=resolveColorMix(st.textContent);
+      css=css.replace(/oklch\([^)]*\)/g,'#888').replace(/oklab\([^)]*\)/g,'#888').replace(/\bcolor\((?:[^()]|\([^()]*\))*\)/g,'#888');
+      st.textContent=css;
+    }
+  });
+
   const FIXED_W=1080;
-  const bg=getComputedStyle(document.documentElement).getPropertyValue('--c4').trim()||'#fff';
+  const bg=varVal('--c4')||'#fff';
   const holder=document.createElement('div');
   holder.style.cssText='position:fixed;left:-99999px;top:0;width:'+FIXED_W+'px;background:'+bg;
   const clone=cleanClone();
@@ -1947,22 +2006,34 @@ document.getElementById('btnPNG').onclick=async()=>{
 
   try{
     await Promise.all([...clone.querySelectorAll('img')].map(im=>im.complete?Promise.resolve():new Promise(r=>{im.onload=im.onerror=r;})));
-    /* html2canvas 1.4.1 不吃部分新語法（aspect-ratio、inset、conic-gradient…），先把已算好的樣式攤平 */
     sanitizeForCanvas(clone);
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const H=Math.ceil(clone.getBoundingClientRect().height);
     holder.style.height=H+'px';
     const canvas=await html2canvas(clone,{
       backgroundColor:bg, scale:2, useCORS:true, logging:false,
-      width:FIXED_W, windowWidth:FIXED_W, height:H, windowHeight:H, scrollX:0, scrollY:0
+      width:FIXED_W, windowWidth:FIXED_W, height:H, windowHeight:H, scrollX:0, scrollY:0,
+      onclone:(doc,node)=>{
+        try{
+          doc.querySelectorAll('style').forEach(st=>{
+            if(st.textContent && /color-mix|oklch|oklab|\bcolor\(/.test(st.textContent)){
+              let css=resolveColorMix(st.textContent);
+              css=css.replace(/oklch\([^)]*\)/g,'#888').replace(/oklab\([^)]*\)/g,'#888').replace(/\bcolor\((?:[^()]|\([^()]*\))*\)/g,'#888');
+              st.textContent=css;
+            }
+          });
+        }catch(_){}
+      }
     });
-    canvas.toBlob(b=>{
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(b);
-      a.download='event-page.png'; a.click();
-    },'image/png');
-  }catch(e){ alert('PNG 產生失敗：'+e.message); }
-  finally{ holder.remove(); document.body.classList.remove('exporting'); btn.textContent=old; btn.disabled=false; }
+    canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='event-page.png'; a.click(); },'image/png');
+  }catch(e){
+    console.error('PNG error:',e);
+    alert('PNG 產生失敗：'+e.message+'\n\n請按 F12 開 Console，把紅色錯誤那行截圖給我。');
+  }
+  finally{
+    styleEls.forEach((st,i)=>st.textContent=saved[i]);
+    holder.remove(); document.body.classList.remove('exporting'); btn.textContent=old; btn.disabled=false;
+  }
 };
 
 /* ---------- 完全自由拖曳：把格狀內容轉為可任意擺放的畫布 ---------- */
@@ -2096,33 +2167,37 @@ function bindAddButton(btn, container){
   };
 }
 function addSecResizeHandle(sec){
-  if(sec.querySelector(':scope > .secResize'))return;
+  if(sec.dataset.hasResize)return; sec.dataset.hasResize='1';
+  if(getComputedStyle(sec).position==='static') sec.style.position='relative';
   const h=document.createElement('div');
-  h.className='secResize'; h.contentEditable='false'; h.title='拖曳調整高度（雙擊還原為貼合內容）';
+  h.className='secResize'; h.contentEditable='false';
+  h.innerHTML='<button type="button" class="srBtn" data-d="-1" title="變矮">－</button>'
+             +'<span class="srLabel" title="拖曳調整高度">↕ 高度</span>'
+             +'<button type="button" class="srBtn" data-d="1" title="變高">＋</button>'
+             +'<button type="button" class="srReset" title="還原貼合內容">↺</button>';
+  /* 放進不會被裁切的浮層：直接掛在 sec 上但用一個不受 overflow 影響的定位技巧——改掛到 sec 的父層 */
   sec.appendChild(h);
-  h.onmousedown=e=>{
+  function setH(px){
+    px=Math.max(0,px);
+    sec.style.height=px+'px'; sec.style.minHeight='0'; sec.style.overflow='hidden';
+    if(sec.classList.contains('hero2')||sec.classList.contains('hero')) updateBannerGuide();
+  }
+  h.querySelectorAll('.srBtn').forEach(b=>{
+    b.onmousedown=e=>{e.preventDefault();e.stopPropagation();};
+    b.onclick=e=>{ e.stopPropagation(); const cur=sec.getBoundingClientRect().height; setH(cur + (+b.dataset.d)*20); persist(); pushHistory(); };
+  });
+  h.querySelector('.srReset').onmousedown=e=>{e.preventDefault();e.stopPropagation();};
+  h.querySelector('.srReset').onclick=e=>{ e.stopPropagation(); sec.style.height=''; sec.style.minHeight=''; sec.style.overflow=''; if(sec.classList.contains('hero2')||sec.classList.contains('hero'))updateBannerGuide(); persist(); pushHistory(); };
+  const lbl=h.querySelector('.srLabel');
+  lbl.onmousedown=e=>{
     e.preventDefault(); e.stopPropagation();
-    const startY=e.clientY;
-    const startBase = sec.offsetHeight;
-    function onMove(ev){
-      /* 完全不鎖範圍：可任意上下拉；用 height + 允許內容溢出時裁切 */
-      const nh = startBase + (ev.clientY - startY);
-      sec.style.height = Math.max(0, nh) + 'px';
-      sec.style.minHeight = '0';
-      sec.style.overflow = 'hidden';
-      if(sec.classList.contains('hero2')||sec.classList.contains('hero')) updateBannerGuide();
-    }
+    const startY=e.clientY, startH=sec.getBoundingClientRect().height;
+    function onMove(ev){ setH(startH+(ev.clientY-startY)); }
     function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); persist(); pushHistory(); }
     document.addEventListener('mousemove',onMove);
     document.addEventListener('mouseup',onUp);
   };
-  /* 雙擊把手 → 還原成自動高度（貼合內容） */
-  h.ondblclick=e=>{
-    e.preventDefault(); e.stopPropagation();
-    sec.style.height=''; sec.style.minHeight=''; sec.style.overflow='';
-    if(sec.classList.contains('hero2')||sec.classList.contains('hero')) updateBannerGuide();
-    persist(); pushHistory();
-  };
+  h.ondblclick=e=>{ e.preventDefault(); e.stopPropagation(); sec.style.height=''; sec.style.minHeight=''; sec.style.overflow=''; if(sec.classList.contains('hero2')||sec.classList.contains('hero'))updateBannerGuide(); persist(); pushHistory(); };
 }
 
 /* ================================================================
@@ -2243,9 +2318,7 @@ function bindBlockTools(el){
         el.style.transformOrigin='top left';
       }
       if(a==='copy'){
-        const c=el.cloneNode(true);
-        c.removeAttribute('data-bt');
-        c.querySelectorAll('.blkTools').forEach(x=>x.remove());
+        const c=scrubClone(el.cloneNode(true));
         el.parentNode.insertBefore(c, el.nextSibling);
         initBlockTools();
         c.scrollIntoView({behavior:'smooth',block:'center'});
@@ -2269,8 +2342,7 @@ function initSpeakerRows(){
 
 /* 版型2 專用：從工具盤新增講師 / 協會 */
 function blankRow(templateRow, isLogo){
-  const c=templateRow.cloneNode(true);
-  c.querySelectorAll('.rowTools,.blkTools').forEach(x=>x.remove());
+  const c=scrubClone(templateRow.cloneNode(true));
   const slot=c.querySelector('.photo,.logo-slot');
   if(slot){ slot.removeAttribute('data-bound'); slot.removeAttribute('style');
     slot.innerHTML = isLogo ? '<div class="ph">公司 / 協會 LOGO<br><small>點此上傳</small></div>' : '<div class="ph">講者照片<br><small>點此上傳</small></div>'; }
@@ -2722,6 +2794,23 @@ function materializeDecor(){
   });
 }
 
+
+/* 清理複製出來的元素：移除編輯器殘留狀態與會卡住縮放/截圖的行內樣式 */
+function scrubClone(clone){
+  clone.querySelectorAll('.rowTools,.blkTools,.uDel,.imgRz,.bGuide,.slotDel,.secResize').forEach(x=>x.remove());
+  const nodes=[clone, ...clone.querySelectorAll('*')];
+  nodes.forEach(el=>{
+    if(!(el instanceof HTMLElement)) return;
+    el.classList.remove('nudging','copyFlash','picked-el','dragging');
+    el.removeAttribute('data-bt'); el.removeAttribute('data-bound'); el.removeAttribute('data-scale');
+    /* 清掉會卡住區塊縮放的固定高度/裁切 */
+    if(el.classList.contains('sec')){ el.style.height=''; el.style.minHeight=''; el.style.overflow=''; }
+    /* 清掉任何含 color-mix 的行內樣式 */
+    try{ for(let k=el.style.length-1;k>=0;k--){ const pr=el.style[k], v=el.style.getPropertyValue(pr); if(/color-mix|color\(/.test(v)) el.style.removeProperty(pr); } }catch(_){}
+  });
+  return clone;
+}
+
 function initFreeGrids(){
   materializeDecor();
   initSpeakerRows();
@@ -2847,9 +2936,7 @@ document.getElementById('fsCopy').onclick=()=>{
   const BLK='.spk-row,.org-row,.ag,.notebar,.intro,.agenda,.nitem,.metaCard,.org,.uBox,.dayTab,.spk-card,.info,.card,.sched,p,h1,h2,h3,h4,li,div';
   let blk=fsTarget.closest(BLK) || fsTarget;
   if(blk===page) return;
-  const clone=blk.cloneNode(true);
-  clone.querySelectorAll('.rowTools,.blkTools,.uDel,.imgRz,.bGuide,.slotDel').forEach(x=>x.remove());
-  clone.removeAttribute('data-bt'); clone.removeAttribute('data-bound');
+  const clone=scrubClone(blk.cloneNode(true));
   clone.style.left=''; clone.style.top=''; clone.style.position='';
   clone.style.marginTop='19px';   /* 約 0.5 公分 */
   blk.parentNode.insertBefore(clone, blk.nextSibling);
