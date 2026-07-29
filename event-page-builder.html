@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V37</title>
+<title>活動頁面版型產生器 V42</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -297,7 +297,8 @@ body.altdown .page *:not(.hnd):not(.rowTools):not(.slotDel):hover{outline:1px da
 
 /* KV hero */
 .hero{position:relative;background:var(--c1);color:#fff;text-align:center;padding:0}
-.hero .kv{width:100%;display:block}
+.hero #kvbox{position:relative;width:100%;height:360px;overflow:hidden}
+.hero .kv{width:100%;height:100%;display:block;object-fit:cover}
 .hero .kvph{height:340px;display:flex;align-items:center;justify-content:center;background:
   repeating-linear-gradient(135deg,var(--c1) 0 22px,color-mix(in srgb,var(--c1) 82%,#000) 22px 44px);
   font-size:13px;letter-spacing:.3em;opacity:.75}
@@ -533,7 +534,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V37</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V42</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -1486,9 +1487,16 @@ window.resetAll=async function(){
 };
 
 function snapshot(){
+  /* 存檔前先把編輯器專用的把手/旗標從 HTML 拿掉，讀回來才會重新綁定、不會失靈 */
+  const tmp=page.cloneNode(true);
+  tmp.querySelectorAll('.secResize,.rowTools,.blkTools,.bGuide,.picked-el').forEach(e=>{
+    if(e.classList.contains('picked-el')) e.classList.remove('picked-el'); else e.remove();
+  });
+  tmp.querySelectorAll('[data-has-resize]').forEach(e=>e.removeAttribute('data-has-resize'));
+  tmp.querySelectorAll('.nudging').forEach(e=>e.classList.remove('nudging'));
   return {
     tpl: curTpl,
-    html: page.innerHTML,
+    html: tmp.innerHTML,
     css: ['--c1','--c2','--c3','--c4'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim()),
     lib: mediaLib   /* ← 媒體庫也一起存，F5 才不會不見 */
   };
@@ -1792,8 +1800,35 @@ function buildExportHTML(cl){
 ${css}
 .page{max-width:1080px;margin:0 auto!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important}</style></head><body><div class="${page.className||'page'}">${cl.innerHTML}</div></body></html>`;
 }
+/* 把已載入的 <img> 依「cover」規則裁成指定寬高比例，回傳新的 dataURL（同步） */
+function coverCropFromImg(img, targetW, targetH){
+  if(!img || !img.naturalWidth) return null;
+  const iw=img.naturalWidth, ih=img.naturalHeight;
+  const scale=Math.max(targetW/iw, targetH/ih);
+  const sw=targetW/scale, sh=targetH/scale;         /* 從原圖取的區域大小 */
+  const sx=(iw-sw)/2, sy=(ih-sh)/2;                 /* 置中裁切 */
+  const cv=document.createElement('canvas'); cv.width=targetW; cv.height=targetH;
+  const cx=cv.getContext('2d');
+  cx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+  try{ return cv.toDataURL('image/jpeg', 0.92); }catch(e){ return null; }
+}
+
 function cleanClone(){
   const cl=page.cloneNode(true);
+  /* 先鎖字級：字級用了 clamp()/vw，會隨瀏覽器視窗寬度變化，導致離屏截圖時字變小。
+     趁還沒刪任何元素、索引還對得上時，把每個元素目前算出的字級/行高鎖成固定 px。 */
+  {
+    const liveAll=[page, ...page.querySelectorAll('*')];
+    const cloneAll=[cl, ...cl.querySelectorAll('*')];
+    for(let i=0;i<liveAll.length && i<cloneAll.length;i++){
+      const L=liveAll[i], C=cloneAll[i];
+      if(!(C instanceof HTMLElement)) continue;
+      const cs=getComputedStyle(L);
+      C.style.fontSize=cs.fontSize;
+      C.style.lineHeight=cs.lineHeight;
+      if(cs.letterSpacing && cs.letterSpacing!=='normal') C.style.letterSpacing=cs.letterSpacing;
+    }
+  }
   cl.querySelectorAll('.hnd,.hide,.mtool,.resize-handle,.fhandle,.fdel,.fresize,.fadd,.secResize,.rowTools,.slotDel,.uDel,.imgRz,.blkTools,.bGuide').forEach(e=>e.remove());
   cl.querySelectorAll('.spk-row,.org-row').forEach(row=>{
     const slot=row.querySelector('.photo,.logo-slot');
@@ -1812,26 +1847,40 @@ function cleanClone(){
   cl.querySelectorAll('.sec').forEach(sec=>{
     if(!sec.classList.contains('hero') && !sec.classList.contains('hero2')) sec.style.minHeight='';
   });
-  /* 主視覺：鎖成「編輯畫面上目前的實際高度」並裁切，讓匯出所見即所得（KV 圖比例不影響版面） */
+  /* 主視覺 KV 匯出裁切：版型2 是滿版背景、版型1 是頂部橫幅，分開處理，避免變形 */
   const liveHero=page.querySelector('.hero, .hero2');
   const cloneHero=cl.querySelector('.hero, .hero2');
   if(liveHero && cloneHero){
-    const lr=liveHero.getBoundingClientRect();
-    const liveW=lr.width||page.getBoundingClientRect().width||1080;
-    const hpx=Math.round(lr.height * (1080/liveW));
-    if(hpx>0){
-      cloneHero.style.height=hpx+'px';
-      cloneHero.style.minHeight=hpx+'px';
-      cloneHero.style.maxHeight=hpx+'px';
-      cloneHero.style.overflow='hidden';
-      cloneHero.style.position='relative';
-      /* 讓 KV 圖填滿並裁切（cover），跟編輯畫面一致、不變形 */
-      const kvImg=cloneHero.querySelector('.kvwrap img, img.kv, .kvbox img');
-      if(kvImg){
-        const wrap=kvImg.closest('.kvwrap')||kvImg.parentElement;
-        if(wrap){ wrap.style.position='absolute'; wrap.style.top='0'; wrap.style.left='0'; wrap.style.right='0'; wrap.style.bottom='0'; wrap.style.width='100%'; wrap.style.height='100%'; wrap.style.overflow='hidden'; }
-        kvImg.style.width='100%'; kvImg.style.height='100%'; kvImg.style.maxHeight='none';
-        kvImg.style.objectFit='cover'; kvImg.style.objectPosition='center'; kvImg.style.opacity='1'; kvImg.style.display='block';
+    const isTpl2=cloneHero.classList.contains('hero2');
+    if(isTpl2){
+      /* 版型2：KV 當滿版背景，鎖高度並 cover 裁切 */
+      const lr=liveHero.getBoundingClientRect();
+      const liveW=Math.round(lr.width)||1080;
+      const hpx=Math.round(lr.height);
+      if(hpx>0){
+        cloneHero.style.height=hpx+'px'; cloneHero.style.minHeight=hpx+'px'; cloneHero.style.maxHeight=hpx+'px';
+        cloneHero.style.overflow='hidden'; cloneHero.style.position='relative';
+        const kvImg=cloneHero.querySelector('.kvwrap img, img.kv, .kvbox img');
+        if(kvImg){
+          const wrap=kvImg.closest('.kvwrap')||kvImg.parentElement, host=wrap||cloneHero;
+          host.style.position='absolute'; host.style.inset='0'; host.style.width='100%'; host.style.height='100%'; host.style.overflow='hidden'; host.style.zIndex='0';
+          const liveKv=liveHero.querySelector('.kvwrap img, img.kv, .kvbox img');
+          try{ const c=coverCropFromImg(liveKv||kvImg, liveW, hpx); if(c) kvImg.setAttribute('src',c); }catch(_){}
+          kvImg.style.width='100%'; kvImg.style.height='100%'; kvImg.style.maxHeight='none'; kvImg.style.objectFit='fill'; kvImg.style.opacity='1'; kvImg.style.display='block';
+        }
+      }
+    }else{
+      /* 版型1：KV 是頂部橫幅，只裁切 #kvbox 那一塊、保留下方文字區塊 */
+      const liveBox=liveHero.querySelector('#kvbox');
+      const cloneBox=cloneHero.querySelector('#kvbox');
+      const liveKv=liveHero.querySelector('#kvbox img, img.kv');
+      const cloneKv=cloneHero.querySelector('#kvbox img, img.kv');
+      if(liveBox && cloneBox && liveKv && cloneKv){
+        const br=liveBox.getBoundingClientRect();
+        const bw=Math.round(br.width)||1080, bh=Math.round(br.height)||360;
+        cloneBox.style.height=bh+'px'; cloneBox.style.overflow='hidden'; cloneBox.style.position='relative';
+        try{ const c=coverCropFromImg(liveKv, bw, bh); if(c) cloneKv.setAttribute('src',c); }catch(_){}
+        cloneKv.style.width='100%'; cloneKv.style.height='100%'; cloneKv.style.objectFit='fill'; cloneKv.style.display='block';
       }
     }
   }
@@ -2026,7 +2075,9 @@ document.getElementById('btnPNG').onclick=async()=>{
     }
   });
 
-  const FIXED_W=1080;
+  /* 用「編輯畫面上主視覺的實際寬度」當匯出寬度，讓 PNG 跟你看到的版面一模一樣（前景不縮小、位置不跑） */
+  const liveRef=page.querySelector('.hero, .hero2')||page;
+  const FIXED_W=Math.round(liveRef.getBoundingClientRect().width)||1080;
   const bg=varVal('--c4')||'#fff';
   const holder=document.createElement('div');
   holder.style.cssText='position:fixed;left:-99999px;top:0;width:'+FIXED_W+'px;background:'+bg;
@@ -2859,6 +2910,11 @@ function initFreeGrids(){
       });
       bindAddButton(ensureAddButton(container), container);
     });
+  });
+  /* 讀檔/重建後：清掉舊的把手與旗標，重新綁定，事件才不會失靈 */
+  document.querySelectorAll('.sec').forEach(sec=>{
+    sec.querySelectorAll(':scope > .secResize').forEach(h=>h.remove());
+    delete sec.dataset.hasResize;
   });
   document.querySelectorAll('.sec').forEach(addSecResizeHandle);
 }
