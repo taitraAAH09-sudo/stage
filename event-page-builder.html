@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V35</title>
+<title>活動頁面版型產生器 V36</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V35</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V36</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -988,7 +988,22 @@ function palette(im){
   });
   document.getElementById('chiphint').style.display=picks.length?'block':'none';
 }
+/* 修正非法色值（例如舊版存進來的 #fffffd.28f5c28…），一律轉成合法 hex */
+function fixColor(h){
+  if(typeof h!=='string') return h;
+  h=h.trim();
+  /* 帶小數點的爛 hex：#rrggbb.xxxx → 取前 7 碼 */
+  const m=h.match(/^#([0-9a-fA-F]{6})[.0-9a-fA-F]*$/);
+  if(m) return '#'+m[1];
+  /* 其他非標準（含 color-mix/color()/oklch）→ 用 toRGB 轉，失敗就給預設 */
+  if(/color-mix|color\(|oklch|oklab/.test(h) || /\.\d/.test(h)){
+    try{ const r=toRGB(h); if(/^rgb|^#[0-9a-fA-F]{3,8}$/.test(r) && !/\.\d/.test(r)) return r; }catch(e){}
+    return '#333333';
+  }
+  return h;
+}
 function set(v,h){
+  h=fixColor(h);
   document.documentElement.style.setProperty(v,h);
   const i=document.querySelector(`input[data-v="${v}"]`); if(i){i.value=h;i.parentElement.style.background=h;}
 }
@@ -1970,6 +1985,14 @@ document.getElementById('btnPNG').onclick=async()=>{
   if(typeof html2canvas==='undefined'){ alert('PNG 元件尚未載入，請確認網路連線後重試。'); return; }
   const btn=document.getElementById('btnPNG'); const old=btn.textContent; btn.textContent='產生中…'; btn.disabled=true;
   document.body.classList.add('exporting');
+
+  /* 先把 CSS 變數裡可能殘留的非法色（舊存檔帶進來的）修正，避免 html2canvas 解析崩潰 */
+  ['--c1','--c2','--c3','--c4'].forEach(v=>{
+    const cur=getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    if(cur && (/\.\d/.test(cur) || /color-mix|color\(|oklch|oklab/.test(cur))){
+      document.documentElement.style.setProperty(v, fixColor(cur));
+    }
+  });
 
   /* 把顏色字串轉標準 rgb（解 color-mix/color()/oklch/var()） */
   const rootCS=getComputedStyle(document.documentElement);
