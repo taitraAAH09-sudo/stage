@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>活動頁面版型產生器 V36</title>
+<title>活動頁面版型產生器 V37</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded',function(){
 </div>
 
 <aside class="side">
-  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V36</em></h1>
+  <h1>活動頁面<span>版型產生器</span> <em style="font-style:normal;font-size:11px;font-weight:900;color:#E8552D;background:#241E22;border:1px solid #E8552D;border-radius:6px;padding:2px 7px;vertical-align:middle">V37</em></h1>
 
   <div class="grp tplGrp">
     <label>編輯</label>
@@ -1818,13 +1818,21 @@ function cleanClone(){
   if(liveHero && cloneHero){
     const lr=liveHero.getBoundingClientRect();
     const liveW=lr.width||page.getBoundingClientRect().width||1080;
-    /* 換算到匯出固定寬度 1080px 的等比高度 */
     const hpx=Math.round(lr.height * (1080/liveW));
     if(hpx>0){
       cloneHero.style.height=hpx+'px';
       cloneHero.style.minHeight=hpx+'px';
       cloneHero.style.maxHeight=hpx+'px';
       cloneHero.style.overflow='hidden';
+      cloneHero.style.position='relative';
+      /* 讓 KV 圖填滿並裁切（cover），跟編輯畫面一致、不變形 */
+      const kvImg=cloneHero.querySelector('.kvwrap img, img.kv, .kvbox img');
+      if(kvImg){
+        const wrap=kvImg.closest('.kvwrap')||kvImg.parentElement;
+        if(wrap){ wrap.style.position='absolute'; wrap.style.top='0'; wrap.style.left='0'; wrap.style.right='0'; wrap.style.bottom='0'; wrap.style.width='100%'; wrap.style.height='100%'; wrap.style.overflow='hidden'; }
+        kvImg.style.width='100%'; kvImg.style.height='100%'; kvImg.style.maxHeight='none';
+        kvImg.style.objectFit='cover'; kvImg.style.objectPosition='center'; kvImg.style.opacity='1'; kvImg.style.display='block';
+      }
     }
   }
   return cl;
