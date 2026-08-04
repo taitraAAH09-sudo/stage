@@ -242,7 +242,9 @@
         <button class="btn dl-btn btn--primary" id="btn-png">🖼 PNG 下載</button>
         <button class="btn dl-btn btn--primary" id="btn-html">🌐 HTML 下載</button>
       </div>
-      <div style="text-align:right; margin-top:7px; display:flex; gap:7px; justify-content:flex-end;">
+      <div style="text-align:right; margin-top:7px; display:flex; gap:7px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="btn btn--ghost" id="btn-import-r1">📥 匯入 Room1</button>
+        <button class="btn btn--ghost" id="btn-import-r2">📥 匯入 Room2</button>
         <button class="btn btn--ghost" id="btn-kv">🎨 匯入 KV 配色</button>
         <button class="btn btn--ghost" id="btn-hide-toolbar">隱藏選項</button>
       </div>
@@ -619,7 +621,7 @@ function showErrBox(){
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, update, remove, onValue, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 /* ── Firebase：獨立專案 stagetool-f9ffb，資料放在 stageTool 節點 ── */
 const firebaseConfig = {
@@ -634,6 +636,20 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+/* ── 第二個 Firebase：活動日程表（schedule.html）的資料庫 gurus-cfa66 ──
+   Room1 = agendaTool 節點；Room2 = agendaTool_room2。只讀取，用來匯入。 */
+const schedApp = initializeApp({
+  apiKey: "AIzaSyDM9gqNxouPzNvj1EPtzVL1QMeH2wfEv6s",
+  authDomain: "gurus-cfa66.firebaseapp.com",
+  databaseURL: "https://gurus-cfa66-default-rtdb.firebaseio.com",
+  projectId: "gurus-cfa66",
+  storageBucket: "gurus-cfa66.firebasestorage.app",
+  messagingSenderId: "584897610628",
+  appId: "1:584897610628:web:d5d7331c022c3b1a3493d1"
+}, 'schedApp');
+const schedDb = getDatabase(schedApp);
+const AGBASE = room => room === '2' ? 'agendaTool_room2' : 'agendaTool';
 
 const ROOT = 'stageTool';
 let STAGE = (new URLSearchParams(location.search).get('stage'))
@@ -1223,6 +1239,145 @@ $('act-save').addEventListener('click', async ()=>{
     toast('✓ 已儲存並同步');
   } catch(e){ toast('✗ 儲存失敗：'+e.message); }
 });
+
+/* ── 📥 從「活動日程表」匯入（Room1 / Room2）──
+   來源：schedule.html 的 Firebase（gurus-cfa66）。
+   篩選：地點(venue)含「主舞台 / 舞台 / 大會舞台 / Main Stage」的活動。
+   帶入：時間 → 對應到本表時段(t1/t2)、活動名稱(name)。其餘欄位留白手動補。
+   規則：日期不在本表 → 問是否新增；活動已存在(同日期+同名) → 問覆蓋或略過。 */
+const VENUE_KEYWORDS = ['主舞台','大會舞台','舞台','main stage'];
+
+function venueIsStage(venue){
+  const v = String(venue||'').toLowerCase();
+  return VENUE_KEYWORDS.some(k => v.includes(k.toLowerCase()));
+}
+
+/* 把日程表的自由時間字串（如 "10:30 - 11:30"）對應到本表的時段陣列。
+   t1 = 起點時段（該時段開頭 == 活動開始）；t2 = 終點時段（該時段結尾 == 活動結束）。
+   對不上就退而求其次：t1 用開始時間落在的時段、t2=t1，讓使用者手動修。 */
+function mapTimeToSlots(timeStr){
+  const T = effTimes();
+  const parseSlot = s => {
+    const m = String(s).match(/(\d{1,2}):(\d{2})\s*[-~]\s*(\d{1,2}):(\d{2})/);
+    if(!m) return null;
+    return { start:m[1].padStart(2,'0')+':'+m[2], end:m[3].padStart(2,'0')+':'+m[4] };
+  };
+  const slots = T.map(parseSlot);
+  const tm = String(timeStr||'').match(/(\d{1,2})[:：]?(\d{2})\s*[-~－〜至到]\s*(\d{1,2})[:：]?(\d{2})/);
+  if(!tm){
+    // 沒有區間（可能全天或只有單一時間）→ 給第一個時段，讓使用者手動調
+    return { t1: T[0]||'', t2: T[0]||'', ok:false };
+  }
+  const start = tm[1].padStart(2,'0')+':'+tm[2];
+  const end   = tm[3].padStart(2,'0')+':'+tm[4];
+  let i1 = slots.findIndex(s => s && s.start===start);
+  let i2 = slots.findIndex(s => s && s.end===end);
+  if(i1<0){
+    // 開始時間對不到任何時段開頭 → 找開始時間落在哪個時段內
+    i1 = slots.findIndex(s => s && s.start<=start && start<s.end);
+  }
+  if(i2<0){
+    // 結束時間對不到任何時段結尾 → 找結束時間落在哪個時段內
+    i2 = slots.findIndex(s => s && s.start<end && end<=s.end);
+  }
+  const ok = (i1>=0 && i2>=0);
+  if(i1<0) i1 = 0;
+  if(i2<0) i2 = i1;
+  if(i2<i1) i2 = i1;
+  return { t1: T[i1]||'', t2: T[i2]||'', ok };
+}
+
+async function importFromRoom(room){
+  if(!effDates().length){ alert('請先到「📅 日期設定」加入至少一個日期，才能匯入。'); return; }
+  toast('讀取 Room '+room+' 資料中…');
+  let raw;
+  try{
+    const snap = await get(ref(schedDb, AGBASE(room) + '/activities'));
+    raw = snap.val() || {};
+  }catch(e){
+    console.error(e); alert('讀取活動日程表失敗：'+(e.message||e)); return;
+  }
+
+  const all = Object.values(raw);
+  const hits = all.filter(a => venueIsStage(a && a.venue));
+  if(!hits.length){
+    alert(`Room ${room} 裡沒有找到地點含「主舞台／舞台／大會舞台」的活動。\n（共讀到 ${all.length} 筆活動）`);
+    return;
+  }
+
+  if(!confirm(`Room ${room} 找到 ${hits.length} 筆與舞台相關的活動。\n將帶入「時間 + 活動名稱」到目前的「${effStages()[STAGE]?.name||''}」，其餘欄位請手動補。\n\n開始匯入？`)) return;
+
+  // 依日期、時間排序，讓逐筆詢問時順序自然
+  hits.sort((a,b)=> String(a.date||'').localeCompare(String(b.date||'')) || String(a.time||'').localeCompare(String(b.time||'')));
+
+  let added=0, skipped=0, overwritten=0, imprecise=0;
+
+  for(const a of hits){
+    const iso = a.date || '';
+    if(!iso){ skipped++; continue; }
+
+    // 1) 日期不在本表 → 問是否新增
+    let dates = effDates();
+    if(!dates.some(d=>d.iso===iso)){
+      if(!confirm(`活動「${(a.name||'').slice(0,30)}」的日期 ${iso} 不在目前的日期欄裡。\n要新增這個日期到本表嗎？（選取消則略過此活動）`)){
+        skipped++; continue;
+      }
+      const newList = [...dates.map(d=>({iso:d.iso,label:d.label||''})), {iso, label:''}]
+        .sort((x,y)=>x.iso.localeCompare(y.iso));
+      try{
+        await update(ref(db, SBASE()+'/settings'), { dates:newList, updatedAt:Date.now() });
+        DATES = newList; // 立即反映，讓後續同日活動不再重複詢問
+      }catch(e){ alert('新增日期失敗：'+(e.message||e)); skipped++; continue; }
+    }
+
+    // 2) 時間 → 時段
+    const map = mapTimeToSlots(a.time);
+    if(!map.ok) imprecise++;
+
+    // 3) 重複檢查（同日期 + 同活動名稱）
+    const dupEntry = Object.entries(ACT).find(([id,x])=>
+      x && x.date===iso && String(x.name||'').trim()===String(a.name||'').trim() && String(a.name||'').trim()!=='');
+    let overwriteId = null;
+    if(dupEntry){
+      const ans = confirm(`這筆活動可能已存在：\n${iso}　${a.name||''}\n\n按「確定」覆蓋，按「取消」略過這一筆。`);
+      if(!ans){ skipped++; continue; }
+      overwriteId = dupEntry[0];
+    }
+
+    const data = {
+      date: iso,
+      t1: map.t1,
+      t2: map.t2,
+      cat: 0,
+      co: '',
+      booth: '',
+      lang: '',
+      name: String(a.name||'').trim(),
+      note: '',
+      updatedAt: Date.now()
+    };
+
+    try{
+      if(overwriteId){ await update(ref(db, SBASE()+'/activities/'+overwriteId), data); overwritten++; }
+      else { await push(ref(db, SBASE()+'/activities'), data); added++; }
+    }catch(e){ console.error(e); skipped++; }
+  }
+
+  let msg = `匯入完成：新增 ${added} 筆`;
+  if(overwritten) msg += `、覆蓋 ${overwritten} 筆`;
+  if(skipped) msg += `、略過 ${skipped} 筆`;
+  msg += '。';
+  if(imprecise) msg += `\n其中 ${imprecise} 筆的時間無法精準對應到時段，已放到最接近的位置，請手動確認。`;
+  alert(msg);
+  toast('✓ 匯入完成');
+}
+
+$('btn-import-r1').addEventListener('click', ()=>requirePw(()=>importFromRoom('1').catch(e=>{
+  console.error(e); alert('匯入失敗：'+(e.message||e));
+})));
+$('btn-import-r2').addEventListener('click', ()=>requirePw(()=>importFromRoom('2').catch(e=>{
+  console.error(e); alert('匯入失敗：'+(e.message||e));
+})));
 
 /* ── 時段設定 ── */
 function openTimes(){
@@ -2147,7 +2302,7 @@ ${brand}
   <div class="head">
     <div class="lg-spacer"></div>
     <div class="titles">
-      ${mode!=='en'?`<div class="t-zh">${esc(titleZh)}</div>`:''}
+      ${mode!=='en'?`<div class="t-zh">${esc(titleZh)}${stageName?`　${esc(stageName)}`:''}</div>`:''}
       ${mode!=='zh'?`<div class="${mode==='en'?'t-zh':'t-en'}">${esc(titleEn)}</div>`:''}
     </div>
     <div class="legend">${legend}</div>
