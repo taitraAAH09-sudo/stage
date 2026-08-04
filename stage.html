@@ -112,7 +112,7 @@
   .ev-co{ font-weight:800; color:#111; }
   .ev-meta{ font-size:9px; color:#3a3a3a; }
   .ev-zh{ font-weight:700; color:#1a3550; margin-top:3px; }
-  .ev-en{ color:#1a3550; font-size:9.8px; }
+  .ev-en{ color:#1a3550; }
   .ev .rowx{ display:none; position:absolute; top:2px; right:3px; font-size:10px; color:var(--danger);
              background:rgba(255,255,255,.9); border-radius:3px; padding:1px 4px; font-weight:800; }
   td.slot:hover .rowx{ display:block; }
@@ -375,8 +375,11 @@
     <div class="f-label">每格最小高度 <span id="lo-h-v" class="lo-val"></span></div>
     <input type="range" class="f-range" id="lo-h" min="34" max="160" step="2">
 
-    <div class="f-label">格內字級 <span id="lo-f-v" class="lo-val"></span></div>
+    <div class="f-label">格內字級（中文） <span id="lo-f-v" class="lo-val"></span></div>
     <input type="range" class="f-range" id="lo-f" min="7" max="20" step="0.5">
+
+    <div class="f-label">格內字級（英文） <span id="lo-fe-v" class="lo-val"></span></div>
+    <input type="range" class="f-range" id="lo-fe" min="7" max="20" step="0.5">
 
     <div class="f-label">時間欄寬度 <span id="lo-t-v" class="lo-val"></span></div>
     <input type="range" class="f-range" id="lo-t" min="60" max="200" step="5">
@@ -689,7 +692,7 @@ const DEF_CATS = [
 const DEF_FOOT_ZH = '＊主辦單位保留修改、變更、活動解釋及取消本活動之權利，屆時變更公告於網站，恕不另外通知。';
 const DEF_FOOT_EN = '*THE ORGANIZER RESERVES THE RIGHT TO MODIFY, ALTER, INTERPRET, OR CANCEL THE EVENT. ANY CHANGES WILL BE ANNOUNCED ON THE OFFICIAL WEBSITE WITHOUT PRIOR NOTICE.';
 
-const DEF_LO = { w:280, h:44, f:10.5, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, tf:11.5, vf:12.5, ff:9.5 };
+const DEF_LO = { w:280, h:44, f:10.5, fe:9.8, t:88, hh:74, hf:19, lw:88, lf:9.5, bh:60, tf:11.5, vf:12.5, ff:9.5 };
 /* 三段色塊各自獨立：head=標題列, venue=地點列, foot=頁尾 */
 const DEF_TH = {
   headBg:'#1c2b3a', headGrad:'', headDir:'to right',
@@ -918,7 +921,7 @@ function render(){
     `<div class="lg-item" style="background:${esc(c.color)};width:${LW}px;font-size:${LF}px;" title="點一下編輯分類">${esc(c.zh)}<span class="lg-en" style="font-size:${Math.max(6.5,LF*0.88)}px;">${esc(c.en)}</span></div>`
   ).join('');
 
-  const CW = lo('w'), CH = lo('h'), CF = lo('f'), TW = lo('t');
+  const CW = lo('w'), CH = lo('h'), CF = lo('f'), CFE = lo('fe'), TW = lo('t');
   let head = `<tr><th class="th-time" style="width:${TW}px;color:${th('dateColor')};">時間 Time</th>` +
     D.map(d=>`<th style="width:${CW}px;color:${th('dateColor')};">${esc(dateLabel(d))}</th>`).join('') + `</tr>`;
 
@@ -949,7 +952,7 @@ function render(){
           ${a.co ? `<div class="ev-co" style="color:${th('cellCo')};">【${esc(a.co)}】</div>` : ''}
           ${(a.booth||a.lang) ? `<div class="ev-meta" style="color:${th('cellMeta')};">${a.booth?`（攤位號：${esc(a.booth)}）`:''}${a.lang?`${a.booth?'　':''}${esc(a.lang)}`:''}</div>` : ''}
           ${nm.zh ? `<div class="ev-zh" style="color:${th('cellZh')};">${nl2br(nm.zh)}</div>` : ''}
-          ${nm.en ? `<div class="ev-en" style="color:${th('cellEn')};">${nl2br(nm.en)}</div>` : ''}
+          ${nm.en ? `<div class="ev-en" style="color:${th('cellEn')};font-size:${CFE}px;">${nl2br(nm.en)}</div>` : ''}
           ${a.note ? `<div class="ev-meta" style="color:${th('cellMeta')};">${esc(a.note)}</div>` : ''}
         </div></td>`;
     });
@@ -1517,7 +1520,7 @@ const darkenHex = (h,t) => mixHex(h,'#000000',t);
 const lightenHex = (h,t) => mixHex(h,'#ffffff',t);
 
 /* ── 📐 版面縮放 ── */
-const LO_KEYS = ['w','h','f','t','hh','hf','lw','lf','tf','vf','ff'];
+const LO_KEYS = ['w','h','f','fe','t','hh','hf','lw','lf','tf','vf','ff'];
 function syncLoLabels(){
   LO_KEYS.forEach(k=>{ const el=$('lo-'+k+'-v'); if(el) el.textContent = $('lo-'+k).value + ' px'; });
 }
@@ -2178,7 +2181,7 @@ function buildHtmlExport(mode){
   const titleZh = SET.titleZh||'大會舞台一覽表';
   const titleEn = SET.titleEn||'Tentative Stage Event Schedule';
   const stageName = effStages()[STAGE]?.name || '';
-  const CW=lo('w'), CH=lo('h'), CF=lo('f'), TW=lo('t'), HH=lo('hh'), HF=lo('hf');
+  const CW=lo('w'), CH=lo('h'), CF=lo('f'), CFE=lo('fe'), TW=lo('t'), HH=lo('hh'), HF=lo('hf');
   const LW=lo('lw'), LF=lo('lf'), BH=lo('bh');
   const TF=lo('tf'), VF=lo('vf'), FF=lo('ff');
   const FOOTBG = th('footGrad')
@@ -2284,7 +2287,7 @@ td.blk{background:#d6d6d6;}
 .c-co{font-weight:800;color:${th('cellCo')};}
 .c-meta{font-size:${Math.max(7,CF*0.86)}px;color:${th('cellMeta')};}
 .c-zh{font-weight:700;color:${th('cellZh')};margin-top:3px;}
-.c-en{color:${th('cellEn')};font-size:${Math.max(7.5,CF*0.94)}px;}
+.c-en{color:${th('cellEn')};font-size:${CFE}px;}
 .foot{padding:10px 18px;font-size:${FF}px;line-height:1.5;
       background:${FOOTBG};color:${th('footColor')};}
 @media(max-width:820px){
