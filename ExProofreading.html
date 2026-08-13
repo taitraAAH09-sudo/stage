@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>展覽名冊校對台</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#1c2430; --ink-soft:#3a4454;
+    --paper-card:#fbf8f1; --line:#d9cfb8;
+    --brass:#8a6d3b; --brass-deep:#6b5228;
+    --ok:#2f6b4f; --ok-bg:#e5efe6;
+    --err:#a3312a; --err-bg:#fbe9e6;
+    --warn:#a3701f; --warn-bg:#f8ecd8;
+    --info:#2b5a86; --info-bg:#e3edf5;
+    --navy:#1f2a3c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:radial-gradient(1200px 600px at 10% -10%, #26324a 0%, transparent 60%), var(--navy);
+    color:var(--ink); font-family:'Noto Sans TC', sans-serif; padding-bottom:80px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+  header{padding:48px 20px 34px; color:#f4efe4; position:relative;}
+  .eyebrow{font-family:'JetBrains Mono', monospace;letter-spacing:.18em;font-size:12px;color:#c9b98a;text-transform:uppercase;margin-bottom:14px;}
+  h1{font-family:'Noto Serif TC', serif;font-weight:900;font-size:clamp(28px,5vw,42px);margin:0 0 10px;line-height:1.15;}
+  header p.sub{color:#b9c2d1;font-size:14.5px;max-width:640px;line-height:1.7;margin:0;}
+
+  main{margin-top:6px;}
+  .panel{
+    background:var(--paper-card); border:1px solid var(--line); border-radius:12px;
+    padding:24px; margin-bottom:22px;
+  }
+  .panel h2{
+    font-family:'Noto Serif TC',serif; font-weight:700; font-size:18px; margin:0 0 4px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .panel h2 .step-no{
+    width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-family:'JetBrains Mono',monospace;
+  }
+  .panel .desc{font-size:13px;color:var(--ink-soft);margin:0 0 18px;line-height:1.6;}
+
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:720px){.upload-grid{grid-template-columns:1fr;}}
+  .dropzone{
+    border:2px dashed var(--line); border-radius:10px; padding:26px 18px;
+    text-align:center; cursor:pointer; transition:all .15s ease; background:#fff;
+    position:relative;
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--brass); background:#fffaf0;}
+  .dropzone.loaded{border-style:solid; border-color:var(--ok); background:var(--ok-bg);}
+  .dropzone .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--brass);text-transform:uppercase;margin-bottom:8px;}
+  .dropzone .icon{font-size:26px;margin-bottom:8px;}
+  .dropzone .fname{font-weight:700;font-size:14px;word-break:break-all;}
+  .dropzone .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+  .dropzone input{display:none;}
+  .sheet-row{margin-top:12px;display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .sheet-row select{
+    font-family:'Noto Sans TC',sans-serif;font-size:12.5px;padding:5px 8px;border-radius:6px;border:1px solid var(--line);
+  }
+  .sheet-row label{font-size:12px;color:var(--ink-soft);}
+
+  .mapping-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px;}
+  .mapping-table th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--ink-soft);padding:8px 10px;border-bottom:2px solid var(--line);
+  }
+  .mapping-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .mapping-table select{
+    width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;
+  }
+  .mapping-table input[type=checkbox]{width:16px;height:16px;}
+  .mapping-table input[type=text]{
+    width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;
+  }
+  .remove-field-btn{
+    background:none;border:none;color:var(--err);font-size:16px;cursor:pointer;line-height:1;padding:4px;
+  }
+  .remove-field-btn:hover{color:#7a201b;}
+  .key-row select{min-width:180px;}
+
+  .btn{
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:14px;
+    border:none;padding:11px 24px;border-radius:999px;cursor:pointer;transition:background .15s ease;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary{background:var(--brass);color:#fff;}
+  .btn-primary:hover{background:var(--brass-deep);}
+  .btn-primary:disabled{background:#c9c2ae;cursor:not-allowed;}
+  .btn-ghost{background:none;border:1px solid #58627a;color:#c9d2e0;}
+  .btn-ghost:hover{border-color:#c9b98a;color:#f4efe4;}
+  .action-row{display:flex;justify-content:flex-end;margin-top:16px;gap:10px;}
+
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px;}
+  .stat{background:var(--paper-card);padding:18px 12px;text-align:center;}
+  .stat .num{font-family:'Noto Serif TC',serif;font-weight:900;font-size:26px;line-height:1;}
+  .stat .lbl{margin-top:6px;font-size:11.5px;color:var(--ink-soft);}
+  .stat.ok .num{color:var(--ok);} .stat.err .num{color:var(--err);}
+  .stat.warn .num{color:var(--warn);} .stat.info .num{color:var(--info);}
+  @media (max-width:720px){.summary{grid-template-columns:repeat(2,1fr);}}
+
+  .section-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:19px;color:#f4efe4;margin:0 0 14px;}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--paper-card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:18px;}
+  .toolbar-left{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);padding:7px 12px;border-radius:999px;cursor:pointer;}
+  .chip:hover{border-color:var(--brass);}
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-width:200px;}
+  .search input{border:none;outline:none;font-size:13.5px;width:100%;background:transparent;}
+
+  .cards{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;}
+  .card{background:var(--paper-card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .card-head .name-cn{font-weight:700;font-size:15px;}
+  .card-head .name-en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .meta-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .meta-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:3px 9px;border-radius:6px;}
+  .status-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;white-space:nowrap;}
+  .status-badge.mismatch{background:var(--err-bg);color:var(--err);}
+  .status-badge.missing{background:var(--warn-bg);color:var(--warn);}
+  .status-badge.extra{background:var(--info-bg);color:var(--info);}
+  table.diff-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.diff-table th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);padding:8px 18px;background:rgba(0,0,0,.02);}
+  table.diff-table td{padding:10px 18px;border-top:1px solid var(--line);vertical-align:top;line-height:1.55;}
+  table.diff-table td.field-name{font-weight:700;width:150px;}
+  table.diff-table td.val-a{color:var(--ink-soft);}
+  table.diff-table td.val-b{color:var(--err);background:var(--err-bg);font-weight:500;border-radius:4px;}
+  .plain-note{padding:14px 18px;font-size:13.5px;}
+  .plain-note.warn{color:var(--warn);background:var(--warn-bg);}
+  .plain-note.info{color:var(--info);background:var(--info-bg);}
+
+  .full-wrap{background:var(--paper-card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:none;}
+  .full-wrap.show{display:block;}
+  .full-scroll{max-height:520px;overflow:auto;}
+  table.full-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.full-table thead th{position:sticky;top:0;background:var(--ink);color:#f4efe4;text-align:left;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;z-index:1;}
+  table.full-table td{padding:9px 14px;border-top:1px solid var(--line);}
+  table.full-table tr:hover td{background:rgba(0,0,0,.02);}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--ok);background:var(--paper-card);border-radius:10px;font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;border:1px solid var(--line);}
+  .toggle-full{text-align:center;margin:16px 0;}
+  .toggle-full button{background:none;border:1px solid #58627a;color:#c9d2e0;font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 18px;border-radius:999px;cursor:pointer;}
+  .toggle-full button:hover{border-color:#c9b98a;color:#f4efe4;}
+  footer{text-align:center;color:#7c8698;font-size:12px;padding:30px 20px 10px;font-family:'JetBrains Mono',monospace;}
+  #resultsSection, #mappingSection{display:none;}
+  .err-msg{color:#e08a80;font-size:13px;margin-top:10px;text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Exhibitor List Audit Tool</div>
+    <h1>展覽名冊校對台</h1>
+    <p class="sub">上傳 A 檔（正確依據）與 B 檔（待查核對象），設定欄位對應後即可自動比對差異——每次改版名單都能重複使用。</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <main>
+
+    <!-- STEP 1: UPLOAD -->
+    <div class="panel" id="uploadPanel">
+      <h2><span class="step-no">1</span>上傳檔案</h2>
+      <p class="desc">A 檔為比對基準（例如 OD 名單），B 檔為要檢查的對象（例如匯入報告）。僅支援 .xlsx / .xls。</p>
+      <div class="upload-grid">
+        <div class="dropzone" id="dropA">
+          <div class="label">A 檔案 · 基準</div>
+          <div class="icon">📄</div>
+          <div class="fname" id="fnameA">點擊或拖曳上傳 A 檔</div>
+          <div class="hint" id="hintA">尚未上傳</div>
+          <div class="sheet-row" id="sheetRowA" style="display:none;">
+            <label>工作表：</label><select id="sheetSelA"></select>
+          </div>
+          <input type="file" id="fileA" accept=".xlsx,.xls">
+        </div>
+        <div class="dropzone" id="dropB">
+          <div class="label">B 檔案 · 查核對象</div>
+          <div class="icon">📄</div>
+          <div class="fname" id="fnameB">點擊或拖曳上傳 B 檔</div>
+          <div class="hint" id="hintB">尚未上傳</div>
+          <div class="sheet-row" id="sheetRowB" style="display:none;">
+            <label>工作表：</label><select id="sheetSelB"></select>
+          </div>
+          <input type="file" id="fileB" accept=".xlsx,.xls">
+        </div>
+      </div>
+      <div class="err-msg" id="uploadErr"></div>
+    </div>
+
+    <!-- STEP 2: MAPPING -->
+    <div class="panel" id="mappingSection">
+      <h2><span class="step-no">2</span>設定比對欄位</h2>
+      <p class="desc">系統已自動猜測欄位對應，請確認或手動調整。「比對鍵」用於將 A、B 兩檔的同一家公司互相配對（建議使用統一編號）。</p>
+
+      <table class="mapping-table">
+        <thead><tr><th style="width:140px">用途</th><th>A 檔欄位</th><th>B 檔欄位</th></tr></thead>
+        <tbody>
+          <tr class="key-row">
+            <td><strong>比對鍵（如統編）</strong></td>
+            <td><select id="keyColA"></select></td>
+            <td><select id="keyColB"></select></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="mapping-table" style="margin-top:14px;">
+        <thead><tr><th style="width:50px">納入</th><th style="width:150px">比對欄位名稱</th><th>A 檔欄位</th><th>B 檔欄位</th><th style="width:40px"></th></tr></thead>
+        <tbody id="fieldMapBody"></tbody>
+      </table>
+
+      <div style="margin-top:12px;">
+        <button class="btn btn-ghost" id="addFieldBtn" style="border-style:dashed;">＋ 新增比對欄位</button>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" id="backToUploadBtn">← 重新上傳</button>
+        <button class="btn btn-primary" id="runCompareBtn">開始比對 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: RESULTS -->
+    <div id="resultsSection">
+      <div class="summary" id="summary"></div>
+
+      <div class="section-title">校對結果</div>
+      <div class="toolbar">
+        <div class="toolbar-left" id="filterChips"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="search"><span style="opacity:.5">⌕</span><input id="searchBox" placeholder="搜尋公司名稱 / 比對鍵"></div>
+          <button class="btn btn-primary" id="downloadBtn">⬇ 下載校對報告 (CSV)</button>
+        </div>
+      </div>
+
+      <div class="cards" id="cards"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">✓ 沒有符合篩選條件的資料</div>
+
+      <div class="toggle-full">
+        <button id="toggleFullBtn">顯示全部核對結果 ▾</button>
+      </div>
+      <div class="full-wrap" id="fullWrap">
+        <div class="full-scroll">
+          <table class="full-table">
+            <thead><tr><th>比對鍵</th><th>公司名稱</th><th>狀態</th><th>差異欄位</th></tr></thead>
+            <tbody id="fullTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="action-row" style="justify-content:center;margin-top:26px;">
+        <button class="btn btn-ghost" id="newCompareBtn">↺ 換一組檔案重新比對</button>
+      </div>
+    </div>
+
+  </main>
+  <footer>展覽名冊校對台 &middot; 所有比對皆在瀏覽器內完成，檔案不會上傳到伺服器</footer>
+</div>
+
+<script>
+// ---------- FIELD DEFINITIONS ----------
+// name shown in UI, plus candidate header names to auto-guess in A and B files
+const FIELD_DEFS = [
+  {name:'攤位號碼', aGuess:['攤位號碼','攤位'], bGuess:['攤位','攤位號碼'], normalize:'text'},
+  {name:'公司名稱-中', aGuess:['公司名稱-中','公司名稱中文','公司名稱'], bGuess:['公司名稱中文','公司名稱-中','公司名稱'], normalize:'text'},
+  {name:'公司名稱-英', aGuess:['公司名稱-英','公司名稱英文'], bGuess:['公司名稱英文','公司名稱-英'], normalize:'text'},
+  {name:'公司地址-英', aGuess:['公司地址-英','地址英文'], bGuess:['地址英文','公司地址-英'], normalize:'text'},
+  {name:'公司電話', aGuess:['公司電話','電話'], bGuess:['電話','公司電話'], normalize:'text'},
+  {name:'公司傳真', aGuess:['公司傳真','傳真'], bGuess:['傳真','公司傳真'], normalize:'text'},
+  {name:'公司Email', aGuess:['公司Email','Email','電子郵件'], bGuess:['Email','公司Email'], normalize:'text'},
+  {name:'公司網站', aGuess:['公司網站','網站'], bGuess:['網站','公司網站'], normalize:'text'},
+  {name:'貿協產品分類碼', aGuess:['貿協產品分類碼','分類代碼'], bGuess:['分類代碼','貿協產品分類碼'], normalize:'codelist'},
+];
+const KEY_GUESS_A = ['公司統編','統一編號','統編'];
+const KEY_GUESS_B = ['統一編號','公司統編','統編'];
+
+let fileState = { A: null, B: null }; // {workbook, sheetName, headers, rows(array of arrays incl header)}
+let mapping = null;
+let compareResults = null;
+let customFields = []; // {id, name, aCol, bCol}
+let customFieldCounter = 0;
+
+// ---------- FILE LOADING ----------
+function setupDropzone(letter){
+  const drop = document.getElementById('drop'+letter);
+  const input = document.getElementById('file'+letter);
+  drop.addEventListener('click', ()=>input.click());
+  drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('drag');});
+  drop.addEventListener('dragleave', ()=>drop.classList.remove('drag'));
+  drop.addEventListener('drop', e=>{
+    e.preventDefault(); drop.classList.remove('drag');
+    if(e.dataTransfer.files.length) handleFile(letter, e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', e=>{
+    if(e.target.files.length) handleFile(letter, e.target.files[0]);
+  });
+}
+setupDropzone('A'); setupDropzone('B');
+
+function handleFile(letter, file){
+  document.getElementById('uploadErr').textContent = '';
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array', cellDates:false});
+      fileState[letter] = {workbook: wb, file: file, sheetName: null};
+      document.getElementById('fname'+letter).textContent = file.name;
+      document.getElementById('hint'+letter).textContent = wb.SheetNames.length + ' 個工作表';
+      document.getElementById('drop'+letter).classList.add('loaded');
+      const sheetRow = document.getElementById('sheetRow'+letter);
+      const sel = document.getElementById('sheetSel'+letter);
+      sel.innerHTML = wb.SheetNames.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      // prefer a sheet literally named 匯入結果 for B if present, else first
+      let defaultSheet = wb.SheetNames[0];
+      if(letter==='B'){
+        const preferred = wb.SheetNames.find(n=>n.includes('匯入結果')) || wb.SheetNames.find(n=>n.includes('結果'));
+        if(preferred) defaultSheet = preferred;
+      }
+      sel.value = defaultSheet;
+      sheetRow.style.display = wb.SheetNames.length>1 ? 'flex' : 'none';
+      sel.onchange = ()=>loadSheet(letter, sel.value);
+      loadSheet(letter, defaultSheet);
+    }catch(err){
+      document.getElementById('uploadErr').textContent = '讀取 '+letter+' 檔失敗：'+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function loadSheet(letter, sheetName){
+  const st = fileState[letter];
+  st.sheetName = sheetName;
+  const sheet = st.workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+  st.rows = rows;
+  st.headers = (rows[0]||[]).map(h=>String(h==null?'':h).trim());
+  maybeShowMapping();
+}
+
+function maybeShowMapping(){
+  if(fileState.A && fileState.A.headers && fileState.B && fileState.B.headers){
+    buildMappingUI();
+    document.getElementById('mappingSection').style.display = 'block';
+    document.getElementById('mappingSection').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+// ---------- MAPPING UI ----------
+function optionsFor(headers, guessList){
+  let best = '';
+  for(const g of guessList){
+    const exact = headers.find(h=>h===g);
+    if(exact){ best = exact; break; }
+  }
+  if(!best){
+    for(const g of guessList){
+      const contains = headers.find(h=>h.includes(g) || g.includes(h));
+      if(contains){ best = contains; break; }
+    }
+  }
+  return best;
+}
+
+function buildSelect(id, headers, selected, allowNone){
+  const opts = (allowNone? ['<option value="">（不比對）</option>'] : [])
+    .concat(headers.map(h=>`<option value="${escapeHtml(h)}" ${h===selected?'selected':''}>${escapeHtml(h)}</option>`));
+  return `<select id="${id}">${opts.join('')}</select>`;
+}
+
+function buildMappingUI(){
+  const aHeaders = fileState.A.headers.filter(h=>h!=='');
+  const bHeaders = fileState.B.headers.filter(h=>h!=='');
+
+  document.getElementById('keyColA').outerHTML = buildSelect('keyColA', aHeaders, optionsFor(aHeaders, KEY_GUESS_A), false);
+  document.getElementById('keyColB').outerHTML = buildSelect('keyColB', bHeaders, optionsFor(bHeaders, KEY_GUESS_B), false);
+
+  customFields = [];
+  customFieldCounter = 0;
+  renderFieldMapBody();
+}
+
+function renderFieldMapBody(){
+  const aHeaders = fileState.A.headers.filter(h=>h!=='');
+  const bHeaders = fileState.B.headers.filter(h=>h!=='');
+  const body = document.getElementById('fieldMapBody');
+
+  const defaultRows = FIELD_DEFS.map((f,i)=>{
+    const aSel = optionsFor(aHeaders, f.aGuess);
+    const bSel = optionsFor(bHeaders, f.bGuess);
+    return `<tr>
+      <td style="text-align:center;"><input type="checkbox" id="incl_${i}" checked></td>
+      <td>${escapeHtml(f.name)}</td>
+      <td>${buildSelect('aCol_'+i, aHeaders, aSel, true)}</td>
+      <td>${buildSelect('bCol_'+i, bHeaders, bSel, true)}</td>
+      <td></td>
+    </tr>`;
+  }).join('');
+
+  const customRows = customFields.map(cf=>{
+    return `<tr>
+      <td style="text-align:center;"><input type="checkbox" id="cincl_${cf.id}" checked></td>
+      <td><input type="text" id="cname_${cf.id}" value="${escapeHtml(cf.name)}" placeholder="欄位名稱"></td>
+      <td>${buildSelect('caCol_'+cf.id, aHeaders, cf.aCol, true)}</td>
+      <td>${buildSelect('cbCol_'+cf.id, bHeaders, cf.bCol, true)}</td>
+      <td style="text-align:center;"><button type="button" class="remove-field-btn" data-cid="${cf.id}" title="移除此欄位">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = defaultRows + customRows;
+
+  body.querySelectorAll('.remove-field-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      syncCustomFieldsFromDOM();
+      const cid = Number(btn.dataset.cid);
+      customFields = customFields.filter(cf=>cf.id!==cid);
+      renderFieldMapBody();
+    });
+  });
+}
+
+function syncCustomFieldsFromDOM(){
+  customFields.forEach(cf=>{
+    const nameEl = document.getElementById('cname_'+cf.id);
+    const aColEl = document.getElementById('caCol_'+cf.id);
+    const bColEl = document.getElementById('cbCol_'+cf.id);
+    if(nameEl) cf.name = nameEl.value;
+    if(aColEl) cf.aCol = aColEl.value;
+    if(bColEl) cf.bCol = bColEl.value;
+  });
+}
+
+document.getElementById('addFieldBtn').addEventListener('click', ()=>{
+  if(!fileState.A || !fileState.B) return;
+  syncCustomFieldsFromDOM();
+  customFieldCounter += 1;
+  customFields.push({id: customFieldCounter, name:'', aCol:'', bCol:''});
+  renderFieldMapBody();
+  const input = document.getElementById('cname_'+customFieldCounter);
+  if(input) input.focus();
+});
+
+document.getElementById('backToUploadBtn').addEventListener('click', ()=>{
+  document.getElementById('mappingSection').style.display = 'none';
+  document.getElementById('uploadPanel').scrollIntoView({behavior:'smooth'});
+});
+
+// ---------- COMPARE ----------
+document.getElementById('runCompareBtn').addEventListener('click', runCompare);
+
+function rowsToObjects(rows){
+  const headers = rows[0].map(h=>String(h==null?'':h).trim());
+  const out = [];
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    if(!row || row.every(c=>c===''||c==null)) continue;
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h] = row[i]===undefined?'':row[i]; });
+    out.push(obj);
+  }
+  return out;
+}
+
+function normalize(val, type){
+  if(val===null||val===undefined) return '';
+  let s = String(val).trim().replace(/\s+/g,' ');
+  if(type==='codelist'){
+    const parts = s.split(',').map(p=>p.trim()).filter(p=>p!=='');
+    parts.sort();
+    return parts.join(',');
+  }
+  return s;
+}
+
+function runCompare(){
+  const keyColA = document.getElementById('keyColA').value;
+  const keyColB = document.getElementById('keyColB').value;
+  if(!keyColA || !keyColB){
+    alert('請選擇 A 檔與 B 檔的比對鍵欄位');
+    return;
+  }
+  const activeFields = FIELD_DEFS.map((f,i)=>{
+    const incl = document.getElementById('incl_'+i).checked;
+    const aCol = document.getElementById('aCol_'+i).value;
+    const bCol = document.getElementById('bCol_'+i).value;
+    return incl && aCol && bCol ? {name:f.name, aCol, bCol, normalize:f.normalize} : null;
+  }).filter(Boolean);
+
+  customFields.forEach(cf=>{
+    const inclEl = document.getElementById('cincl_'+cf.id);
+    const nameEl = document.getElementById('cname_'+cf.id);
+    const aColEl = document.getElementById('caCol_'+cf.id);
+    const bColEl = document.getElementById('cbCol_'+cf.id);
+    if(!inclEl || !inclEl.checked) return;
+    const name = (nameEl.value||'').trim() || '(未命名欄位)';
+    const aCol = aColEl.value, bCol = bColEl.value;
+    if(aCol && bCol){
+      activeFields.push({name, aCol, bCol, normalize:'text'});
+    }
+  });
+
+  if(activeFields.length===0){
+    alert('請至少選擇一個要比對的欄位');
+    return;
+  }
+
+  const aObjs = rowsToObjects(fileState.A.rows);
+  const bObjs = rowsToObjects(fileState.B.rows);
+
+  const aMap = new Map();
+  aObjs.forEach(o=>{
+    const k = normalize(o[keyColA],'text');
+    if(k) aMap.set(k, o);
+  });
+  const bMap = new Map();
+  bObjs.forEach(o=>{
+    const k = normalize(o[keyColB],'text');
+    if(k) bMap.set(k, o);
+  });
+
+  // guess display-name fields (company name) for cards: prefer Chinese name, fall back to English
+  const nameFieldCN = activeFields.find(f=>f.name.includes('公司名稱') && f.name.includes('中')) || null;
+  const nameFieldEN = activeFields.find(f=>f.name.includes('公司名稱') && f.name.includes('英')) || null;
+
+  function pickLabel(rec, colSide){
+    const cn = nameFieldCN ? String(rec[nameFieldCN[colSide]]||'').trim() : '';
+    const en = nameFieldEN ? String(rec[nameFieldEN[colSide]]||'').trim() : '';
+    return cn || en || '';
+  }
+
+  const results = [];
+  const seenKeys = new Set();
+
+  aMap.forEach((aRec, key)=>{
+    seenKeys.add(key);
+    const bRec = bMap.get(key);
+    const label = pickLabel(aRec, 'aCol');
+    if(!bRec){
+      results.push({key, label, status:'missing', diffs:[]});
+      return;
+    }
+    const diffs = [];
+    activeFields.forEach(f=>{
+      const av = aRec[f.aCol];
+      const bv = bRec[f.bCol];
+      const an = normalize(av, f.normalize);
+      const bn = normalize(bv, f.normalize);
+      if(an !== bn){
+        diffs.push({field:f.name, a: av==null?'':av, b: bv==null?'':bv});
+      }
+    });
+    results.push({key, label, status: diffs.length? 'mismatch':'match', diffs});
+  });
+
+  bMap.forEach((bRec, key)=>{
+    if(seenKeys.has(key)) return;
+    const label = pickLabel(bRec, 'bCol');
+    results.push({key, label, status:'extra', diffs:[]});
+  });
+
+  compareResults = results;
+  renderResults();
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+}
+
+// ---------- RESULTS RENDERING ----------
+let currentFilter = 'issues';
+
+function renderResults(){
+  const results = compareResults;
+  const s = {
+    total: results.length,
+    match: results.filter(r=>r.status==='match').length,
+    mismatch: results.filter(r=>r.status==='mismatch').length,
+    missing: results.filter(r=>r.status==='missing').length,
+    extra: results.filter(r=>r.status==='extra').length,
+  };
+  document.getElementById('summary').innerHTML = [
+    {key:'total',label:'比對總筆數',cls:''},
+    {key:'match',label:'完全相符',cls:'ok'},
+    {key:'mismatch',label:'欄位有差異',cls:'err'},
+    {key:'missing',label:'B 檔缺筆',cls:'warn'},
+    {key:'extra',label:'B 檔多出',cls:'info'},
+  ].map(d=>`<div class="stat ${d.cls}"><div class="num">${s[d.key]}</div><div class="lbl">${d.label}</div></div>`).join('');
+
+  const chipDefs = [
+    {key:'issues', label:`⚠ 全部問題 (${s.mismatch+s.missing+s.extra})`},
+    {key:'mismatch', label:`✕ 欄位不符 (${s.mismatch})`},
+    {key:'missing', label:`− B 檔缺筆 (${s.missing})`},
+    {key:'extra', label:`＋ B 檔多出 (${s.extra})`},
+  ];
+  currentFilter = 'issues';
+  const chipsEl = document.getElementById('filterChips');
+  function draw(){
+    chipsEl.innerHTML = chipDefs.map(c=>`<button class="chip ${currentFilter===c.key?'active':''}" data-k="${c.key}">${c.label}</button>`).join('');
+    chipsEl.querySelectorAll('.chip').forEach(b=>{ b.onclick=()=>{currentFilter=b.dataset.k; draw(); renderCards();}; });
+  }
+  draw();
+
+  document.getElementById('searchBox').oninput = renderCards;
+  renderCards();
+
+  document.getElementById('toggleFullBtn').onclick = ()=>{
+    const w = document.getElementById('fullWrap');
+    const shown = w.classList.toggle('show');
+    document.getElementById('toggleFullBtn').textContent = shown ? '收合全部核對結果 ▴' : '顯示全部核對結果 ▾';
+    if(shown) renderFullTable();
+  };
+}
+
+function matchesSearch(r,q){
+  if(!q) return true;
+  q=q.toLowerCase();
+  return (r.key||'').toLowerCase().includes(q) || (r.label||'').toLowerCase().includes(q);
+}
+
+function renderCards(){
+  const q = document.getElementById('searchBox').value.trim();
+  let filtered = compareResults.filter(r=>{
+    if(currentFilter==='issues') return r.status!=='match';
+    return r.status===currentFilter;
+  }).filter(r=>matchesSearch(r,q));
+
+  const cardsEl = document.getElementById('cards');
+  const emptyEl = document.getElementById('emptyState');
+  if(filtered.length===0){ cardsEl.innerHTML=''; emptyEl.style.display='block'; return; }
+  emptyEl.style.display='none';
+
+  cardsEl.innerHTML = filtered.map(r=>{
+    let badge, body;
+    if(r.status==='missing'){
+      badge = `<span class="status-badge missing">B 檔缺筆</span>`;
+      body = `<div class="plain-note warn">比對鍵「${escapeHtml(r.key)}」存在於 A 檔，但 B 檔中查無此筆資料。</div>`;
+    } else if(r.status==='extra'){
+      badge = `<span class="status-badge extra">B 檔多出</span>`;
+      body = `<div class="plain-note info">比對鍵「${escapeHtml(r.key)}」只存在於 B 檔，A 檔中查無此筆資料。</div>`;
+    } else {
+      badge = `<span class="status-badge mismatch">${r.diffs.length} 項欄位不符</span>`;
+      body = `<table class="diff-table">
+        <thead><tr><th>欄位</th><th>A 檔（正確依據）</th><th>B 檔（現況，差異處紅底）</th></tr></thead>
+        <tbody>${r.diffs.map(d=>`<tr>
+          <td class="field-name">${escapeHtml(d.field)}</td>
+          <td class="val-a">${escapeHtml(d.a) || '<span style="opacity:.4">(空白)</span>'}</td>
+          <td class="val-b">${escapeHtml(d.b) || '<span style="opacity:.6">(空白)</span>'}</td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+    return `<div class="card">
+      <div class="card-head">
+        <div>
+          <div class="name-cn">${escapeHtml(r.label) || '(無名稱)'}</div>
+          <div class="name-en">${escapeHtml(r.key)}</div>
+        </div>
+        <div class="meta-tags">${badge}</div>
+      </div>
+      ${body}
+    </div>`;
+  }).join('');
+}
+
+function renderFullTable(){
+  document.getElementById('fullTableBody').innerHTML = compareResults.map(r=>{
+    const badge = r.status==='match' ? `<span class="status-badge" style="background:var(--ok-bg);color:var(--ok);">相符</span>`
+      : r.status==='mismatch' ? `<span class="status-badge mismatch">不符</span>`
+      : r.status==='missing' ? `<span class="status-badge missing">缺筆</span>`
+      : `<span class="status-badge extra">多出</span>`;
+    const diffFields = r.diffs.map(d=>d.field).join('、');
+    return `<tr><td>${escapeHtml(r.key)}</td><td>${escapeHtml(r.label)}</td><td>${badge}</td><td style="color:var(--err)">${escapeHtml(diffFields)}</td></tr>`;
+  }).join('');
+}
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const rows = [['比對鍵','公司名稱','差異類型','欄位','A檔數值','B檔數值']];
+  compareResults.forEach(r=>{
+    if(r.status==='missing') rows.push([r.key, r.label, 'B檔缺筆','','','']);
+    else if(r.status==='extra') rows.push([r.key, r.label, 'B檔多出','','','']);
+    else if(r.status==='mismatch') r.diffs.forEach(d=>rows.push([r.key, r.label, '欄位不符', d.field, d.a, d.b]));
+  });
+  const csv = rows.map(row=>row.map(c=>{
+    const s = (c===null||c===undefined)?'':String(c);
+    return '"'+s.replace(/"/g,'""')+'"';
+  }).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = '校對報告_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('newCompareBtn').addEventListener('click', ()=>{
+  fileState = {A:null, B:null};
+  compareResults = null;
+  customFields = [];
+  customFieldCounter = 0;
+  ['A','B'].forEach(letter=>{
+    document.getElementById('fname'+letter).textContent = '點擊或拖曳上傳 '+letter+' 檔';
+    document.getElementById('hint'+letter).textContent = '尚未上傳';
+    document.getElementById('drop'+letter).classList.remove('loaded');
+    document.getElementById('sheetRow'+letter).style.display = 'none';
+    document.getElementById('file'+letter).value = '';
+  });
+  document.getElementById('mappingSection').style.display = 'none';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('uploadPanel').scrollIntoView({behavior:'smooth'});
+});
+
+function escapeHtml(s){
+  if(s===undefined||s===null) return '';
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
