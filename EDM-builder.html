@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EDM Builder V7 · 中東採購媒合會 版型產生器</title>
+<title>EDM Builder V8 · 中東採購媒合會 版型產生器</title>
 <style>
 /* ===== 編輯器外殼 ===== */
 :root{--c1:#16305C;--c2:#6B2FA0;--c3:#2E6BE6;--c4:#ffffff;--ink:#1f2733;--dim:#5a6577;--line:#39414F}
@@ -159,6 +159,8 @@ body:not(.exporting) .page .sec:hover::before{opacity:1}
 
 .imgRz{position:absolute;right:2px;bottom:2px;width:20px;height:20px;background:var(--c2);border:2px solid #fff;border-radius:5px;cursor:nwse-resize;z-index:22;opacity:.6;transition:.15s;box-shadow:0 0 0 2px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.4)}
 .imgRz:hover{opacity:1;transform:scale(1.15)}
+.imgTip{position:absolute;background:rgba(20,24,33,.9);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;z-index:21;opacity:0;transition:.15s;pointer-events:none;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.sizable:hover .imgTip{opacity:1}
 .sizable:hover .imgRz{opacity:1}
 .imgH{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:#14181F;border:2px solid var(--c2);border-radius:15px;padding:0 6px;height:28px;z-index:13;opacity:0;transition:.15s;pointer-events:none}
 .sizable:hover .imgH{opacity:.92;pointer-events:auto}
@@ -219,7 +221,7 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
 <body>
 <div class="app">
   <aside class="side">
-    <h1><span class="verBadge" id="verBadge">V7</span>EDM <span>Builder</span></h1>
+    <h1><span class="verBadge" id="verBadge">V8</span>EDM <span>Builder</span></h1>
     <div class="tip">Email layout · 600px width</div>
 
     <h5>Template / Language</h5>
@@ -236,7 +238,18 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
     <p class="tip" style="margin-top:2px">存檔會記錄名稱、時間與當時的版型／語言（例：A-2）。✕ 需兩次確認才會清空。</p>
 
     <h5>Hero KV Image</h5>
-    <div class="drop" id="drop">Click or drag to upload KV<br>JPG / PNG<span class="dHint">Recommended 1200px wide banner</span></div>
+    <div class="drop" id="drop">Click or drag to upload KV<br>JPG / PNG<span class="dHint">建議 1200×678px（JPG / PNG）</span></div>
+
+    <h5>圖片建議尺寸</h5>
+    <p class="tip" style="line-height:1.75">
+      主視覺 KV　<b>1200×678</b><br>
+      商洽照片　<b>寬 1200</b>（高度不限）<br>
+      產業類別圖　<b>600×450</b><br>
+      底部橫幅　<b>1200×390</b><br>
+      版型2 四宮格　<b>600×300</b><br>
+      版型2 卡片小圖　<b>200×200</b><br>
+      <span style="opacity:.7">＊皆為顯示尺寸的 2 倍，手機高解析螢幕才不會糊。滑到圖片上也會顯示建議尺寸。</span>
+    </p>
 
     <h5>Colors (click an element first)</h5>
     <div class="cbar">
@@ -353,7 +366,7 @@ const page=document.getElementById('page');
 const $=id=>document.getElementById(id);
 
 /* ---------- 版本號（每次改版 +1）---------- */
-const APP_VER='V7';
+const APP_VER='V8';
 try{document.title='EDM Builder '+APP_VER+' · 中東採購媒合會 版型產生器';}catch(e){}
 
 /* ---------- 原始骨架 + 圖片素材（務必在還原草稿前擷取）---------- */
@@ -525,6 +538,21 @@ function wrapMultiImages(){
     p.querySelectorAll(':scope > .imgRz,:scope > .imgH').forEach(h=>h.remove());
   });
 }
+/* 各圖片位置的建議上傳尺寸（依 600px 信件寬的實際顯示尺寸 ×2 倍，供高解析裝置用） */
+const IMG_HINTS=[
+  {sel:'#kvbox',    name:'主視覺 KV',   w:1200, h:678},
+  {sel:'.banner',   name:'底部橫幅',     w:1200, h:390},
+  {sel:'.imgHold',  name:'商洽照片',     w:1200, h:0  },
+  {sel:'.cat',      name:'產業類別圖',   w:600,  h:450},
+  {sel:'.t2-tile',  name:'四宮格圖',     w:600,  h:300},
+  {sel:'.t2-card',  name:'卡片小圖',     w:200,  h:200}
+];
+function hintFor(img){
+  for(const h of IMG_HINTS){try{if(img.closest(h.sel))return h;}catch(e){}}
+  return null;
+}
+function hintText(h){return h.h?(h.w+'×'+h.h+'px'):('寬 '+h.w+'px');}
+
 /* 把縮放手把移到該張圖片實際的右下角 */
 function placeRz(box,img,rz){
   if(!box||!img||!rz)return;
@@ -535,10 +563,22 @@ function placeRz(box,img,rz){
   rz.style.left=Math.round((ir.right-br.left)*k-12)+'px';
   rz.style.top =Math.round((ir.bottom-br.top)*k-12)+'px';
 }
+function placeTip(box,img,el){
+  if(!box||!img||!el)return;
+  const br=box.getBoundingClientRect(),ir=img.getBoundingClientRect();
+  if(!ir.width||!br.width)return;
+  const k=box.offsetWidth?box.offsetWidth/br.width:1;
+  el.style.left=Math.round((ir.left-br.left)*k+4)+'px';
+  el.style.top =Math.round((ir.top-br.top)*k+4)+'px';
+}
 function placeAllRz(){
   page.querySelectorAll('.imgRz').forEach(rz=>{
     const box=rz.parentElement;const img=box&&box.querySelector('img');
     if(img)placeRz(box,img,rz);
+  });
+  page.querySelectorAll('.imgTip').forEach(tp=>{
+    const box=tp.parentElement;const img=box&&box.querySelector('img');
+    if(img)placeTip(box,img,tp);
   });
 }
 window.addEventListener('resize',placeAllRz);
@@ -546,18 +586,28 @@ function bindImages(){
   wrapMultiImages();
   page.querySelectorAll('img').forEach(img=>{
     const box=img.parentElement;
-    if(box.dataset.imgbound)return;box.dataset.imgbound='1';box.classList.add('sizable');
+    box.dataset.imgbound='1';   /* 只作為 initAll 清理用的標記，不再拿來擋重新綁定 */box.classList.add('sizable');
     if(getComputedStyle(box).position==='static')box.style.position='relative';
     const isKV=box.id==='kvbox'||img.closest('.kv-wrap')||img.closest('.banner')||box.classList.contains('t2-tile');
     /* 點圖片換照片 */
     img.style.cursor='pointer';
     img.title='點一下換圖片 · Click to replace';
+    const hint=hintFor(img);
+    img.title='點一下換圖片 · Click to replace'+(hint?('　建議尺寸 '+hintText(hint)):'');
+    if(hint&&!box.querySelector('.imgTip')){
+      const tp=document.createElement('span');tp.className='bGuide imgTip';tp.contentEditable='false';
+      tp.textContent='建議 '+hintText(hint);
+      box.appendChild(tp);placeTip(box,img,tp);
+    }
     if(!img.dataset.replbound){img.dataset.replbound='1';
       img.addEventListener('click',ev=>{
         if(ev.altKey)return;
         ev.stopPropagation();
         const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.style.cssText='position:fixed;left:-9999px';document.body.appendChild(inp);
-        inp.onchange=async e=>{const f=e.target.files&&e.target.files[0];inp.remove();if(!f)return;const d=await compressImage(f,isKV?1200:900,.85);if(d){img.src=d;persist();pushHistory();}};
+        inp.onchange=async e=>{const f=e.target.files&&e.target.files[0];inp.remove();if(!f)return;
+          const cap=Math.max(900,hint?hint.w:900);
+          const d=await compressImage(f,cap,.85);
+          if(d){img.src=d;img.addEventListener('load',()=>placeAllRz(),{once:true});persist();pushHistory();}};
         inp.click();
       });
     }
@@ -602,7 +652,13 @@ function bindImages(){
 
 /* ---------- KV 上傳 ---------- */
 function compressImage(file,maxw,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;if(w>maxw){h=Math.round(h*maxw/w);w=maxw;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);res(c.toDataURL('image/jpeg',q||.85));};im.onerror=()=>res(null);im.src=r.result;};r.onerror=()=>res(null);r.readAsDataURL(file);});}
-function applyKV(durl){const box=$('kvbox');box.innerHTML='<img src="'+durl+'" alt="KV">';persist();pushHistory();}
+function applyKV(durl){
+  const box=$('kvbox');
+  let img=box.querySelector('img');
+  if(!img){img=document.createElement('img');img.alt='KV';box.insertBefore(img,box.firstChild);}
+  img.src=durl;                 /* 只換 src，不動容器 → 高度、裁切、手把全部留著 */
+  initAll();persist();pushHistory();
+}
 function pickKV(){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.style.cssText='position:fixed;left:-9999px';document.body.appendChild(inp);inp.onchange=async e=>{const f=e.target.files&&e.target.files[0];inp.remove();if(!f)return;const d=await compressImage(f,1200,.85);if(d)applyKV(d);};inp.click();}
 $('drop').onclick=pickKV;
 $('drop').ondragover=e=>{e.preventDefault();};
@@ -1023,7 +1079,7 @@ function closeOnb(){const o=$('onbOverlay');if(o)o.style.display='none';try{loca
 $('btnHelp').onclick=openOnb;
 
 /* ---------- 初始化 ---------- */
-function initAll(){page.querySelectorAll('[data-imgbound]').forEach(b=>{b.removeAttribute('data-imgbound');b.querySelectorAll(':scope > .imgRz,:scope > .imgH').forEach(h=>h.remove());});addAllSecResize();initBlockTools();bindImages();makeAllEditable();addRowButtons();}
+function initAll(){page.querySelectorAll('[data-imgbound]').forEach(b=>{b.removeAttribute('data-imgbound');b.querySelectorAll(':scope > .imgRz,:scope > .imgH,:scope > .imgTip').forEach(h=>h.remove());});addAllSecResize();initBlockTools();bindImages();makeAllEditable();addRowButtons();}
 function addAllSecResize(){page.querySelectorAll('.sec').forEach(sec=>{sec.querySelectorAll(':scope > .secResize').forEach(h=>h.remove());delete sec.dataset.hasResize;});page.querySelectorAll('.sec').forEach(addSecResize);}
 
 (async function boot(){
