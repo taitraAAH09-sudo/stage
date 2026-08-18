@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EDM Builder V5 · 中東採購媒合會 版型產生器</title>
+<title>EDM Builder V7 · 中東採購媒合會 版型產生器</title>
 <style>
 /* ===== 編輯器外殼 ===== */
 :root{--c1:#16305C;--c2:#6B2FA0;--c3:#2E6BE6;--c4:#ffffff;--ink:#1f2733;--dim:#5a6577;--line:#39414F}
@@ -148,24 +148,30 @@ body:not(.exporting) .page .sec{outline:1px dashed rgba(107,47,160,.25);outline-
 body:not(.exporting) .page .sec:hover{outline:1px dashed rgba(107,47,160,.6);background:rgba(107,47,160,.02)}
 body:not(.exporting) .page .sec::before{content:attr(data-n);position:absolute;top:0;left:0;z-index:8;font-size:9px;font-weight:800;color:#fff;background:rgba(107,47,160,.85);padding:2px 8px;border-radius:0 0 8px 0;opacity:0;transition:.15s;pointer-events:none}
 body:not(.exporting) .page .sec:hover::before{opacity:1}
-.secResize{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);height:30px;padding:0 6px;border-radius:15px;background:#14181F;border:2px solid var(--c2);opacity:0;transition:.15s;z-index:45;display:flex;align-items:center;gap:4px;pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.secResize{position:absolute;right:8px;bottom:4px;height:30px;padding:0 6px;border-radius:15px;background:#14181F;border:2px solid var(--c2);opacity:0;transition:.15s;z-index:45;display:flex;align-items:center;gap:4px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 .sec:hover .secResize{opacity:.9}
+.secResize>*{pointer-events:none}
+.sec:hover .secResize>*{pointer-events:auto}
 .secResize:hover{opacity:1!important}
 .secResize .srLabel{font-size:12px;font-weight:900;color:#fff;white-space:nowrap;cursor:ns-resize;padding:0 6px}
 .secResize .srBtn,.secResize .srReset{width:26px;height:26px;border:0;border-radius:50%;background:var(--c2);color:#fff;font-size:15px;font-weight:900;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
 .secResize .srReset{background:#3A4152;font-size:13px}
 
-.imgRz{position:absolute;right:2px;bottom:2px;width:18px;height:18px;background:var(--c2);border:2px solid #fff;border-radius:4px;cursor:nwse-resize;z-index:12;opacity:0;transition:.15s}
+.imgRz{position:absolute;right:2px;bottom:2px;width:20px;height:20px;background:var(--c2);border:2px solid #fff;border-radius:5px;cursor:nwse-resize;z-index:22;opacity:.6;transition:.15s;box-shadow:0 0 0 2px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.4)}
+.imgRz:hover{opacity:1;transform:scale(1.15)}
 .sizable:hover .imgRz{opacity:1}
-.imgH{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:#14181F;border:2px solid var(--c2);border-radius:15px;padding:0 6px;height:28px;z-index:13;opacity:0;transition:.15s}
-.sizable:hover .imgH{opacity:.92}
+.imgH{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:#14181F;border:2px solid var(--c2);border-radius:15px;padding:0 6px;height:28px;z-index:13;opacity:0;transition:.15s;pointer-events:none}
+.sizable:hover .imgH{opacity:.92;pointer-events:auto}
 .imgH button{width:24px;height:24px;border:0;border-radius:50%;background:var(--c2);color:#fff;font-size:14px;font-weight:900;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
 .imgH span{font-size:11px;font-weight:800;color:#fff;padding:0 4px;white-space:nowrap}
-.slotDel{position:absolute;right:6px;top:6px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(20,24,33,.85);color:#fff;font-size:12px;cursor:pointer;z-index:11;opacity:0;transition:.15s}
-.sizable:hover .slotDel{opacity:1}
+.slotDel{position:absolute;right:6px;top:6px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(20,24,33,.85);color:#fff;font-size:12px;cursor:pointer;z-index:11;opacity:0;transition:.15s;pointer-events:none}
+.sizable:hover .slotDel{opacity:1;pointer-events:auto}
 
-.blkTools{position:absolute;top:4px;right:4px;display:flex;gap:3px;opacity:0;transition:.15s;z-index:20;background:rgba(20,24,33,.72);padding:3px;border-radius:7px}
+.blkTools{position:absolute;bottom:calc(100% + 3px);top:auto;right:2px;display:flex;gap:3px;opacity:0;transition:.15s;z-index:20;background:rgba(20,24,33,.86);padding:3px;border-radius:7px;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 *:hover>.blkTools{opacity:1}
+.blkTools button{pointer-events:none}
+*:hover>.blkTools button{pointer-events:auto}
+.t2-tile>.blkTools{top:4px;right:4px;bottom:auto}
 .blkTools button{width:22px;height:22px;border:0;border-radius:5px;background:#2B3444;color:#fff;font-size:12px;cursor:pointer;font-family:inherit}
 .blkTools button:hover{background:var(--c2)}
 
@@ -213,7 +219,7 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
 <body>
 <div class="app">
   <aside class="side">
-    <h1><span class="verBadge" id="verBadge">V5</span>EDM <span>Builder</span></h1>
+    <h1><span class="verBadge" id="verBadge">V7</span>EDM <span>Builder</span></h1>
     <div class="tip">Email layout · 600px width</div>
 
     <h5>Template / Language</h5>
@@ -247,7 +253,7 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
       <button data-ins="btn" type="button">＋ Button</button>
     </div>
     <button class="btn g btnBlock" id="btnImg" type="button">＋ Image</button>
-    <p class="tip">紫色 <b>＋</b>／工具列 <b>⧉</b>：一律往<b>下一排</b>複製（橫排整排複製、直排複製一項）。<br><b>ALT + Left-click drag</b> to move any element; drop it on the bin to delete.<br><b>ALT + Sol tık ile sürükleyerek</b> her ögeyi taşıyın; silmek için çöp kutusuna bırakın.</p>
+    <p class="tip">紫色 <b>＋</b>／工具列 <b>⧉</b>：一律往<b>下一排</b>複製（橫排整排複製、直排複製一項）。<br>每張圖右下角的<b>紫色小方塊</b>可直接拖曳縮放，連按兩下還原。<br><b>ALT + Left-click drag</b> to move any element; drop it on the bin to delete.<br><b>ALT + Sol tık ile sürükleyerek</b> her ögeyi taşıyın; silmek için çöp kutusuna bırakın.</p>
 
     <h5>Export</h5>
     <button class="btn btnBlock" id="btnPNG" type="button">🖼 Download PNG</button>
@@ -347,7 +353,7 @@ const page=document.getElementById('page');
 const $=id=>document.getElementById(id);
 
 /* ---------- 版本號（每次改版 +1）---------- */
-const APP_VER='V5';
+const APP_VER='V7';
 try{document.title='EDM Builder '+APP_VER+' · 中東採購媒合會 版型產生器';}catch(e){}
 
 /* ---------- 原始骨架 + 圖片素材（務必在還原草稿前擷取）---------- */
@@ -432,7 +438,7 @@ function cleanForSave(){
 }
 
 /* ---------- 可編輯 ---------- */
-const NO_EDIT='.secResize,.blkTools,.imgRz,.slotDel,.srBtn,.srReset,.srLabel,.bGuide,.rowAdd';
+const NO_EDIT='.secResize,.blkTools,.imgRz,.slotDel,.srBtn,.srReset,.srLabel,.bGuide,.rowAdd,.imgH,.imgH span,.imgH button';
 function makeAllEditable(){
   page.querySelectorAll('*').forEach(el=>{
     if(el.closest(NO_EDIT))return;
@@ -462,7 +468,7 @@ function addSecResize(sec){
 }
 
 /* ---------- 區塊工具（複製/縮放/刪除）---------- */
-const BLK_SEL='.info,.meta,.org,.lead,.pillars,.pillars .h,.pillars .ps p,.regbar,.reg2,.gcard,.twocards,.look-t,.cat,.darkinfo,.regbar a,.card3,.t2-tile,.t2-card,.t2-cards,.t2-blk,.t2-cta,.t2-lead,.t2-h1,.imgHold';
+const BLK_SEL='.info,.meta,.org,.lead,.pillars,.pillars .h,.pillars .ps p,.regbar,.reg2,.gcard,.twocards,.look-t,.cat,.darkinfo,.card3,.t2-tile,.t2-card,.t2-cards,.t2-blk,.t2-cta,.t2-lead,.t2-h1,.imgHold';
 /* 橫向並排的容器：在裡面的項目按「⧉ 複製」時，複製的是整排並放到下一排，
    而不是硬塞成同一排的第 4 張（TAITRA 要的是往下長，不是往右擠）。 */
 const HROW_SEL='.t2-cards,.twocards';
@@ -471,8 +477,11 @@ function rowToDuplicate(el){
   if(p&&p!==page&&p.matches&&p.matches(HROW_SEL)&&!el.matches(HROW_SEL))return p;
   return el;
 }
+const NO_TOOLS_TAGS=['A','SPAN','B','I','EM','STRONG'];
 function bindBlockTools(el){
-  if(el.dataset.bt)return;el.dataset.bt='1';
+  if(el.dataset.bt)return;
+  if(NO_TOOLS_TAGS.includes(el.tagName)){el.dataset.bt='skip';return;}  /* 行內元素塞工具列會破壞游標定位 */
+  el.dataset.bt='1';
   if(getComputedStyle(el).position==='static')el.style.position='relative';
   el.dataset.scale=el.dataset.scale||'100';
   const t=document.createElement('div');t.className='blkTools';t.contentEditable='false';
@@ -516,13 +525,30 @@ function wrapMultiImages(){
     p.querySelectorAll(':scope > .imgRz,:scope > .imgH').forEach(h=>h.remove());
   });
 }
+/* 把縮放手把移到該張圖片實際的右下角 */
+function placeRz(box,img,rz){
+  if(!box||!img||!rz)return;
+  const br=box.getBoundingClientRect(),ir=img.getBoundingClientRect();
+  if(!ir.width||!br.width)return;
+  const k=box.offsetWidth?box.offsetWidth/br.width:1;   /* 區塊被 scale 過時換算回原座標 */
+  rz.style.right='auto';rz.style.bottom='auto';
+  rz.style.left=Math.round((ir.right-br.left)*k-12)+'px';
+  rz.style.top =Math.round((ir.bottom-br.top)*k-12)+'px';
+}
+function placeAllRz(){
+  page.querySelectorAll('.imgRz').forEach(rz=>{
+    const box=rz.parentElement;const img=box&&box.querySelector('img');
+    if(img)placeRz(box,img,rz);
+  });
+}
+window.addEventListener('resize',placeAllRz);
 function bindImages(){
   wrapMultiImages();
   page.querySelectorAll('img').forEach(img=>{
     const box=img.parentElement;
     if(box.dataset.imgbound)return;box.dataset.imgbound='1';box.classList.add('sizable');
     if(getComputedStyle(box).position==='static')box.style.position='relative';
-    const isKV=box.id==='kvbox'||img.closest('.kv-wrap')||img.closest('.banner');
+    const isKV=box.id==='kvbox'||img.closest('.kv-wrap')||img.closest('.banner')||box.classList.contains('t2-tile');
     /* 點圖片換照片 */
     img.style.cursor='pointer';
     img.title='點一下換圖片 · Click to replace';
@@ -535,31 +561,43 @@ function bindImages(){
         inp.click();
       });
     }
-    /* 對角縮放手把（右下）：拉寬拉高，KV/橫幅這種用高度裁切 */
-    if(!box.querySelector('.imgRz')){const rz=document.createElement('span');rz.className='imgRz';rz.contentEditable='false';box.appendChild(rz);
+    /* 對角縮放手把：貼在「圖片本身」的右下角（不是整個區塊的角落）。
+       固定高度的容器（KV／橫幅／四宮格）用高度＋cover 裁切；一般圖等比拉寬。 */
+    if(!box.querySelector('.imgRz')){const rz=document.createElement('span');rz.className='imgRz';rz.contentEditable='false';rz.title='拖曳縮放圖片 · 連按兩下還原大小';box.appendChild(rz);
       rz.onmousedown=e=>{e.preventDefault();e.stopPropagation();
         const sx=e.clientX,sy=e.clientY,sw=img.getBoundingClientRect().width,sh=img.getBoundingClientRect().height;
         const mv=ev=>{
-          if(isKV){ /* KV/橫幅：改高度 + cover 裁切，上下拉 */
-            const nh=Math.max(60,sh+(ev.clientY-sy));
+          if(isKV){ /* 固定高容器：改高度 + cover 裁切，上下拉 */
+            const nh=Math.max(50,sh+(ev.clientY-sy));
             box.style.height=nh+'px';box.style.overflow='hidden';
             img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';
-          }else{ /* 一般圖：改寬度、等比 */
-            img.style.width=Math.max(40,sw+(ev.clientX-sx))+'px';img.style.height='auto';
+          }else{ /* 一般圖：改寬度、等比。flex/max-width 一併解鎖，
+                    否則像 .t2-card img 的 flex:0 0 66px 會把寬度鎖死拉不動。 */
+            img.style.flex='0 0 auto';img.style.maxWidth='none';img.style.alignSelf='flex-start';
+            const cap=box.clientWidth||600;   /* 最寬不超過所在容器，免得撐破 600px 信件 */
+            img.style.width=Math.min(cap,Math.max(30,sw+(ev.clientX-sx)))+'px';img.style.height='auto';
           }
+          placeRz(box,img,rz);
         };
-        const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);persist();pushHistory();};
-        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);};}
+        const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);placeRz(box,img,rz);persist();pushHistory();};
+        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);};
+      rz.ondblclick=e=>{e.preventDefault();e.stopPropagation();   /* 連按兩下還原原始大小 */
+        ['width','height','flex','maxWidth','alignSelf','objectFit'].forEach(k=>img.style[k]='');
+        box.style.height='';box.style.overflow='';
+        placeRz(box,img,rz);persist();pushHistory();};
+      placeRz(box,img,rz);
+    }
     /* KV/橫幅另加上下高度把手（跟區塊一樣的 －/＋） */
-    if(isKV && !box.querySelector('.imgH')){const hb=document.createElement('div');hb.className='imgH';hb.contentEditable='false';
+    if(isKV && !box.classList.contains('t2-tile') && !box.querySelector('.imgH')){const hb=document.createElement('div');hb.className='imgH';hb.contentEditable='false';
       hb.innerHTML='<button type="button" data-d="-1">－</button><span>↕圖高</span><button type="button" data-d="1">＋</button><button type="button" data-r="1">↺</button>';
       box.appendChild(hb);
       function setBoxH(px){px=Math.max(40,px);box.style.height=px+'px';box.style.overflow='hidden';img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';}
       hb.querySelectorAll('button').forEach(bn=>{bn.onmousedown=e=>{e.preventDefault();e.stopPropagation();};bn.onclick=e=>{e.stopPropagation();
         if(bn.dataset.r){box.style.height='';box.style.overflow='';img.style.height='auto';img.style.objectFit='';}
-        else setBoxH(box.getBoundingClientRect().height+(+bn.dataset.d)*20);persist();pushHistory();};});
+        else setBoxH(box.getBoundingClientRect().height+(+bn.dataset.d)*20);placeAllRz();persist();pushHistory();};});
     }
   });
+  requestAnimationFrame(placeAllRz);
 }
 
 /* ---------- KV 上傳 ---------- */
