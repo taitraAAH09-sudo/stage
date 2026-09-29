@@ -362,12 +362,13 @@ function run(rows,pages){
     return {row:r,status,fields:best.f,page:best.bl[0].page,block:best.bl.map(x=>x.text),via:r._via};
   });
   // PDF entries not claimed: booth lines outside used blocks
-  const freq={};S.lines.forEach(l=>{const t=nk(l.text).trim();freq[t]=(freq[t]||0)+1;});
-  const chrome=t=>freq[t]>=4 && !BOOTH_LINE.test(t);
+  // page chrome = lines repeated near the top of 4+ pages (section side-tabs, headers)
+  const topFreq={};pages.forEach(p=>new Set(p.lines.slice(0,6).map(t=>nk(t).trim())).forEach(t=>topFreq[t]=(topFreq[t]||0)+1));
+  const chrome=t=>topFreq[t]>=4 && !BOOTH_LINE.test(t);
   const orphans=[];
-  const mapLike=new Set(pages.filter(p=>boothCount(p)>30).map(p=>p.num));
+  const mapLike=new Set(pages.filter(p=>{const b=boothCount(p);return b>30||(b>12&&!p.lines.some(isLabel));}).map(p=>p.num));
   S.lines.forEach((ln,i)=>{ if(used.has(i)||mapLike.has(ln.page))return; const t=nk(ln.text).trim();
-    if(BOOTH_LINE.test(t)){const ctx=[];for(let j=i-1;j>=0&&ctx.length<3;j--){const u=nk(S.lines[j].text).trim(); if(isLabel(u)||used.has(j)||BOOTH_LINE.test(u)||chrome(u))break; ctx.unshift(u);} if(ctx.length)orphans.push({page:ln.page,booth:t,ctx});}});
+    if(BOOTH_LINE.test(t)){const ctx=[];for(let j=i-1;j>=0&&ctx.length<3;j--){const u=nk(S.lines[j].text).trim(); if(isLabel(u)||used.has(j)||BOOTH_LINE.test(u)||chrome(u))break; ctx.unshift(u);} orphans.push({page:ln.page,booth:t,ctx:ctx.length?ctx:['（名稱讀不到，請看頁面）']});}});
   return {results,orphans};
 }
 function boothCount(p){return p.lines.filter(t=>BOOTH_LINE.test(nk(t).trim())).length;}
@@ -466,7 +467,7 @@ function makeResults(host,cfg){
   // cfg: {mode:'pdf'|'xx', items:[], labels:{}, bName, exportName, onPage}
   const ORDER_ST=['diff','glyph','missing','orphan','extra','fmt','ok'];
   const counts={};cfg.items.forEach(it=>counts[it.status]=(counts[it.status]||0)+1);
-  const problem=cfg.items.filter(it=>it.status!=='ok'&&it.status!=='fmt').length;
+  const problem=cfg.items.filter(it=>it.status!=='ok').length;
   let filter=problem?'todo':'all',q='';
   host.innerHTML=`<p class="sub">${cfg.summary}</p>
     <div class="chips" role="group" aria-label="篩選"></div>
@@ -481,7 +482,7 @@ function makeResults(host,cfg){
   host.querySelector('[data-a=xlsx]').onclick=()=>exportX(cfg);
   host.querySelector('tbody').onclick=e=>{const b=e.target.closest('.pg');if(b&&cfg.onPage)cfg.onPage(+b.dataset.p);};
   function pass(it){
-    if(filter==='todo'&&(it.status==='ok'||it.status==='fmt'))return false;
+    if(filter==='todo'&&it.status==='ok')return false;
     if(filter!=='todo'&&filter!=='all'&&it.status!==filter)return false;
     if(q){const h=CORE.norm([it.zh,it.en,it.booth,it.pdfBooth].join('|'));if(!h.includes(q))return false;}
     return true;
@@ -504,7 +505,7 @@ function makeResults(host,cfg){
         return `<div class="fd"><div class="k">${FL[k]}</div><div class="v">
           <div><span class="lab">Excel</span>${v.a?A:'<span class="none">（空白）</span>'}</div>
           <div><span class="lab">${cfg.bName}</span>${v.b?B:'<span class="none">（沒有）</span>'}</div>
-          ${v.st==='glyph'&&!hinted&&(hinted=true)?'<div class="hint">PDF 的文字層讀不到這幾個字（顯示為「県」），多半是字型問題，請點頁碼看實際排版。</div>':v.st==='fmt'?'<div class="src">只有空白或標點不同</div>':''}</div></div>`;}).join('')||'<span class="src">全部相符</span>';}
+          ${v.st==='glyph'&&!hinted&&(hinted=true)?'<div class="hint">PDF 的文字層讀不到這幾個字（顯示為「県」），多半是字型問題，請點頁碼看實際排版。</div>':v.st==='fmt'?'<div class="hint">文字相同，但標點或空白不同（例如撇號位置、括號、逗號），請確認以哪個為準</div>':''}</div></div>`;}).join('')||'<span class="src">全部相符</span>';}
     if(it.block&&it.block.length) body+=`<details class="raw"><summary>PDF 原文</summary><pre>${esc(it.block.join('\n'))}</pre></details>`;
     const co=`<div class="co"><b>${esc(it.zh||it.en||'')}</b>${it.zh&&it.en&&it.en!==it.zh?`<small>${esc(it.en)}</small>`:''}<span class="src">${it.excelRow?esc(shortName(it.file))+'　第 '+it.excelRow+' 列':''}${it.booth?'　'+esc(it.booth):''}</span></div>`;
     return `<tr><td><span class="tag t-${it.status}">${esc(cfg.labels[it.status])}</span></td><td>${co}</td><td>${where}</td><td>${body}</td></tr>`;
@@ -516,10 +517,10 @@ function diffLines(cfg,it){
   if(it.status==='missing')return [cfg.mode==='pdf'?'PDF 找不到這筆':'B 檔找不到這筆'];
   if(it.status==='orphan')return ['PDF 多出這筆，Excel 沒有'];
   if(it.status==='extra')return ['B 檔多出這筆，A 檔沒有'];
-  return Object.entries(it.fields).filter(([k,v])=>!['ok','skip'].includes(v.st)).map(([k,v])=>`${FL[k]}：Excel「${v.a||'空白'}」／${cfg.bName}「${v.b||'沒有'}」${v.st==='glyph'?'（PDF 缺字，請目視）':v.st==='fmt'?'（僅格式）':''}`);
+  return Object.entries(it.fields).filter(([k,v])=>!['ok','skip'].includes(v.st)).map(([k,v])=>`${FL[k]}：Excel「${v.a||'空白'}」／${cfg.bName}「${v.b||'沒有'}」${v.st==='glyph'?'（PDF 缺字，請目視）':v.st==='fmt'?'（標點或空白不同）':''}`);
 }
 function copyText(cfg){
-  const list=cfg.items.filter(it=>!['ok','fmt'].includes(it.status));
+  const list=cfg.items.filter(it=>it.status!=='ok');
   return list.map(it=>{const head=`${cfg.mode==='pdf'?(it.page?'P'+it.page+'　':''):''}${it.zh||it.en}${it.booth||it.pdfBooth?'（'+(it.booth||it.pdfBooth)+'）':''}`;
     return head+'\n'+diffLines(cfg,it).map(s=>'　'+s).join('\n');}).join('\n\n');
 }
@@ -571,7 +572,7 @@ $('#xxRun').onclick=()=>{
   const n=s=>items.filter(x=>x.status===s).length;
   $('#xxResCard').classList.remove('hidden');
   makeResults($('#xxRes'),{mode:'xx',items,bName:'B 檔',exportName:'校對結果_Excel對Excel',
-    labels:{ok:'全部相符',fmt:'僅格式不同',diff:'有差異',missing:'B 檔找不到',extra:'B 檔多出'},
+    labels:{ok:'全部相符',fmt:'標點不同',diff:'有差異',missing:'B 檔找不到',extra:'B 檔多出'},
     summary:`A 檔 ${A.length} 筆、B 檔 ${B.length} 筆，比對欄位：${fields.map(k=>FL[k]).join('、')}。有差異 ${n('diff')} 筆，B 檔找不到 ${n('missing')} 筆，B 檔多出 ${n('extra')} 筆。`});
   $('#xxResCard').scrollIntoView({behavior:'smooth',block:'start'});
 };
@@ -694,8 +695,8 @@ $('#pdRun').onclick=()=>{
   const n=s=>items.filter(x=>x.status===s).length;
   $('#pdResCard').classList.remove('hidden');
   makeResults($('#pdRes'),{mode:'pdf',items,bName:'PDF',exportName:'校對結果_'+shortName(PD.name).replace(/\.pdf$/i,''),onPage:openPage,
-    labels:{ok:'全部相符',fmt:'僅格式不同',glyph:'PDF 缺字待目視',diff:'有差異',missing:'PDF 找不到',orphan:'PDF 多出'},
-    summary:`Excel ${rows.length} 筆，對照 PDF ${pages.length} 頁（${toRange([...PD.sel].sort((a,b)=>a-b))}）。有差異 ${n('diff')} 筆、PDF 缺字待目視 ${n('glyph')} 筆、PDF 找不到 ${n('missing')} 筆、PDF 多出 ${n('orphan')} 筆，全部相符 ${n('ok')+n('fmt')} 筆。結果依 PDF 頁序排列，方便照頁在校稿上標註。`});
+    labels:{ok:'全部相符',fmt:'標點不同',glyph:'PDF 缺字待目視',diff:'有差異',missing:'PDF 找不到',orphan:'PDF 多出'},
+    summary:`Excel ${rows.length} 筆，對照 PDF ${pages.length} 頁（${toRange([...PD.sel].sort((a,b)=>a-b))}）。有差異 ${n('diff')} 筆、PDF 缺字待目視 ${n('glyph')} 筆、PDF 找不到 ${n('missing')} 筆、PDF 多出 ${n('orphan')} 筆，標點或空白不同 ${n('fmt')} 筆，全部相符 ${n('ok')} 筆。結果依 PDF 頁序排列，方便照頁在校稿上標註。`});
   $('#pdResCard').scrollIntoView({behavior:'smooth',block:'start'});
 };
 
