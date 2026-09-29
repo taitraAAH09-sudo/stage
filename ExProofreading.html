@@ -1,719 +1,719 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>展覽名冊校對台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
-  :root{
-    --ink:#1c2430; --ink-soft:#3a4454;
-    --paper-card:#fbf8f1; --line:#d9cfb8;
-    --brass:#8a6d3b; --brass-deep:#6b5228;
-    --ok:#2f6b4f; --ok-bg:#e5efe6;
-    --err:#a3312a; --err-bg:#fbe9e6;
-    --warn:#a3701f; --warn-bg:#f8ecd8;
-    --info:#2b5a86; --info-bg:#e3edf5;
-    --navy:#1f2a3c;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:radial-gradient(1200px 600px at 10% -10%, #26324a 0%, transparent 60%), var(--navy);
-    color:var(--ink); font-family:'Noto Sans TC', sans-serif; padding-bottom:80px;
-  }
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
-  header{padding:48px 20px 34px; color:#f4efe4; position:relative;}
-  .eyebrow{font-family:'JetBrains Mono', monospace;letter-spacing:.18em;font-size:12px;color:#c9b98a;text-transform:uppercase;margin-bottom:14px;}
-  h1{font-family:'Noto Serif TC', serif;font-weight:900;font-size:clamp(28px,5vw,42px);margin:0 0 10px;line-height:1.15;}
-  header p.sub{color:#b9c2d1;font-size:14.5px;max-width:640px;line-height:1.7;margin:0;}
-
-  main{margin-top:6px;}
-  .panel{
-    background:var(--paper-card); border:1px solid var(--line); border-radius:12px;
-    padding:24px; margin-bottom:22px;
-  }
-  .panel h2{
-    font-family:'Noto Serif TC',serif; font-weight:700; font-size:18px; margin:0 0 4px;
-    display:flex; align-items:center; gap:10px;
-  }
-  .panel h2 .step-no{
-    width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;
-    display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-family:'JetBrains Mono',monospace;
-  }
-  .panel .desc{font-size:13px;color:var(--ink-soft);margin:0 0 18px;line-height:1.6;}
-
-  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media (max-width:720px){.upload-grid{grid-template-columns:1fr;}}
-  .dropzone{
-    border:2px dashed var(--line); border-radius:10px; padding:26px 18px;
-    text-align:center; cursor:pointer; transition:all .15s ease; background:#fff;
-    position:relative;
-  }
-  .dropzone:hover, .dropzone.drag{border-color:var(--brass); background:#fffaf0;}
-  .dropzone.loaded{border-style:solid; border-color:var(--ok); background:var(--ok-bg);}
-  .dropzone .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--brass);text-transform:uppercase;margin-bottom:8px;}
-  .dropzone .icon{font-size:26px;margin-bottom:8px;}
-  .dropzone .fname{font-weight:700;font-size:14px;word-break:break-all;}
-  .dropzone .hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
-  .dropzone input{display:none;}
-  .sheet-row{margin-top:12px;display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;}
-  .sheet-row select{
-    font-family:'Noto Sans TC',sans-serif;font-size:12.5px;padding:5px 8px;border-radius:6px;border:1px solid var(--line);
-  }
-  .sheet-row label{font-size:12px;color:var(--ink-soft);}
-
-  .mapping-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px;}
-  .mapping-table th{
-    text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;
-    text-transform:uppercase;color:var(--ink-soft);padding:8px 10px;border-bottom:2px solid var(--line);
-  }
-  .mapping-table td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
-  .mapping-table select{
-    width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;
-  }
-  .mapping-table input[type=checkbox]{width:16px;height:16px;}
-  .mapping-table input[type=text]{
-    width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;
-  }
-  .remove-field-btn{
-    background:none;border:none;color:var(--err);font-size:16px;cursor:pointer;line-height:1;padding:4px;
-  }
-  .remove-field-btn:hover{color:#7a201b;}
-  .key-row select{min-width:180px;}
-
-  .btn{
-    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:14px;
-    border:none;padding:11px 24px;border-radius:999px;cursor:pointer;transition:background .15s ease;
-    display:inline-flex;align-items:center;gap:8px;
-  }
-  .btn-primary{background:var(--brass);color:#fff;}
-  .btn-primary:hover{background:var(--brass-deep);}
-  .btn-primary:disabled{background:#c9c2ae;cursor:not-allowed;}
-  .btn-ghost{background:none;border:1px solid #58627a;color:#c9d2e0;}
-  .btn-ghost:hover{border-color:#c9b98a;color:#f4efe4;}
-  .action-row{display:flex;justify-content:flex-end;margin-top:16px;gap:10px;}
-
-  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px;}
-  .stat{background:var(--paper-card);padding:18px 12px;text-align:center;}
-  .stat .num{font-family:'Noto Serif TC',serif;font-weight:900;font-size:26px;line-height:1;}
-  .stat .lbl{margin-top:6px;font-size:11.5px;color:var(--ink-soft);}
-  .stat.ok .num{color:var(--ok);} .stat.err .num{color:var(--err);}
-  .stat.warn .num{color:var(--warn);} .stat.info .num{color:var(--info);}
-  @media (max-width:720px){.summary{grid-template-columns:repeat(2,1fr);}}
-
-  .section-title{font-family:'Noto Serif TC',serif;font-weight:700;font-size:19px;color:#f4efe4;margin:0 0 14px;}
-
-  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--paper-card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:18px;}
-  .toolbar-left{display:flex;gap:8px;flex-wrap:wrap;}
-  .chip{font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);padding:7px 12px;border-radius:999px;cursor:pointer;}
-  .chip:hover{border-color:var(--brass);}
-  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-width:200px;}
-  .search input{border:none;outline:none;font-size:13.5px;width:100%;background:transparent;}
-
-  .cards{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;}
-  .card{background:var(--paper-card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .card-head .name-cn{font-weight:700;font-size:15px;}
-  .card-head .name-en{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
-  .meta-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .meta-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:3px 9px;border-radius:6px;}
-  .status-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;white-space:nowrap;}
-  .status-badge.mismatch{background:var(--err-bg);color:var(--err);}
-  .status-badge.missing{background:var(--warn-bg);color:var(--warn);}
-  .status-badge.extra{background:var(--info-bg);color:var(--info);}
-  table.diff-table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  table.diff-table th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);padding:8px 18px;background:rgba(0,0,0,.02);}
-  table.diff-table td{padding:10px 18px;border-top:1px solid var(--line);vertical-align:top;line-height:1.55;}
-  table.diff-table td.field-name{font-weight:700;width:150px;}
-  table.diff-table td.val-a{color:var(--ink-soft);}
-  table.diff-table td.val-b{color:var(--err);background:var(--err-bg);font-weight:500;border-radius:4px;}
-  .plain-note{padding:14px 18px;font-size:13.5px;}
-  .plain-note.warn{color:var(--warn);background:var(--warn-bg);}
-  .plain-note.info{color:var(--info);background:var(--info-bg);}
-
-  .full-wrap{background:var(--paper-card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:none;}
-  .full-wrap.show{display:block;}
-  .full-scroll{max-height:520px;overflow:auto;}
-  table.full-table{width:100%;border-collapse:collapse;font-size:13px;}
-  table.full-table thead th{position:sticky;top:0;background:var(--ink);color:#f4efe4;text-align:left;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;z-index:1;}
-  table.full-table td{padding:9px 14px;border-top:1px solid var(--line);}
-  table.full-table tr:hover td{background:rgba(0,0,0,.02);}
-
-  .empty-state{text-align:center;padding:40px 20px;color:var(--ok);background:var(--paper-card);border-radius:10px;font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;border:1px solid var(--line);}
-  .toggle-full{text-align:center;margin:16px 0;}
-  .toggle-full button{background:none;border:1px solid #58627a;color:#c9d2e0;font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 18px;border-radius:999px;cursor:pointer;}
-  .toggle-full button:hover{border-color:#c9b98a;color:#f4efe4;}
-  footer{text-align:center;color:#7c8698;font-size:12px;padding:30px 20px 10px;font-family:'JetBrains Mono',monospace;}
-  #resultsSection, #mappingSection{display:none;}
-  .err-msg{color:#e08a80;font-size:13px;margin-top:10px;text-align:center;}
+:root{
+  --bg:#1f2a3c; --bg2:#26334a; --ink-on-bg:#e8e2d4; --muted-on-bg:#a9b3c4; --gold:#c9a86a;
+  --card:#faf6ee; --card2:#f2ecdf; --line:#e1d8c6; --ink:#1f2a3c; --ink2:#5b6475;
+  --ok:#2f7a55; --ok-bg:#e3f1e8; --diff:#b23b2e; --diff-bg:#f8e1dc; --glyph:#a86a12; --glyph-bg:#fbeccd;
+  --fmt:#5a6a86; --fmt-bg:#e6eaf1; --miss:#6b4aa0; --miss-bg:#ece5f6; --extra:#1f6f8b; --extra-bg:#dff0f5;
+  --serif:"Noto Serif TC","Songti TC","PMingLiU",serif; --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --card:#faf6ee; } }
+:root[data-theme="dark"]{ --card:#faf6ee; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink-on-bg);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:44px 24px 80px}
+header .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--gold)}
+header h1{font-family:var(--serif);font-weight:900;font-size:clamp(34px,5vw,46px);line-height:1.15;margin:8px 0 10px;color:#fff}
+header p{margin:0;max-width:40em;color:var(--muted-on-bg)}
+.modes{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.modes a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-on-bg);border:1px solid #3a4862;border-radius:8px;padding:8px 14px;background:var(--bg2)}
+.modes a b{font-weight:700;color:#fff}
+.modes a span{font-size:13px;color:var(--muted-on-bg)}
+.modes a:hover{border-color:var(--gold)}
+section.mode{margin-top:40px}
+.mode-head{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+.mode-head h2{font-family:var(--serif);font-size:24px;margin:0;color:#fff}
+.mode-head .rule{flex:1;height:1px;background:#3a4862}
+.card{background:var(--card);color:var(--ink);border-radius:12px;padding:24px 26px;margin-top:16px;border:1px solid #d9cfbb}
+.card h3{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 4px;font-family:var(--serif);font-size:20px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700}
+.pill{font-family:var(--sans);font-size:12.5px;font-weight:500;padding:2px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink2)}
+.pill.pdf{background:#fff3e6;border-color:#efd3b0;color:#8a5a1c}
+.card .sub{margin:0 0 16px;color:var(--ink2);font-size:14px}
+.drops{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.drop{position:relative;border:1.5px dashed #d2c6ad;border-radius:10px;background:#fff;padding:22px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--gold);background:#fffdf8}
+.drop:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .role{font-size:12.5px;color:#8a7650;letter-spacing:.08em}
+.drop .big{font-weight:700;margin-top:6px}
+.drop .state{font-size:13px;color:var(--ink2);margin-top:4px;word-break:break-all}
+.drop.done{border-style:solid;border-color:#9dc3a9;background:#f6fbf7}
+.drop.done .state{color:var(--ok)}
+.btn{font:inherit;font-size:14px;font-weight:500;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 14px;cursor:pointer}
+.btn:hover{border-color:var(--ink2)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff;padding:10px 22px;font-size:15px}
+.btn.primary:hover{background:#2c3b55}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hidden{display:none!important}
+.note{font-size:13px;color:var(--ink2)}
+.warn{background:var(--glyph-bg);color:#6d4508;border-radius:8px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+.err{background:var(--diff-bg);color:var(--diff);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+/* mapping */
+details.map{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+details.map>summary{cursor:pointer;padding:10px 14px;font-weight:500;list-style:none}
+details.map>summary::-webkit-details-marker{display:none}
+details.map>summary::before{content:"▸";display:inline-block;width:1.1em;color:var(--ink2);transition:transform .15s}
+details.map[open]>summary::before{transform:rotate(90deg)}
+.mapbody{padding:4px 14px 14px}
+.mapfile{border-top:1px solid var(--line);padding-top:12px;margin-top:10px}
+.mapfile:first-child{border-top:0;margin-top:0}
+.mapfile .fn{font-weight:700;margin-bottom:8px;word-break:break-all}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 14px}
+.mapgrid label{display:flex;flex-direction:column;font-size:12.5px;color:var(--ink2);gap:3px}
+select,input[type=text],input[type=number]{font:inherit;font-size:13.5px;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:#fff;max-width:100%}
+/* pages */
+.pagebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.pagebar input[type=text]{width:200px}
+.selcount{margin-left:auto;font-size:14px;color:var(--ink2)}
+.selcount b{color:var(--ink);font-size:16px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;max-height:460px;overflow:auto;padding:4px;border-radius:8px;background:var(--card2)}
+.th{position:relative;border:2px solid transparent;border-radius:6px;background:#fff;cursor:pointer;padding:0;font:inherit;text-align:left}
+.th canvas{display:block;width:100%;height:auto;aspect-ratio:419/595;background:#f4f1ea;border-radius:4px 4px 0 0}
+.th .cap{display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;color:var(--ink2)}
+.th .dot{width:7px;height:7px;border-radius:50%;background:#c9a86a}
+.th.on{border-color:var(--ink)}
+.th.on .cap{background:var(--ink);color:#fff;border-radius:0 0 3px 3px}
+.th:not(.on) canvas{opacity:.55}
+.progress{height:6px;border-radius:3px;background:var(--card2);overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
+/* results */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.chip{font:inherit;font-size:13.5px;border-radius:999px;padding:5px 12px;border:1px solid transparent;cursor:pointer;background:#fff;color:var(--ink);border-color:var(--line)}
+.chip b{margin-left:6px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.tools input[type=text]{flex:1;min-width:180px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+table.res{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+table.res th{position:sticky;top:0;background:var(--card2);text-align:left;font-weight:500;color:var(--ink2);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.res td{padding:9px 10px;border-bottom:1px solid #eee6d6;vertical-align:top}
+table.res tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:12px;font-weight:500;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)} .t-diff{background:var(--diff-bg);color:var(--diff)}
+.t-glyph{background:var(--glyph-bg);color:var(--glyph)} .t-fmt{background:var(--fmt-bg);color:var(--fmt)}
+.t-missing{background:var(--miss-bg);color:var(--miss)} .t-extra,.t-orphan{background:var(--extra-bg);color:var(--extra)}
+.co b{display:block}.co small{display:block;color:var(--ink2)}
+.src{font-size:12px;color:var(--ink2)}
+.fd{display:grid;grid-template-columns:5.5em 1fr;gap:2px 10px;margin-bottom:8px}
+.fd:last-child{margin-bottom:0}
+.fd .k{color:var(--ink2);font-size:12.5px;padding-top:1px}
+.fd .v{word-break:break-all}
+.fd .v div{line-height:1.5}
+.fd .lab{display:inline-block;width:3.2em;font-size:11.5px;color:var(--ink2)}
+.fd del{background:#f6c9c1;text-decoration:none;border-radius:2px}
+.fd ins{background:#bfe3cd;text-decoration:none;border-radius:2px}
+.fd .none{color:#a39a88;font-style:italic}
+.fd .hint{font-size:12px;color:var(--glyph)}
+.pg{font:inherit;font-size:13px;color:var(--extra);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+details.raw summary{font-size:12px;color:var(--ink2);cursor:pointer;margin-top:6px}
+details.raw pre{white-space:pre-wrap;font-family:var(--sans);font-size:12.5px;background:var(--card2);padding:8px 10px;border-radius:6px;margin:6px 0 0}
+.empty{padding:28px;text-align:center;color:var(--ink2)}
+.xlslist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.xlslist li{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px 6px 12px}
+.xlslist .fname{flex:1;word-break:break-all;font-size:14px}
+.btn.sm{padding:3px 10px;font-size:12.5px}
+footer{margin-top:48px;text-align:center;font-size:12.5px;color:var(--muted-on-bg)}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,21,32,.72);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 24px) 16px 24px;z-index:50;overflow:auto}
+.modal .box{background:#fff;border-radius:10px;max-width:960px;width:100%;padding:12px}
+.modal .bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--ink)}
+.modal .bar b{flex:1}
+.modal canvas{width:100%;height:auto;display:block}
+@media (max-width:640px){.wrap{padding:28px 14px 60px}.card{padding:18px 16px}.selcount{margin-left:0;width:100%}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-
+<div class="wrap">
 <header>
-  <div class="wrap">
-    <div class="eyebrow">Exhibitor List Audit Tool</div>
-    <h1>展覽名冊校對台</h1>
-    <p class="sub">上傳 A 檔（正確依據）與 B 檔（待查核對象），設定欄位對應後即可自動比對差異——每次改版名單都能重複使用。</p>
-  </div>
+  <div class="eyebrow">EXHIBITOR LIST AUDIT TOOL</div>
+  <h1>展覽名冊校對台</h1>
+  <p>用正確的 Excel 名單去查另一份檔案：可以是另一份 Excel（例如匯入報告），也可以是廠商交來的 PDF 名錄校稿。所有比對都在瀏覽器內完成，檔案不會上傳到任何伺服器。</p>
+  <nav class="modes" aria-label="比對方式">
+    <a href="#mode-xx"><b>Excel 對 Excel</b><span>A 檔基準，查 B 檔</span></a>
+    <a href="#mode-pdf"><b>Excel 對 PDF</b><span>拿 Excel 校廠商的名錄 PDF</span></a>
+  </nav>
 </header>
 
-<div class="wrap">
-  <main>
-
-    <!-- STEP 1: UPLOAD -->
-    <div class="panel" id="uploadPanel">
-      <h2><span class="step-no">1</span>上傳檔案</h2>
-      <p class="desc">A 檔為比對基準（例如 OD 名單），B 檔為要檢查的對象（例如匯入報告）。僅支援 .xlsx / .xls。</p>
-      <div class="upload-grid">
-        <div class="dropzone" id="dropA">
-          <div class="label">A 檔案 · 基準</div>
-          <div class="icon">📄</div>
-          <div class="fname" id="fnameA">點擊或拖曳上傳 A 檔</div>
-          <div class="hint" id="hintA">尚未上傳</div>
-          <div class="sheet-row" id="sheetRowA" style="display:none;">
-            <label>工作表：</label><select id="sheetSelA"></select>
-          </div>
-          <input type="file" id="fileA" accept=".xlsx,.xls">
-        </div>
-        <div class="dropzone" id="dropB">
-          <div class="label">B 檔案 · 查核對象</div>
-          <div class="icon">📄</div>
-          <div class="fname" id="fnameB">點擊或拖曳上傳 B 檔</div>
-          <div class="hint" id="hintB">尚未上傳</div>
-          <div class="sheet-row" id="sheetRowB" style="display:none;">
-            <label>工作表：</label><select id="sheetSelB"></select>
-          </div>
-          <input type="file" id="fileB" accept=".xlsx,.xls">
-        </div>
-      </div>
-      <div class="err-msg" id="uploadErr"></div>
+<!-- ================= Excel ↔ Excel ================= -->
+<section class="mode" id="mode-xx">
+  <div class="mode-head"><h2>Excel 對 Excel</h2><div class="rule"></div></div>
+  <div class="card">
+    <h3><span class="step">1</span>上傳檔案<span class="pill">Excel ↔ Excel 用</span></h3>
+    <p class="sub">A 檔為比對基準（例如 OD 名單），B 檔為要檢查的對象（例如匯入報告）。僅支援 .xlsx / .xls。</p>
+    <div class="drops">
+      <label class="drop" id="xxDropA"><input type="file" accept=".xlsx,.xls" id="xxFileA">
+        <div class="role">A 檔　基準</div><div class="big">點擊或拖曳上傳 A 檔</div><div class="state">尚未上傳</div></label>
+      <label class="drop" id="xxDropB"><input type="file" accept=".xlsx,.xls" id="xxFileB">
+        <div class="role">B 檔　查核對象</div><div class="big">點擊或拖曳上傳 B 檔</div><div class="state">尚未上傳</div></label>
     </div>
+  </div>
+  <div class="card hidden" id="xxMapCard">
+    <h3><span class="step">2</span>確認欄位對應</h3>
+    <p class="sub">已依表頭自動對好欄位，兩份檔案用「中文名稱」配對（沒有中文就用英文名稱）。不想比的欄位選「不比對」。</p>
+    <div id="xxMaps"></div>
+    <div class="row" style="margin-top:16px"><button class="btn primary" id="xxRun">開始比對</button><span class="note" id="xxRunNote"></span></div>
+  </div>
+  <div class="card hidden" id="xxResCard">
+    <h3><span class="step">3</span>比對結果</h3>
+    <div id="xxRes"></div>
+  </div>
+</section>
 
-    <!-- STEP 2: MAPPING -->
-    <div class="panel" id="mappingSection">
-      <h2><span class="step-no">2</span>設定比對欄位</h2>
-      <p class="desc">系統已自動猜測欄位對應，請確認或手動調整。「比對鍵」用於將 A、B 兩檔的同一家公司互相配對（建議使用統一編號）。</p>
-
-      <table class="mapping-table">
-        <thead><tr><th style="width:140px">用途</th><th>A 檔欄位</th><th>B 檔欄位</th></tr></thead>
-        <tbody>
-          <tr class="key-row">
-            <td><strong>比對鍵（如統編）</strong></td>
-            <td><select id="keyColA"></select></td>
-            <td><select id="keyColB"></select></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table class="mapping-table" style="margin-top:14px;">
-        <thead><tr><th style="width:50px">納入</th><th style="width:150px">比對欄位名稱</th><th>A 檔欄位</th><th>B 檔欄位</th><th style="width:40px"></th></tr></thead>
-        <tbody id="fieldMapBody"></tbody>
-      </table>
-
-      <div style="margin-top:12px;">
-        <button class="btn btn-ghost" id="addFieldBtn" style="border-style:dashed;">＋ 新增比對欄位</button>
-      </div>
-
-      <div class="action-row">
-        <button class="btn btn-ghost" id="backToUploadBtn">← 重新上傳</button>
-        <button class="btn btn-primary" id="runCompareBtn">開始比對 →</button>
-      </div>
+<!-- ================= Excel ↔ PDF ================= -->
+<section class="mode" id="mode-pdf">
+  <div class="mode-head"><h2>Excel 對 PDF</h2><div class="rule"></div></div>
+  <div class="card">
+    <h3><span class="step">1</span>上傳檔案<span class="pill pdf">Excel ↔ PDF 用</span></h3>
+    <p class="sub">Excel 是正確資料，一份 PDF 含兩個以上的展時，把每個展的 Excel 都放進來（可一次多選，也可分次加入），會合併成一份名單去比。PDF 是廠商交來的校稿，文字要能選取（非掃描檔）。</p>
+    <div class="drops">
+      <label class="drop" id="pdDropX"><input type="file" accept=".xlsx,.xls" multiple id="pdFileX">
+        <div class="role">Excel　正確資料</div><div class="big">點擊或拖曳上傳 Excel（可多檔，可分次加入）</div><div class="state">尚未上傳</div></label>
+      <label class="drop" id="pdDropP"><input type="file" accept=".pdf,application/pdf" id="pdFileP">
+        <div class="role">PDF　廠商校稿</div><div class="big">點擊或拖曳上傳 PDF</div><div class="state">尚未上傳</div></label>
     </div>
+    <ul class="xlslist" id="pdXlsList"></ul>
+    <div class="progress hidden" id="pdProg"><i></i></div>
+    <div id="pdMsg"></div>
+  </div>
 
-    <!-- STEP 3: RESULTS -->
-    <div id="resultsSection">
-      <div class="summary" id="summary"></div>
-
-      <div class="section-title">校對結果</div>
-      <div class="toolbar">
-        <div class="toolbar-left" id="filterChips"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <div class="search"><span style="opacity:.5">⌕</span><input id="searchBox" placeholder="搜尋公司名稱 / 比對鍵"></div>
-          <button class="btn btn-primary" id="downloadBtn">⬇ 下載校對報告 (CSV)</button>
-        </div>
-      </div>
-
-      <div class="cards" id="cards"></div>
-      <div class="empty-state" id="emptyState" style="display:none;">✓ 沒有符合篩選條件的資料</div>
-
-      <div class="toggle-full">
-        <button id="toggleFullBtn">顯示全部核對結果 ▾</button>
-      </div>
-      <div class="full-wrap" id="fullWrap">
-        <div class="full-scroll">
-          <table class="full-table">
-            <thead><tr><th>比對鍵</th><th>公司名稱</th><th>狀態</th><th>差異欄位</th></tr></thead>
-            <tbody id="fullTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="action-row" style="justify-content:center;margin-top:26px;">
-        <button class="btn btn-ghost" id="newCompareBtn">↺ 換一組檔案重新比對</button>
-      </div>
+  <div class="card hidden" id="pdPageCard">
+    <h3><span class="step">2</span>選擇要校對的頁面</h3>
+    <p class="sub">金色圓點是偵測到攤位號的頁面，也就是廠商資料頁；「自動選名錄頁」會只選這些。點縮圖可以單頁加減，按住 Shift 可以連選。頁碼是 PDF 閱讀器上的頁數，不是印刷頁碼。</p>
+    <div class="pagebar">
+      <button class="btn" id="pdAuto">自動選名錄頁</button>
+      <button class="btn" id="pdAll">全選</button>
+      <button class="btn" id="pdNone">全不選</button>
+      <input type="text" id="pdRange" placeholder="輸入頁碼，例如 20-48, 52-60" aria-label="頁碼範圍">
+      <button class="btn" id="pdRangeApply">套用</button>
+      <span class="selcount">已選 <b id="pdSelN">0</b> / <span id="pdTotal">0</span> 頁</span>
     </div>
+    <div class="thumbs" id="pdThumbs"></div>
+    <details class="map" id="pdMapWrap"><summary>Excel 欄位對應（已自動判斷，通常不用改）</summary><div class="mapbody" id="pdMaps"></div></details>
+    <div class="row" style="margin-top:16px"><button class="btn primary" id="pdRun">開始比對</button><span class="note" id="pdRunNote"></span></div>
+  </div>
 
-  </main>
-  <footer>展覽名冊校對台 &middot; 所有比對皆在瀏覽器內完成，檔案不會上傳到伺服器</footer>
+  <div class="card hidden" id="pdResCard">
+    <h3><span class="step">3</span>比對結果</h3>
+    <div id="pdRes"></div>
+  </div>
+</section>
+
+<footer>展覽名冊校對台　所有比對皆在瀏覽器內完成，檔案不會上傳到伺服器</footer>
 </div>
 
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-label="PDF 頁面預覽">
+  <div class="box"><div class="bar"><b id="modalTitle"></b><button class="btn" id="modalPrev">上一頁</button><button class="btn" id="modalNext">下一頁</button><button class="btn" id="modalClose">關閉</button></div><canvas id="modalCanvas"></canvas></div>
+</div>
 <script>
-// ---------- FIELD DEFINITIONS ----------
-// name shown in UI, plus candidate header names to auto-guess in A and B files
-const FIELD_DEFS = [
-  {name:'攤位號碼', aGuess:['攤位號碼','攤位'], bGuess:['攤位','攤位號碼'], normalize:'text'},
-  {name:'公司名稱-中', aGuess:['公司名稱-中','公司名稱中文','公司名稱'], bGuess:['公司名稱中文','公司名稱-中','公司名稱'], normalize:'text'},
-  {name:'公司名稱-英', aGuess:['公司名稱-英','公司名稱英文'], bGuess:['公司名稱英文','公司名稱-英'], normalize:'text'},
-  {name:'公司地址-英', aGuess:['公司地址-英','地址英文'], bGuess:['地址英文','公司地址-英'], normalize:'text'},
-  {name:'公司電話', aGuess:['公司電話','電話'], bGuess:['電話','公司電話'], normalize:'text'},
-  {name:'公司傳真', aGuess:['公司傳真','傳真'], bGuess:['傳真','公司傳真'], normalize:'text'},
-  {name:'公司Email', aGuess:['公司Email','Email','電子郵件'], bGuess:['Email','公司Email'], normalize:'text'},
-  {name:'公司網站', aGuess:['公司網站','網站'], bGuess:['網站','公司網站'], normalize:'text'},
-  {name:'貿協產品分類碼', aGuess:['貿協產品分類碼','分類代碼'], bGuess:['分類代碼','貿協產品分類碼'], normalize:'codelist'},
-];
-const KEY_GUESS_A = ['公司統編','統一編號','統編'];
-const KEY_GUESS_B = ['統一編號','公司統編','統編'];
-
-let fileState = { A: null, B: null }; // {workbook, sheetName, headers, rows(array of arrays incl header)}
-let mapping = null;
-let compareResults = null;
-let customFields = []; // {id, name, aCol, bCol}
-let customFieldCounter = 0;
-
-// ---------- FILE LOADING ----------
-function setupDropzone(letter){
-  const drop = document.getElementById('drop'+letter);
-  const input = document.getElementById('file'+letter);
-  drop.addEventListener('click', ()=>input.click());
-  drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('drag');});
-  drop.addEventListener('dragleave', ()=>drop.classList.remove('drag'));
-  drop.addEventListener('drop', e=>{
-    e.preventDefault(); drop.classList.remove('drag');
-    if(e.dataTransfer.files.length) handleFile(letter, e.dataTransfer.files[0]);
-  });
-  input.addEventListener('change', e=>{
-    if(e.target.files.length) handleFile(letter, e.target.files[0]);
-  });
+const CORE = (()=>{
+const BOOTH_LINE=/^[SN]\d{4}[a-z]?$/;
+const LABEL_RE=/^(TEL|E-?MAIL|URL|FAX)\s*[:：]/i;
+const GLYPH=/[県\uFFFD]/;
+function nk(s){return String(s??'').normalize('NFKC').replace(/[\u200B-\u200D\uFEFF\u00A0]/g,' ').replace(/[‘’`´]/g,"'").replace(/[“”]/g,'"');}
+function norm(s){return nk(s).replace(/臺/g,'台').replace(/\s+/g,'').toLowerCase();}
+function loose(s){return norm(s).replace(/[^\p{L}\p{N}]/gu,'');}
+function digits(s){return nk(s).replace(/\D/g,'');}
+function hasCJK(s){return /[\u3040-\u30ff\u3400-\u9fff]/.test(s||'');}
+function str(v){return String(v??'').trim();}
+function wildIncludes(hay,needle){ // hay may contain glyph placeholders matching any char
+  if(!needle||!GLYPH.test(hay))return false;
+  outer: for(let i=0;i+needle.length<=hay.length;i++){
+    for(let j=0;j<needle.length;j++){const h=hay[i+j];if(h!==needle[j]&&!GLYPH.test(h))continue outer;}
+    return true;}
+  return false;
 }
-setupDropzone('A'); setupDropzone('B');
-
-function handleFile(letter, file){
-  document.getElementById('uploadErr').textContent = '';
-  const reader = new FileReader();
-  reader.onload = (e)=>{
-    try{
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, {type:'array', cellDates:false});
-      fileState[letter] = {workbook: wb, file: file, sheetName: null};
-      document.getElementById('fname'+letter).textContent = file.name;
-      document.getElementById('hint'+letter).textContent = wb.SheetNames.length + ' 個工作表';
-      document.getElementById('drop'+letter).classList.add('loaded');
-      const sheetRow = document.getElementById('sheetRow'+letter);
-      const sel = document.getElementById('sheetSel'+letter);
-      sel.innerHTML = wb.SheetNames.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-      // prefer a sheet literally named 匯入結果 for B if present, else first
-      let defaultSheet = wb.SheetNames[0];
-      if(letter==='B'){
-        const preferred = wb.SheetNames.find(n=>n.includes('匯入結果')) || wb.SheetNames.find(n=>n.includes('結果'));
-        if(preferred) defaultSheet = preferred;
-      }
-      sel.value = defaultSheet;
-      sheetRow.style.display = wb.SheetNames.length>1 ? 'flex' : 'none';
-      sel.onchange = ()=>loadSheet(letter, sel.value);
-      loadSheet(letter, defaultSheet);
-    }catch(err){
-      document.getElementById('uploadErr').textContent = '讀取 '+letter+' 檔失敗：'+err.message;
-    }
-  };
-  reader.readAsArrayBuffer(file);
+function buildStream(pages){
+  const lines=[];let N='',L='';const nStart=[],lStart=[];
+  pages.forEach(pg=>pg.lines.forEach(t=>{nStart.push(N.length);lStart.push(L.length);lines.push({page:pg.num,text:t});N+=norm(t);L+=loose(t);}));
+  nStart.push(N.length);lStart.push(L.length);
+  return {lines,N,L,nStart,lStart};
 }
-
-function loadSheet(letter, sheetName){
-  const st = fileState[letter];
-  st.sheetName = sheetName;
-  const sheet = st.workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
-  st.rows = rows;
-  st.headers = (rows[0]||[]).map(h=>String(h==null?'':h).trim());
-  maybeShowMapping();
+function lineAt(starts,pos){let lo=0,hi=starts.length-2;while(lo<hi){const m=(lo+hi+1)>>1;if(starts[m]<=pos)lo=m;else hi=m-1;}return lo;}
+function findLineStarts(S,needle,useLoose){
+  const hay=useLoose?S.L:S.N, st=useLoose?S.lStart:S.nStart, out=[];
+  if(!needle||needle.length<2)return out;
+  let i=hay.indexOf(needle);
+  while(i>=0){const li=lineAt(st,i); if(st[li]===i)out.push(li); i=hay.indexOf(needle,i+1);}
+  return out;
 }
-
-function maybeShowMapping(){
-  if(fileState.A && fileState.A.headers && fileState.B && fileState.B.headers){
-    buildMappingUI();
-    document.getElementById('mappingSection').style.display = 'block';
-    document.getElementById('mappingSection').scrollIntoView({behavior:'smooth', block:'start'});
-  }
-}
-
-// ---------- MAPPING UI ----------
-function optionsFor(headers, guessList){
-  let best = '';
-  for(const g of guessList){
-    const exact = headers.find(h=>h===g);
-    if(exact){ best = exact; break; }
-  }
-  if(!best){
-    for(const g of guessList){
-      const contains = headers.find(h=>h.includes(g) || g.includes(h));
-      if(contains){ best = contains; break; }
-    }
-  }
-  return best;
-}
-
-function buildSelect(id, headers, selected, allowNone){
-  const opts = (allowNone? ['<option value="">（不比對）</option>'] : [])
-    .concat(headers.map(h=>`<option value="${escapeHtml(h)}" ${h===selected?'selected':''}>${escapeHtml(h)}</option>`));
-  return `<select id="${id}">${opts.join('')}</select>`;
-}
-
-function buildMappingUI(){
-  const aHeaders = fileState.A.headers.filter(h=>h!=='');
-  const bHeaders = fileState.B.headers.filter(h=>h!=='');
-
-  document.getElementById('keyColA').outerHTML = buildSelect('keyColA', aHeaders, optionsFor(aHeaders, KEY_GUESS_A), false);
-  document.getElementById('keyColB').outerHTML = buildSelect('keyColB', bHeaders, optionsFor(bHeaders, KEY_GUESS_B), false);
-
-  customFields = [];
-  customFieldCounter = 0;
-  renderFieldMapBody();
-}
-
-function renderFieldMapBody(){
-  const aHeaders = fileState.A.headers.filter(h=>h!=='');
-  const bHeaders = fileState.B.headers.filter(h=>h!=='');
-  const body = document.getElementById('fieldMapBody');
-
-  const defaultRows = FIELD_DEFS.map((f,i)=>{
-    const aSel = optionsFor(aHeaders, f.aGuess);
-    const bSel = optionsFor(bHeaders, f.bGuess);
-    return `<tr>
-      <td style="text-align:center;"><input type="checkbox" id="incl_${i}" checked></td>
-      <td>${escapeHtml(f.name)}</td>
-      <td>${buildSelect('aCol_'+i, aHeaders, aSel, true)}</td>
-      <td>${buildSelect('bCol_'+i, bHeaders, bSel, true)}</td>
-      <td></td>
-    </tr>`;
-  }).join('');
-
-  const customRows = customFields.map(cf=>{
-    return `<tr>
-      <td style="text-align:center;"><input type="checkbox" id="cincl_${cf.id}" checked></td>
-      <td><input type="text" id="cname_${cf.id}" value="${escapeHtml(cf.name)}" placeholder="欄位名稱"></td>
-      <td>${buildSelect('caCol_'+cf.id, aHeaders, cf.aCol, true)}</td>
-      <td>${buildSelect('cbCol_'+cf.id, bHeaders, cf.bCol, true)}</td>
-      <td style="text-align:center;"><button type="button" class="remove-field-btn" data-cid="${cf.id}" title="移除此欄位">✕</button></td>
-    </tr>`;
-  }).join('');
-
-  body.innerHTML = defaultRows + customRows;
-
-  body.querySelectorAll('.remove-field-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      syncCustomFieldsFromDOM();
-      const cid = Number(btn.dataset.cid);
-      customFields = customFields.filter(cf=>cf.id!==cid);
-      renderFieldMapBody();
-    });
-  });
-}
-
-function syncCustomFieldsFromDOM(){
-  customFields.forEach(cf=>{
-    const nameEl = document.getElementById('cname_'+cf.id);
-    const aColEl = document.getElementById('caCol_'+cf.id);
-    const bColEl = document.getElementById('cbCol_'+cf.id);
-    if(nameEl) cf.name = nameEl.value;
-    if(aColEl) cf.aCol = aColEl.value;
-    if(bColEl) cf.bCol = bColEl.value;
-  });
-}
-
-document.getElementById('addFieldBtn').addEventListener('click', ()=>{
-  if(!fileState.A || !fileState.B) return;
-  syncCustomFieldsFromDOM();
-  customFieldCounter += 1;
-  customFields.push({id: customFieldCounter, name:'', aCol:'', bCol:''});
-  renderFieldMapBody();
-  const input = document.getElementById('cname_'+customFieldCounter);
-  if(input) input.focus();
-});
-
-document.getElementById('backToUploadBtn').addEventListener('click', ()=>{
-  document.getElementById('mappingSection').style.display = 'none';
-  document.getElementById('uploadPanel').scrollIntoView({behavior:'smooth'});
-});
-
-// ---------- COMPARE ----------
-document.getElementById('runCompareBtn').addEventListener('click', runCompare);
-
-function rowsToObjects(rows){
-  const headers = rows[0].map(h=>String(h==null?'':h).trim());
-  const out = [];
-  for(let r=1;r<rows.length;r++){
-    const row = rows[r];
-    if(!row || row.every(c=>c===''||c==null)) continue;
-    const obj = {};
-    headers.forEach((h,i)=>{ obj[h] = row[i]===undefined?'':row[i]; });
-    out.push(obj);
+function isLabel(t){return LABEL_RE.test(nk(t).trim());}
+function isCont(t){const s=nk(t).trim();return !!s && !hasCJK(s) && !/\s/.test(s) && /^[\w.\-\/?=&%#~+:@!,]+$/.test(s) && !BOOTH_LINE.test(s);}
+function blockFrom(S,start,otherStarts){
+  const out=[];let seenLabel=false,booths=0,prevLabel=false;
+  for(let i=start;i<S.lines.length && out.length<20;i++){
+    const t=nk(S.lines[i].text).trim();
+    if(i>start && otherStarts.has(i))break;
+    const lab=isLabel(t), bth=BOOTH_LINE.test(t);
+    if(bth){ if(booths)break; booths++; }
+    if(seenLabel && !lab && !(prevLabel && isCont(t)))break;
+    if(i>start && S.lines[i].page!==S.lines[i-1].page)break;
+    if(i>start && booths && !bth && !seenLabel && i+1<S.lines.length && BOOTH_LINE.test(nk(S.lines[i+1].text).trim()))break;
+    out.push(S.lines[i]); if(lab){seenLabel=true;prevLabel=true;} else if(!(prevLabel&&isCont(t))) prevLabel=false;
   }
   return out;
 }
-
-function normalize(val, type){
-  if(val===null||val===undefined) return '';
-  let s = String(val).trim().replace(/\s+/g,' ');
-  if(type==='codelist'){
-    const parts = s.split(',').map(p=>p.trim()).filter(p=>p!=='');
-    parts.sort();
-    return parts.join(',');
+function labelVal(texts,label){
+  for(let i=0;i<texts.length;i++){const t=nk(texts[i]).trim();
+    const m=t.match(new RegExp('^(?:'+label+')\\s*[:：]\\s*(.*)$','i'));
+    if(m){let v=m[1].trim();let j=i+1;
+      while(j<texts.length && !isLabel(texts[j]) && isCont(texts[j]) && label!=='TEL'){v+=nk(texts[j]).trim();j++;}
+      return v;}
   }
-  return s;
+  return null;
+}
+function parseBlock(texts){
+  const T=texts.map(t=>nk(t).trim());
+  let i=0;const nameZh=[],nameEn=[];
+  while(i<T.length && hasCJK(T[i]) && !/^\d/.test(T[i]))nameZh.push(T[i++]);
+  while(i<T.length && !hasCJK(T[i]) && !BOOTH_LINE.test(T[i]) && !isLabel(T[i]) && !/^\d{3,6}\s/.test(T[i]))nameEn.push(T[i++]);
+  let booth='';if(i<T.length && BOOTH_LINE.test(T[i]))booth=T[i++];
+  const rest=T.slice(i).filter(t=>!isLabel(t));
+  const firstLab=T.findIndex(isLabel);const addrLines=T.slice(i,firstLab<0?T.length:firstLab);
+  let zip='',zh=[],en=[];
+  addrLines.forEach((t,k)=>{ if(hasCJK(t.replace(/県(?![\u3400-\u9fff])/g,'')) && !en.length){ if(!zh.length){const m=t.match(/^(\d{3,7})\s*(.*)$/);if(m){zip=m[1];t=m[2];}} zh.push(t);} else en.push(t); });
+  return {nameZh:nameZh.join(''),nameEn:nameEn.join(' '),booth,zip,addr:zh.join(''),addrEn:en.join(' '),
+    tel:labelVal(T,'TEL'),email:labelVal(T,'E-?MAIL'),url:labelVal(T,'URL')};
+}
+function textCmp(ev,bN,bL){
+  if(!ev)return 'skip';
+  const n=norm(ev);if(bN.includes(n))return 'ok';
+  const l=loose(ev);if(l&&bL.includes(l))return 'fmt';
+  if(wildIncludes(bN,n))return 'glyph';
+  return 'diff';
+}
+function valCmp(ev,pv,kind){
+  const has=ev!=='';const ph=pv!==null&&pv!=='';
+  if(!has&&!ph)return 'skip';
+  if(!has&&ph)return 'extra';
+  if(has&&!ph)return 'diff';
+  if(kind==='tel'){ if(digits(ev)!==digits(pv))return 'diff'; return norm(ev)===norm(pv)?'ok':'fmt';}
+  if(norm(ev)===norm(pv))return 'ok';
+  if(loose(ev)===loose(pv))return 'fmt';
+  if(wildIncludes(norm(pv),'')||GLYPH.test(pv)){ if(norm(pv).length===norm(ev).length && wildIncludes(norm(pv),norm(ev)))return 'glyph';}
+  return 'diff';
+}
+const FIELDS=['zh','en','booth','zip','addr','addrEn','tel','email','url'];
+function checkRow(r,texts){
+  const bN=texts.map(norm).join(''),bL=texts.map(loose).join('');
+  const P=parseBlock(texts);const f={};
+  f.zh={st:textCmp(str(r.zh),bN,bL),pdf:P.nameZh};
+  f.en={st:textCmp(str(r.en),bN,bL),pdf:P.nameEn||(P.nameZh&&!hasCJK(P.nameZh)?P.nameZh:'')};
+  f.booth={st:valCmp(str(r.booth),P.booth,'booth'),pdf:P.booth};
+  f.zip={st:valCmp(digits(r.zip),P.zip,'zip'),pdf:P.zip};
+  f.addr={st:textCmp(str(r.addr),bN,bL),pdf:P.addr||P.addrEn};
+  f.addrEn=(str(r.addrEn)&&norm(r.addrEn)===norm(r.addr))?{st:'skip',pdf:''}:{st:textCmp(str(r.addrEn),bN,bL),pdf:P.addrEn};
+  f.tel={st:valCmp(str(r.tel),P.tel??'','tel'),pdf:P.tel??''};
+  f.email={st:valCmp(str(r.email),P.email??'','email'),pdf:P.email??''};
+  f.url={st:valCmp(str(r.url),P.url??'','url'),pdf:P.url??''};
+  // fields not mapped: mark skip
+  FIELDS.forEach(k=>{ if(r[k]===undefined) f[k]={st:'skip',pdf:f[k]?f[k].pdf:''}; });
+  return f;
+}
+const W={ok:0,fmt:0,skip:0,glyph:0,extra:-0.5,diff:-1};
+function run(rows,pages){
+  const S=buildStream(pages);
+  const hitLines=new Map(); // line -> Set(rowIdx)
+  rows.forEach((r,ri)=>{
+    const tries=[[norm(r.zh),false,'zh'],[loose(r.zh),true,'zh'],[norm(r.en),false,'en'],[loose(r.en),true,'en']];
+    r._hits=[];
+    for(const [k,lo,via] of tries){ if(!k||k.length<2)continue; const h=findLineStarts(S,k,lo); if(h.length){r._hits=h;r._via=via;break;} }
+    if(!r._hits.length){ // partial: name found mid-line (e.g. Excel dropped a leading word)
+      for(const k of [loose(r.zh),loose(r.en)]){ if(!k||k.length<8)continue; let i=S.L.indexOf(k); const h=[];
+        while(i>=0){h.push(lineAt(S.lStart,i)); i=S.L.indexOf(k,i+1);}
+        if(h.length){r._hits=[...new Set(h)];r._via='partial';break;} }
+    }
+    r._hits.forEach(li=>{if(!hitLines.has(li))hitLines.set(li,new Set());hitLines.get(li).add(ri);});
+  });
+  const used=new Set();
+  const results=rows.map((r,ri)=>{
+    if(!str(r.zh)&&!str(r.en))return {row:r,status:'nokey',fields:{}};
+    if(!r._hits.length)return {row:r,status:'missing',fields:{}};
+    let best=null;
+    for(const li of r._hits){
+      const others=new Set([...hitLines.keys()].filter(k=>k!==li && ![...hitLines.get(k)].every(x=>x===ri)));
+      const bl=blockFrom(S,li,others);const texts=bl.map(x=>x.text);
+      const f=checkRow(r,texts);
+      const score=Object.values(f).reduce((a,x)=>a+(x.st==='ok'||x.st==='fmt'||x.st==='glyph'?1:x.st==='diff'?-0.2:0),0)+(f.booth.pdf?1:0)+(texts.some(isLabel)?1:0);
+      if(!best||score>best.score)best={score,f,bl,li};
+    }
+    best.bl.forEach((x,k)=>used.add(best.li+k));
+    if(r._via==='partial'){const P=parseBlock(best.bl.map(x=>x.text));
+      if(str(r.zh))best.f.zh={st:'diff',pdf:P.nameZh||P.nameEn}; if(str(r.en))best.f.en={st:'diff',pdf:P.nameEn||P.nameZh};}
+    const sts=Object.values(best.f).map(x=>x.st);
+    const status=sts.includes('diff')||sts.includes('extra')?'diff':sts.includes('glyph')?'glyph':sts.includes('fmt')?'fmt':'ok';
+    return {row:r,status,fields:best.f,page:best.bl[0].page,block:best.bl.map(x=>x.text),via:r._via};
+  });
+  // PDF entries not claimed: booth lines outside used blocks
+  const freq={};S.lines.forEach(l=>{const t=nk(l.text).trim();freq[t]=(freq[t]||0)+1;});
+  const chrome=t=>freq[t]>=4 && !BOOTH_LINE.test(t);
+  const orphans=[];
+  const mapLike=new Set(pages.filter(p=>boothCount(p)>30).map(p=>p.num));
+  S.lines.forEach((ln,i)=>{ if(used.has(i)||mapLike.has(ln.page))return; const t=nk(ln.text).trim();
+    if(BOOTH_LINE.test(t)){const ctx=[];for(let j=i-1;j>=0&&ctx.length<3;j--){const u=nk(S.lines[j].text).trim(); if(isLabel(u)||used.has(j)||BOOTH_LINE.test(u)||chrome(u))break; ctx.unshift(u);} if(ctx.length)orphans.push({page:ln.page,booth:t,ctx});}});
+  return {results,orphans};
+}
+function boothCount(p){return p.lines.filter(t=>BOOTH_LINE.test(nk(t).trim())).length;}
+function boothPages(pages){return pages.filter(p=>{const b=boothCount(p);return b>=1&&b<=30&&p.lines.some(isLabel);}).map(p=>p.num);}
+return {run,norm,loose,nk,hasCJK,digits,boothPages,FIELDS};
+})();
+if(typeof module!=='undefined')module.exports=CORE;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const colL=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=(i-m-1)/26|0;}return s;};
+const FIELDS=[
+  {k:'zone',label:'展區',re:/展區(中文)?$|^展區/},
+  {k:'zh',label:'中文名稱',re:/中文名稱|公司名稱(?!.*英)|廠商名稱(?!.*英)/},
+  {k:'en',label:'英文名稱',re:/英文名稱|name/i},
+  {k:'booth',label:'攤位號',re:/攤位|booth/i},
+  {k:'zip',label:'郵遞區號',re:/郵遞|zip/i},
+  {k:'addrEn',label:'英文地址',re:/地址.*英|英文地址|address/i},
+  {k:'addr',label:'地址',re:/地址/},
+  {k:'tel',label:'電話',re:/電話|tel/i},
+  {k:'email',label:'Email',re:/mail/i},
+  {k:'url',label:'網址',re:/網址|網站|url|web/i},
+];
+const FL=Object.fromEntries(FIELDS.map(f=>[f.k,f.label]));
+const ORDER=['zone','zh','en','booth','zip','addr','addrEn','tel','email','url'];
+
+/* ---------- Excel ---------- */
+async function readWB(file){
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const sheets=wb.SheetNames.map(n=>({name:n,aoa:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:false})}));
+  const f={name:file.name,sheets,cfg:null};
+  f.cfg=autoCfg(f);return f;
+}
+function detectMap(hdr){
+  const map={};const used=new Set();
+  for(const fd of FIELDS){
+    const i=hdr.findIndex((h,ix)=>!used.has(ix)&&h&&fd.re.test(String(h).trim())&&!(fd.k==='addr'&&/英|郵遞|zip/i.test(h))&&!(fd.k==='en'&&/中文/.test(h))&&!(fd.k==='zone'&&/英/.test(h)));
+    map[fd.k]=i; if(i>=0)used.add(i);
+  }
+  return map;
+}
+function autoCfg(f){
+  let best={score:-1,sheet:0,hr:0};
+  f.sheets.forEach((s,si)=>{for(let r=0;r<Math.min(15,s.aoa.length);r++){const m=detectMap(s.aoa[r].map(String));const sc=Object.values(m).filter(x=>x>=0).length;if(sc>best.score)best={score:sc,sheet:si,hr:r};}});
+  const hdr=(f.sheets[best.sheet].aoa[best.hr]||[]).map(String);
+  return {sheet:best.sheet,hr:best.hr,map:detectMap(hdr)};
+}
+function rowsOf(f){
+  const s=f.sheets[f.cfg.sheet];const out=[];
+  for(let r=f.cfg.hr+1;r<s.aoa.length;r++){
+    const a=s.aoa[r];const o={file:f.name,excelRow:r+1};
+    ORDER.forEach(k=>{const c=f.cfg.map[k];if(c>=0)o[k]=String(a[c]??'').trim();});
+    if(!(o.zh||o.en))continue; out.push(o);
+  }
+  return out;
+}
+function mapUI(host,files,fieldsShown,onChange){
+  host.innerHTML='';
+  files.forEach((f,fi)=>{
+    const s=f.sheets[f.cfg.sheet];const hdr=(s.aoa[f.cfg.hr]||[]);
+    const width=Math.max(hdr.length,...s.aoa.slice(0,20).map(r=>r.length));
+    const opts=(sel)=>`<option value="-1"${sel<0?' selected':''}>不比對</option>`+Array.from({length:width},(_,i)=>`<option value="${i}"${i===sel?' selected':''}>${colL(i)}　${esc(String(hdr[i]??'').slice(0,24))}</option>`).join('');
+    const d=document.createElement('div');d.className='mapfile';
+    d.innerHTML=`<div class="fn">${esc(f.title||f.name)}</div>
+      <div class="row" style="margin-bottom:10px">
+        <label class="note">工作表 <select data-a="sheet">${f.sheets.map((x,i)=>`<option value="${i}"${i===f.cfg.sheet?' selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+        <label class="note">表頭在第 <input type="number" min="1" data-a="hr" value="${f.cfg.hr+1}" style="width:64px"> 列</label>
+        <span class="note">共 ${rowsOf(f).length} 筆有名稱的資料</span></div>
+      <div class="mapgrid">${fieldsShown.map(k=>`<label>${FL[k]}<select data-k="${k}">${opts(f.cfg.map[k]??-1)}</select></label>`).join('')}</div>`;
+    d.querySelector('[data-a=sheet]').onchange=e=>{f.cfg.sheet=+e.target.value;const hr=f.cfg.hr;const hd=(f.sheets[f.cfg.sheet].aoa[hr]||[]).map(String);f.cfg.map=detectMap(hd);mapUI(host,files,fieldsShown,onChange);onChange&&onChange();};
+    d.querySelector('[data-a=hr]').onchange=e=>{f.cfg.hr=Math.max(0,(+e.target.value||1)-1);f.cfg.map=detectMap((f.sheets[f.cfg.sheet].aoa[f.cfg.hr]||[]).map(String));mapUI(host,files,fieldsShown,onChange);onChange&&onChange();};
+    d.querySelectorAll('select[data-k]').forEach(sel=>sel.onchange=e=>{f.cfg.map[sel.dataset.k]=+e.target.value;onChange&&onChange();});
+    host.appendChild(d);
+  });
 }
 
-function runCompare(){
-  const keyColA = document.getElementById('keyColA').value;
-  const keyColB = document.getElementById('keyColB').value;
-  if(!keyColA || !keyColB){
-    alert('請選擇 A 檔與 B 檔的比對鍵欄位');
-    return;
-  }
-  const activeFields = FIELD_DEFS.map((f,i)=>{
-    const incl = document.getElementById('incl_'+i).checked;
-    const aCol = document.getElementById('aCol_'+i).value;
-    const bCol = document.getElementById('bCol_'+i).value;
-    return incl && aCol && bCol ? {name:f.name, aCol, bCol, normalize:f.normalize} : null;
-  }).filter(Boolean);
-
-  customFields.forEach(cf=>{
-    const inclEl = document.getElementById('cincl_'+cf.id);
-    const nameEl = document.getElementById('cname_'+cf.id);
-    const aColEl = document.getElementById('caCol_'+cf.id);
-    const bColEl = document.getElementById('cbCol_'+cf.id);
-    if(!inclEl || !inclEl.checked) return;
-    const name = (nameEl.value||'').trim() || '(未命名欄位)';
-    const aCol = aColEl.value, bCol = bColEl.value;
-    if(aCol && bCol){
-      activeFields.push({name, aCol, bCol, normalize:'text'});
-    }
-  });
-
-  if(activeFields.length===0){
-    alert('請至少選擇一個要比對的欄位');
-    return;
-  }
-
-  const aObjs = rowsToObjects(fileState.A.rows);
-  const bObjs = rowsToObjects(fileState.B.rows);
-
-  const aMap = new Map();
-  aObjs.forEach(o=>{
-    const k = normalize(o[keyColA],'text');
-    if(k) aMap.set(k, o);
-  });
-  const bMap = new Map();
-  bObjs.forEach(o=>{
-    const k = normalize(o[keyColB],'text');
-    if(k) bMap.set(k, o);
-  });
-
-  // guess display-name fields (company name) for cards: prefer Chinese name, fall back to English
-  const nameFieldCN = activeFields.find(f=>f.name.includes('公司名稱') && f.name.includes('中')) || null;
-  const nameFieldEN = activeFields.find(f=>f.name.includes('公司名稱') && f.name.includes('英')) || null;
-
-  function pickLabel(rec, colSide){
-    const cn = nameFieldCN ? String(rec[nameFieldCN[colSide]]||'').trim() : '';
-    const en = nameFieldEN ? String(rec[nameFieldEN[colSide]]||'').trim() : '';
-    return cn || en || '';
-  }
-
-  const results = [];
-  const seenKeys = new Set();
-
-  aMap.forEach((aRec, key)=>{
-    seenKeys.add(key);
-    const bRec = bMap.get(key);
-    const label = pickLabel(aRec, 'aCol');
-    if(!bRec){
-      results.push({key, label, status:'missing', diffs:[]});
-      return;
-    }
-    const diffs = [];
-    activeFields.forEach(f=>{
-      const av = aRec[f.aCol];
-      const bv = bRec[f.bCol];
-      const an = normalize(av, f.normalize);
-      const bn = normalize(bv, f.normalize);
-      if(an !== bn){
-        diffs.push({field:f.name, a: av==null?'':av, b: bv==null?'':bv});
-      }
-    });
-    results.push({key, label, status: diffs.length? 'mismatch':'match', diffs});
-  });
-
-  bMap.forEach((bRec, key)=>{
-    if(seenKeys.has(key)) return;
-    const label = pickLabel(bRec, 'bCol');
-    results.push({key, label, status:'extra', diffs:[]});
-  });
-
-  compareResults = results;
-  renderResults();
-  document.getElementById('resultsSection').style.display = 'block';
-  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+/* ---------- diff highlight ---------- */
+function charDiff(a,b){
+  a=CORE.nk(a);b=CORE.nk(b);
+  const cj=x=>CORE.hasCJK(x.replace(/県/g,''));
+  if(cj(a)||cj(b)){a=a.replace(/\s+/g,'');b=b.replace(/\s+/g,'');}
+  if(!a||!b||a.length*b.length>90000)return [esc(a),esc(b)];
+  const n=a.length,m=b.length,dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=a[i]===b[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  let i=0,j=0,A='',B='';
+  const pa=(c,t)=>A+=t?`<del>${esc(c)}</del>`:esc(c), pb=(c,t)=>B+=t?`<ins>${esc(c)}</ins>`:esc(c);
+  while(i<n&&j<m){ if(a[i]===b[j]){pa(a[i]);pb(b[j]);i++;j++;} else if(dp[i+1][j]>=dp[i][j+1]){pa(a[i],1);i++;} else {pb(b[j],1);j++;} }
+  while(i<n)pa(a[i++],1);while(j<m)pb(b[j++],1);
+  return [A.replace(/<\/del><del>/g,''),B.replace(/<\/ins><ins>/g,'')];
 }
 
-// ---------- RESULTS RENDERING ----------
-let currentFilter = 'issues';
-
-function renderResults(){
-  const results = compareResults;
-  const s = {
-    total: results.length,
-    match: results.filter(r=>r.status==='match').length,
-    mismatch: results.filter(r=>r.status==='mismatch').length,
-    missing: results.filter(r=>r.status==='missing').length,
-    extra: results.filter(r=>r.status==='extra').length,
-  };
-  document.getElementById('summary').innerHTML = [
-    {key:'total',label:'比對總筆數',cls:''},
-    {key:'match',label:'完全相符',cls:'ok'},
-    {key:'mismatch',label:'欄位有差異',cls:'err'},
-    {key:'missing',label:'B 檔缺筆',cls:'warn'},
-    {key:'extra',label:'B 檔多出',cls:'info'},
-  ].map(d=>`<div class="stat ${d.cls}"><div class="num">${s[d.key]}</div><div class="lbl">${d.label}</div></div>`).join('');
-
-  const chipDefs = [
-    {key:'issues', label:`⚠ 全部問題 (${s.mismatch+s.missing+s.extra})`},
-    {key:'mismatch', label:`✕ 欄位不符 (${s.mismatch})`},
-    {key:'missing', label:`− B 檔缺筆 (${s.missing})`},
-    {key:'extra', label:`＋ B 檔多出 (${s.extra})`},
-  ];
-  currentFilter = 'issues';
-  const chipsEl = document.getElementById('filterChips');
+/* ---------- results view (shared) ---------- */
+const FST={diff:'不同',fmt:'僅格式不同',glyph:'PDF 缺字',extra:'Excel 空白、對方有值',skip:'',ok:''};
+function makeResults(host,cfg){
+  // cfg: {mode:'pdf'|'xx', items:[], labels:{}, bName, exportName, onPage}
+  const ORDER_ST=['diff','glyph','missing','orphan','extra','fmt','ok'];
+  const counts={};cfg.items.forEach(it=>counts[it.status]=(counts[it.status]||0)+1);
+  const problem=cfg.items.filter(it=>it.status!=='ok'&&it.status!=='fmt').length;
+  let filter=problem?'todo':'all',q='';
+  host.innerHTML=`<p class="sub">${cfg.summary}</p>
+    <div class="chips" role="group" aria-label="篩選"></div>
+    <div class="tools"><input type="text" placeholder="搜尋公司名稱、攤位號" aria-label="搜尋"><button class="btn" data-a="copy">複製差異清單</button><button class="btn" data-a="xlsx">匯出 Excel</button></div>
+    <div class="tablewrap"><table class="res"><thead><tr><th>狀態</th><th>公司</th><th>${cfg.mode==='pdf'?'PDF 頁':'B 檔列'}</th><th>差異內容</th></tr></thead><tbody></tbody></table></div>`;
+  const chips=host.querySelector('.chips');
+  const defs=[['todo','要處理的',problem],['all','全部',cfg.items.length],...ORDER_ST.filter(s=>counts[s]).map(s=>[s,cfg.labels[s],counts[s]])];
+  chips.innerHTML=defs.map(([k,l,n])=>`<button class="chip" data-f="${k}">${esc(l)}<b>${n}</b></button>`).join('');
+  chips.onclick=e=>{const b=e.target.closest('.chip');if(!b)return;filter=b.dataset.f;draw();};
+  host.querySelector('.tools input').oninput=e=>{q=CORE.norm(e.target.value);draw();};
+  host.querySelector('[data-a=copy]').onclick=async e=>{const t=copyText(cfg);try{await navigator.clipboard.writeText(t);e.target.textContent='已複製';}catch(_){prompt('複製以下內容',t);}setTimeout(()=>e.target.textContent='複製差異清單',1600);};
+  host.querySelector('[data-a=xlsx]').onclick=()=>exportX(cfg);
+  host.querySelector('tbody').onclick=e=>{const b=e.target.closest('.pg');if(b&&cfg.onPage)cfg.onPage(+b.dataset.p);};
+  function pass(it){
+    if(filter==='todo'&&(it.status==='ok'||it.status==='fmt'))return false;
+    if(filter!=='todo'&&filter!=='all'&&it.status!==filter)return false;
+    if(q){const h=CORE.norm([it.zh,it.en,it.booth,it.pdfBooth].join('|'));if(!h.includes(q))return false;}
+    return true;
+  }
   function draw(){
-    chipsEl.innerHTML = chipDefs.map(c=>`<button class="chip ${currentFilter===c.key?'active':''}" data-k="${c.key}">${c.label}</button>`).join('');
-    chipsEl.querySelectorAll('.chip').forEach(b=>{ b.onclick=()=>{currentFilter=b.dataset.k; draw(); renderCards();}; });
+    chips.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.f===filter));
+    const list=cfg.items.filter(pass);
+    host.querySelector('tbody').innerHTML=list.length?list.map(rowHTML).join(''):`<tr><td colspan="4" class="empty">${filter==='todo'?'沒有需要處理的項目。':'這個條件下沒有資料。'}</td></tr>`;
+  }
+  function rowHTML(it){
+    const where=cfg.mode==='pdf'
+      ? (it.page?`<button class="pg" data-p="${it.page}">第 ${it.page} 頁</button>`:'<span class="src">—</span>')
+      : (it.bRow?`列 ${it.bRow}`:'<span class="src">—</span>');
+    let body='';
+    if(it.status==='missing') body=`<div class="src">${cfg.mode==='pdf'?'所選頁面裡找不到這家公司的名稱（中英文都查過）。可能是名稱被改、漏排，或在沒選到的頁面。':'B 檔沒有同名的公司。'}</div>`;
+    else if(it.status==='orphan') body=`<div class="src">PDF 有這一筆，Excel 裡對不到。</div>`;
+    else if(it.status==='extra') body=`<div class="src">B 檔有這一筆，A 檔沒有。</div>`;
+    else {let hinted=false; body=Object.entries(it.fields).filter(([k,v])=>!['ok','skip'].includes(v.st)).sort((x,y)=>ORDER.indexOf(x[0])-ORDER.indexOf(y[0])).map(([k,v])=>{
+        const [A,B]=charDiff(v.a,v.b);
+        return `<div class="fd"><div class="k">${FL[k]}</div><div class="v">
+          <div><span class="lab">Excel</span>${v.a?A:'<span class="none">（空白）</span>'}</div>
+          <div><span class="lab">${cfg.bName}</span>${v.b?B:'<span class="none">（沒有）</span>'}</div>
+          ${v.st==='glyph'&&!hinted&&(hinted=true)?'<div class="hint">PDF 的文字層讀不到這幾個字（顯示為「県」），多半是字型問題，請點頁碼看實際排版。</div>':v.st==='fmt'?'<div class="src">只有空白或標點不同</div>':''}</div></div>`;}).join('')||'<span class="src">全部相符</span>';}
+    if(it.block&&it.block.length) body+=`<details class="raw"><summary>PDF 原文</summary><pre>${esc(it.block.join('\n'))}</pre></details>`;
+    const co=`<div class="co"><b>${esc(it.zh||it.en||'')}</b>${it.zh&&it.en&&it.en!==it.zh?`<small>${esc(it.en)}</small>`:''}<span class="src">${it.excelRow?esc(shortName(it.file))+'　第 '+it.excelRow+' 列':''}${it.booth?'　'+esc(it.booth):''}</span></div>`;
+    return `<tr><td><span class="tag t-${it.status}">${esc(cfg.labels[it.status])}</span></td><td>${co}</td><td>${where}</td><td>${body}</td></tr>`;
   }
   draw();
-
-  document.getElementById('searchBox').oninput = renderCards;
-  renderCards();
-
-  document.getElementById('toggleFullBtn').onclick = ()=>{
-    const w = document.getElementById('fullWrap');
-    const shown = w.classList.toggle('show');
-    document.getElementById('toggleFullBtn').textContent = shown ? '收合全部核對結果 ▴' : '顯示全部核對結果 ▾';
-    if(shown) renderFullTable();
-  };
+}
+const shortName=n=>String(n||'').replace(/\.(xlsx|xls)$/i,'');
+function diffLines(cfg,it){
+  if(it.status==='missing')return [cfg.mode==='pdf'?'PDF 找不到這筆':'B 檔找不到這筆'];
+  if(it.status==='orphan')return ['PDF 多出這筆，Excel 沒有'];
+  if(it.status==='extra')return ['B 檔多出這筆，A 檔沒有'];
+  return Object.entries(it.fields).filter(([k,v])=>!['ok','skip'].includes(v.st)).map(([k,v])=>`${FL[k]}：Excel「${v.a||'空白'}」／${cfg.bName}「${v.b||'沒有'}」${v.st==='glyph'?'（PDF 缺字，請目視）':v.st==='fmt'?'（僅格式）':''}`);
+}
+function copyText(cfg){
+  const list=cfg.items.filter(it=>!['ok','fmt'].includes(it.status));
+  return list.map(it=>{const head=`${cfg.mode==='pdf'?(it.page?'P'+it.page+'　':''):''}${it.zh||it.en}${it.booth||it.pdfBooth?'（'+(it.booth||it.pdfBooth)+'）':''}`;
+    return head+'\n'+diffLines(cfg,it).map(s=>'　'+s).join('\n');}).join('\n\n');
+}
+function exportX(cfg){
+  const head=['狀態','Excel 檔','Excel 列','中文名稱','英文名稱','攤位號',cfg.mode==='pdf'?'PDF 頁':'B 檔列','差異內容'];
+  const aoa=[head,...cfg.items.map(it=>[cfg.labels[it.status],shortName(it.file),it.excelRow||'',it.zh||'',it.en||'',it.booth||it.pdfBooth||'',cfg.mode==='pdf'?(it.page||''):(it.bRow||''),it.status==='ok'?'':diffLines(cfg,it).join('\n')])];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:14},{wch:26},{wch:8},{wch:30},{wch:34},{wch:9},{wch:8},{wch:80}];ws['!autofilter']={ref:'A1:H1'};
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'比對結果');
+  const d=new Date();const stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb,`${cfg.exportName}_${stamp}.xlsx`);
 }
 
-function matchesSearch(r,q){
-  if(!q) return true;
-  q=q.toLowerCase();
-  return (r.key||'').toLowerCase().includes(q) || (r.label||'').toLowerCase().includes(q);
+/* ---------- drag visuals ---------- */
+document.querySelectorAll('.drop').forEach(d=>{
+  ['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,()=>d.classList.add('over')));
+  ['dragleave','drop'].forEach(ev=>d.addEventListener(ev,()=>d.classList.remove('over')));
+});
+function setDrop(id,text,ok){const d=$(id);d.querySelector('.state').textContent=text;d.classList.toggle('done',!!ok);}
+
+/* =================== Excel ↔ Excel =================== */
+const XX={A:null,B:null};
+async function xxLoad(which,file){
+  try{XX[which]=await readWB(file);XX[which].title=(which==='A'?'A 檔（基準）':'B 檔（查核對象）')+'　'+file.name;setDrop('#xxDrop'+which,file.name+'　已讀取',true);}
+  catch(e){setDrop('#xxDrop'+which,'讀不到這個檔案：'+e.message,false);XX[which]=null;}
+  if(XX.A&&XX.B){$('#xxMapCard').classList.remove('hidden');mapUI($('#xxMaps'),[XX.A,XX.B],ORDER,null);$('#xxResCard').classList.add('hidden');}
 }
+$('#xxFileA').onchange=e=>e.target.files[0]&&xxLoad('A',e.target.files[0]);
+$('#xxFileB').onchange=e=>e.target.files[0]&&xxLoad('B',e.target.files[0]);
+function cmpVal(a,b){ if(!a&&!b)return 'skip'; if(!a&&b)return 'extra'; if(a&&!b)return 'diff';
+  if(CORE.norm(a)===CORE.norm(b))return 'ok'; if(CORE.loose(a)===CORE.loose(b))return 'fmt'; return 'diff';}
+$('#xxRun').onclick=()=>{
+  const A=rowsOf(XX.A),B=rowsOf(XX.B);
+  const fields=ORDER.filter(k=>XX.A.cfg.map[k]>=0&&XX.B.cfg.map[k]>=0);
+  if(!fields.some(k=>k==='zh'||k==='en')){$('#xxRunNote').textContent='兩邊至少要對到「中文名稱」或「英文名稱」其中一欄才能配對。';return;}
+  $('#xxRunNote').textContent='';
+  const key=r=>CORE.norm(r.zh)||CORE.norm(r.en);
+  const idx=new Map();B.forEach((r,i)=>{const k=key(r);if(!idx.has(k))idx.set(k,[]);idx.get(k).push(i);});
+  const usedB=new Set();const items=[];
+  A.forEach(a=>{
+    let cand=(idx.get(key(a))||[]).filter(i=>!usedB.has(i));
+    if(!cand.length&&a.en){const k2=CORE.norm(a.en);B.forEach((b,i)=>{if(!usedB.has(i)&&CORE.norm(b.en)===k2)cand.push(i);});}
+    if(!cand.length){items.push({...a,status:'missing',fields:{}});return;}
+    const bi=cand.find(i=>CORE.norm(B[i].booth)===CORE.norm(a.booth))??cand[0];usedB.add(bi);const b=B[bi];
+    const f={};fields.forEach(k=>f[k]={st:cmpVal(a[k]||'',b[k]||''),a:a[k]||'',b:b[k]||''});
+    const sts=Object.values(f).map(x=>x.st);
+    items.push({...a,bRow:b.excelRow,fields:f,status:sts.includes('diff')||sts.includes('extra')?'diff':sts.includes('fmt')?'fmt':'ok'});
+  });
+  B.forEach((b,i)=>{if(!usedB.has(i))items.push({...b,file:XX.B.name,excelRow:null,bRow:b.excelRow,status:'extra',fields:{}});});
+  const n=s=>items.filter(x=>x.status===s).length;
+  $('#xxResCard').classList.remove('hidden');
+  makeResults($('#xxRes'),{mode:'xx',items,bName:'B 檔',exportName:'校對結果_Excel對Excel',
+    labels:{ok:'全部相符',fmt:'僅格式不同',diff:'有差異',missing:'B 檔找不到',extra:'B 檔多出'},
+    summary:`A 檔 ${A.length} 筆、B 檔 ${B.length} 筆，比對欄位：${fields.map(k=>FL[k]).join('、')}。有差異 ${n('diff')} 筆，B 檔找不到 ${n('missing')} 筆，B 檔多出 ${n('extra')} 筆。`});
+  $('#xxResCard').scrollIntoView({behavior:'smooth',block:'start'});
+};
 
-function renderCards(){
-  const q = document.getElementById('searchBox').value.trim();
-  let filtered = compareResults.filter(r=>{
-    if(currentFilter==='issues') return r.status!=='match';
-    return r.status===currentFilter;
-  }).filter(r=>matchesSearch(r,q));
-
-  const cardsEl = document.getElementById('cards');
-  const emptyEl = document.getElementById('emptyState');
-  if(filtered.length===0){ cardsEl.innerHTML=''; emptyEl.style.display='block'; return; }
-  emptyEl.style.display='none';
-
-  cardsEl.innerHTML = filtered.map(r=>{
-    let badge, body;
-    if(r.status==='missing'){
-      badge = `<span class="status-badge missing">B 檔缺筆</span>`;
-      body = `<div class="plain-note warn">比對鍵「${escapeHtml(r.key)}」存在於 A 檔，但 B 檔中查無此筆資料。</div>`;
-    } else if(r.status==='extra'){
-      badge = `<span class="status-badge extra">B 檔多出</span>`;
-      body = `<div class="plain-note info">比對鍵「${escapeHtml(r.key)}」只存在於 B 檔，A 檔中查無此筆資料。</div>`;
-    } else {
-      badge = `<span class="status-badge mismatch">${r.diffs.length} 項欄位不符</span>`;
-      body = `<table class="diff-table">
-        <thead><tr><th>欄位</th><th>A 檔（正確依據）</th><th>B 檔（現況，差異處紅底）</th></tr></thead>
-        <tbody>${r.diffs.map(d=>`<tr>
-          <td class="field-name">${escapeHtml(d.field)}</td>
-          <td class="val-a">${escapeHtml(d.a) || '<span style="opacity:.4">(空白)</span>'}</td>
-          <td class="val-b">${escapeHtml(d.b) || '<span style="opacity:.6">(空白)</span>'}</td>
-        </tr>`).join('')}</tbody></table>`;
+/* =================== Excel ↔ PDF =================== */
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const PD={xls:[],doc:null,name:'',pages:[],boothPages:new Set(),sel:new Set(),last:null};
+$('#pdFileX').onchange=async e=>{
+  const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
+  const errs=[];
+  for(const f of fs){
+    try{const wb=await readWB(f);wb.title=f.name;
+      const i=PD.xls.findIndex(x=>x.name===f.name);
+      if(i>=0)PD.xls[i]=wb;else PD.xls.push(wb);}
+    catch(err){errs.push(`${esc(f.name)} 讀不到：${esc(err.message)}`);}
+  }
+  $('#pdMsg').innerHTML=errs.length?`<div class="err">${errs.join('<br>')}</div>`:'';
+  pdXlsChanged();
+};
+function pdXlsChanged(){
+  const total=PD.xls.reduce((a,f)=>a+rowsOf(f).length,0);
+  setDrop('#pdDropX',PD.xls.length?`已放 ${PD.xls.length} 個檔、共 ${total} 筆。可再點這裡繼續加`:'尚未上傳',PD.xls.length>0);
+  $('#pdXlsList').innerHTML=PD.xls.map((f,i)=>`<li><span class="fname">${esc(f.name)}</span><span class="src">${rowsOf(f).length} 筆</span><button class="btn sm" data-rm="${i}" aria-label="移除 ${esc(f.name)}">移除</button></li>`).join('');
+  mapUI($('#pdMaps'),PD.xls,['zh','en','booth','zip','addr','addrEn','tel','email','url'],pdXlsChanged2);
+  pdReady();
+}
+function pdXlsChanged2(){const total=PD.xls.reduce((a,f)=>a+rowsOf(f).length,0);setDrop('#pdDropX',`已放 ${PD.xls.length} 個檔、共 ${total} 筆。可再點這裡繼續加`,PD.xls.length>0);}
+$('#pdXlsList').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;PD.xls.splice(+b.dataset.rm,1);pdXlsChanged();};
+$('#pdFileP').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  PD.name=f.name;PD.doc=null;PD.pages=[];$('#pdMsg').innerHTML='';
+  setDrop('#pdDropP','讀取中…',false);
+  const prog=$('#pdProg'),bar=prog.querySelector('i');prog.classList.remove('hidden');bar.style.width='0';
+  try{
+    const doc=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer()),verbosity:0}).promise;
+    PD.doc=doc;
+    for(let p=1;p<=doc.numPages;p++){
+      const tc=await (await doc.getPage(p)).getTextContent();
+      PD.pages.push({num:p,lines:linesOf(tc)});
+      bar.style.width=(p/doc.numPages*100)+'%';
+      if(p%5===0)await new Promise(r=>setTimeout(r));
     }
-    return `<div class="card">
-      <div class="card-head">
-        <div>
-          <div class="name-cn">${escapeHtml(r.label) || '(無名稱)'}</div>
-          <div class="name-en">${escapeHtml(r.key)}</div>
-        </div>
-        <div class="meta-tags">${badge}</div>
-      </div>
-      ${body}
-    </div>`;
-  }).join('');
+    const chars=PD.pages.reduce((a,p)=>a+p.lines.join('').length,0);
+    PD.boothPages=new Set(CORE.boothPages(PD.pages));
+    setDrop('#pdDropP',`${f.name}　${doc.numPages} 頁`,true);
+    if(chars<50*doc.numPages*0.2)$('#pdMsg').innerHTML='<div class="warn">這份 PDF 幾乎抓不到文字，可能是掃描檔或文字已轉外框，比對結果會不準。請跟廠商要「文字可選取」的 PDF。</div>';
+    PD.sel=new Set(PD.boothPages.size?PD.boothPages:PD.pages.map(p=>p.num));
+    buildThumbs();pdReady();
+  }catch(err){setDrop('#pdDropP','讀不到這個 PDF：'+err.message,false);}
+  prog.classList.add('hidden');
+};
+function linesOf(tc){
+  const lines=[];let cur='',lastY=null;
+  for(const it of tc.items){
+    const y=it.transform[5];
+    if(y<40&&/^\s*\d{1,3}\s*$/.test(it.str))continue; // 頁碼
+    if(lastY!==null&&Math.abs(y-lastY)>2&&cur.trim()){lines.push(cur);cur='';}
+    cur+=it.str;lastY=y;
+    if(it.hasEOL){if(cur.trim())lines.push(cur);cur='';lastY=null;}
+  }
+  if(cur.trim())lines.push(cur);
+  return lines.map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean);
 }
-
-function renderFullTable(){
-  document.getElementById('fullTableBody').innerHTML = compareResults.map(r=>{
-    const badge = r.status==='match' ? `<span class="status-badge" style="background:var(--ok-bg);color:var(--ok);">相符</span>`
-      : r.status==='mismatch' ? `<span class="status-badge mismatch">不符</span>`
-      : r.status==='missing' ? `<span class="status-badge missing">缺筆</span>`
-      : `<span class="status-badge extra">多出</span>`;
-    const diffFields = r.diffs.map(d=>d.field).join('、');
-    return `<tr><td>${escapeHtml(r.key)}</td><td>${escapeHtml(r.label)}</td><td>${badge}</td><td style="color:var(--err)">${escapeHtml(diffFields)}</td></tr>`;
-  }).join('');
+function pdReady(){
+  const ok=PD.doc&&PD.xls.length;
+  $('#pdPageCard').classList.toggle('hidden',!PD.doc);
+  $('#pdRun').disabled=!ok;
+  $('#pdRunNote').textContent=PD.doc&&!PD.xls.length?'還沒放 Excel。':'';
+  updSel();
 }
-
-document.getElementById('downloadBtn').addEventListener('click', ()=>{
-  const rows = [['比對鍵','公司名稱','差異類型','欄位','A檔數值','B檔數值']];
-  compareResults.forEach(r=>{
-    if(r.status==='missing') rows.push([r.key, r.label, 'B檔缺筆','','','']);
-    else if(r.status==='extra') rows.push([r.key, r.label, 'B檔多出','','','']);
-    else if(r.status==='mismatch') r.diffs.forEach(d=>rows.push([r.key, r.label, '欄位不符', d.field, d.a, d.b]));
+/* thumbnails */
+let io=null,renderQ=Promise.resolve();
+function buildThumbs(){
+  const host=$('#pdThumbs');host.innerHTML='';$('#pdTotal').textContent=PD.pages.length;
+  if(io)io.disconnect();
+  io=new IntersectionObserver(ents=>ents.forEach(en=>{if(en.isIntersecting){const b=en.target;io.unobserve(b);renderQ=renderQ.then(()=>drawThumb(b));}}),{root:host,rootMargin:'200px'});
+  PD.pages.forEach(p=>{
+    const b=document.createElement('button');b.type='button';b.className='th';b.dataset.p=p.num;
+    b.setAttribute('aria-label',`第 ${p.num} 頁`);
+    b.innerHTML=`<canvas width="84" height="120"></canvas><div class="cap"><span>${p.num}</span>${PD.boothPages.has(p.num)?'<span class="dot" title="偵測到攤位號"></span>':''}</div>`;
+    host.appendChild(b);io.observe(b);
   });
-  const csv = rows.map(row=>row.map(c=>{
-    const s = (c===null||c===undefined)?'':String(c);
-    return '"'+s.replace(/"/g,'""')+'"';
-  }).join(',')).join('\r\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = '校對報告_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById('newCompareBtn').addEventListener('click', ()=>{
-  fileState = {A:null, B:null};
-  compareResults = null;
-  customFields = [];
-  customFieldCounter = 0;
-  ['A','B'].forEach(letter=>{
-    document.getElementById('fname'+letter).textContent = '點擊或拖曳上傳 '+letter+' 檔';
-    document.getElementById('hint'+letter).textContent = '尚未上傳';
-    document.getElementById('drop'+letter).classList.remove('loaded');
-    document.getElementById('sheetRow'+letter).style.display = 'none';
-    document.getElementById('file'+letter).value = '';
-  });
-  document.getElementById('mappingSection').style.display = 'none';
-  document.getElementById('resultsSection').style.display = 'none';
-  document.getElementById('uploadPanel').scrollIntoView({behavior:'smooth'});
-});
-
-function escapeHtml(s){
-  if(s===undefined||s===null) return '';
-  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  paintSel();
 }
+async function drawThumb(b){
+  try{const pg=await PD.doc.getPage(+b.dataset.p);const vp0=pg.getViewport({scale:1});
+    const w=Math.round(b.clientWidth||104),dpr=Math.min(2,window.devicePixelRatio||1);const vp=pg.getViewport({scale:w*dpr/vp0.width});
+    const c=b.querySelector('canvas');c.width=vp.width;c.height=vp.height;c.style.aspectRatio=`${vp0.width}/${vp0.height}`;
+    await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;}catch(e){}
+}
+$('#pdThumbs').onclick=e=>{
+  const b=e.target.closest('.th');if(!b)return;const p=+b.dataset.p;
+  if(e.shiftKey&&PD.last){const [a,z]=[Math.min(PD.last,p),Math.max(PD.last,p)];const on=!PD.sel.has(p);for(let i=a;i<=z;i++)on?PD.sel.add(i):PD.sel.delete(i);}
+  else PD.sel.has(p)?PD.sel.delete(p):PD.sel.add(p);
+  PD.last=p;paintSel();
+};
+function paintSel(){document.querySelectorAll('#pdThumbs .th').forEach(b=>{const on=PD.sel.has(+b.dataset.p);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});updSel();}
+function updSel(){$('#pdSelN').textContent=PD.sel.size;const r=[...PD.sel].sort((a,b)=>a-b);$('#pdRange').value=toRange(r);}
+function toRange(a){const out=[];for(let i=0;i<a.length;i++){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;out.push(i===j?`${a[i]}`:`${a[i]}-${a[j]}`);i=j;}return out.join(', ');}
+function parseRange(s,max){const set=new Set();s.replace(/[，、；;]/g,',').split(',').forEach(t=>{const m=t.trim().match(/^(\d+)\s*(?:[-~－到]\s*(\d+))?$/);if(!m)return;let a=+m[1],b=m[2]?+m[2]:a;if(a>b)[a,b]=[b,a];for(let i=Math.max(1,a);i<=Math.min(max,b);i++)set.add(i);});return set;}
+$('#pdAuto').onclick=()=>{PD.sel=new Set(PD.boothPages);paintSel();};
+$('#pdAll').onclick=()=>{PD.sel=new Set(PD.pages.map(p=>p.num));paintSel();};
+$('#pdNone').onclick=()=>{PD.sel=new Set();paintSel();};
+$('#pdRangeApply').onclick=()=>{PD.sel=parseRange($('#pdRange').value,PD.pages.length);paintSel();};
+$('#pdRange').onkeydown=e=>{if(e.key==='Enter')$('#pdRangeApply').click();};
+
+$('#pdRun').onclick=()=>{
+  if(!PD.sel.size){$('#pdRunNote').textContent='請至少選一頁。';return;}
+  const rows=PD.xls.flatMap(rowsOf);
+  if(!rows.length){$('#pdRunNote').textContent='Excel 裡沒有讀到公司名稱，請打開欄位對應檢查「中文名稱／英文名稱」。';$('#pdMapWrap').open=true;return;}
+  $('#pdRunNote').textContent='';
+  const pages=PD.pages.filter(p=>PD.sel.has(p.num));
+  const {results,orphans}=CORE.run(rows,pages);
+  const items=results.map(r=>{
+    const f={};Object.entries(r.fields||{}).forEach(([k,v])=>f[k]={st:v.st,a:r.row[k]||'',b:v.pdf||''});
+    return {...r.row,status:r.status==='nokey'?'missing':r.status,fields:f,page:r.page,block:r.block,pdfBooth:r.fields&&r.fields.booth?r.fields.booth.pdf:''};
+  });
+  orphans.forEach(o=>items.push({status:'orphan',zh:o.ctx.filter(CORE.hasCJK).join('')||o.ctx.join(' '),en:o.ctx.filter(t=>!CORE.hasCJK(t)).join(' '),pdfBooth:o.booth,page:o.page,fields:{},block:[...o.ctx,o.booth]}));
+  items.sort((a,b)=>(a.page||1e9)-(b.page||1e9));
+  const n=s=>items.filter(x=>x.status===s).length;
+  $('#pdResCard').classList.remove('hidden');
+  makeResults($('#pdRes'),{mode:'pdf',items,bName:'PDF',exportName:'校對結果_'+shortName(PD.name).replace(/\.pdf$/i,''),onPage:openPage,
+    labels:{ok:'全部相符',fmt:'僅格式不同',glyph:'PDF 缺字待目視',diff:'有差異',missing:'PDF 找不到',orphan:'PDF 多出'},
+    summary:`Excel ${rows.length} 筆，對照 PDF ${pages.length} 頁（${toRange([...PD.sel].sort((a,b)=>a-b))}）。有差異 ${n('diff')} 筆、PDF 缺字待目視 ${n('glyph')} 筆、PDF 找不到 ${n('missing')} 筆、PDF 多出 ${n('orphan')} 筆，全部相符 ${n('ok')+n('fmt')} 筆。結果依 PDF 頁序排列，方便照頁在校稿上標註。`});
+  $('#pdResCard').scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+/* page preview */
+let modalPage=1;
+async function openPage(p){
+  if(!PD.doc)return;modalPage=Math.min(Math.max(1,p),PD.doc.numPages);
+  $('#modal').classList.remove('hidden');$('#modalTitle').textContent=`第 ${modalPage} 頁　${PD.name}`;
+  const pg=await PD.doc.getPage(modalPage);const vp0=pg.getViewport({scale:1});
+  const w=Math.min(936,window.innerWidth-56),dpr=Math.min(2,window.devicePixelRatio||1);const vp=pg.getViewport({scale:w*dpr/vp0.width});
+  const c=$('#modalCanvas');c.width=vp.width;c.height=vp.height;
+  await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  $('#modalClose').focus();
+}
+$('#modalClose').onclick=()=>$('#modal').classList.add('hidden');
+$('#modalPrev').onclick=()=>openPage(modalPage-1);
+$('#modalNext').onclick=()=>openPage(modalPage+1);
+$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').classList.add('hidden');};
+document.addEventListener('keydown',e=>{if($('#modal').classList.contains('hidden'))return;if(e.key==='Escape')$('#modal').classList.add('hidden');if(e.key==='ArrowLeft')openPage(modalPage-1);if(e.key==='ArrowRight')openPage(modalPage+1);});
 </script>
-</body>
-</html>
+</body></html>
