@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>開幕巡場產出台 V8</title>
+<title>開幕巡場產出台 V9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- 內建：PptxGenJS 3.12.0（產生 PPT）、pdf.js 3.11.174（讀 PDF 主視覺），不需連外部網站 -->
@@ -214,7 +214,7 @@ table.flow tr.lock td{background:#fafbfa}
 <body>
 <header>
   <h1>開幕活動及巡場介紹｜產出台</h1>
-  <span class="ver">V8</span>
+  <span class="ver">V9</span>
   <button class="btn btn-ghost btn-sm" id="btnClear" title="清掉畫面，從空白模板開始（線上存檔不受影響）">開新頁</button>
   <button class="btn btn-go" id="btnExport">產出 PPT</button>
 </header>
@@ -245,18 +245,18 @@ table.flow tr.lock td{background:#fafbfa}
   <p class="hint">每頁上方的標題都能直接點來修改（封面標題預設「開幕活動及巡場介紹」）；右上「顯示此頁」取消勾選即不輸出。日期與位置會自動帶入 P.3、P.9，Logo 放在每頁右上角。</p>
   <div class="grid">
     <div style="grid-column:1/-1"><label>展名（可換行：第一行英文、第二行中文）</label><textarea data-k="name" rows="2" style="min-height:60px" placeholder="Taiwan Innotech Expo&#10;台灣創新技術博覽會"></textarea></div>
-    <div><label>開始日期</label><input type="date" data-k="dateS"></div>
-    <div><label>結束日期</label><input type="date" data-k="dateE"></div>
+    <div><label>開始日期</label><input type="date" data-k="dateS" min="2000-01-01" max="2099-12-31"></div>
+    <div><label>結束日期</label><input type="date" data-k="dateE" min="2000-01-01" max="2099-12-31"></div>
     <div><label>展出位置</label><input type="text" data-k="loc" placeholder="例：台北世貿1館 A、B、C(部分)、D區"></div>
-    <div><label>展覽 Logo（選填，每頁右上）</label><div class="imgbox sm" data-img="logo">點擊或拖曳 Logo</div></div>
-    <div><label>封面主視覺（選填，可上傳 PDF / PNG / JPG，放封面右半）</label><div class="imgbox sm" data-img="cover">點擊或拖曳 PDF / PNG / JPG</div>
+    <div><label>展覽 Logo（選填，每頁含封面都放右上角）</label><div class="imgbox sm" data-img="logo">點擊或拖曳 Logo</div></div>
+    <div><label>主視覺 KV（選填，PDF / PNG / JPG，只用來抓配色，不放進簡報）</label><div class="imgbox sm" data-img="cover">點擊或拖曳 PDF / PNG / JPG</div>
       <div class="palette">
         <div class="sw"><input type="color" data-th="c1">主色</div>
         <div class="sw"><input type="color" data-th="c2">輔色</div>
         <div class="sw"><input type="color" data-th="c3">深色字</div>
         <button class="btn btn-ghost btn-sm" id="thReset">還原預設配色</button>
       </div>
-      <p class="hint" style="margin:6px 0 0">上傳主視覺後自動抓配色，套到章節標籤、表頭、封面展名、大數字、站位表；可點色塊微調。</p>
+      <p class="hint" style="margin:6px 0 0">上傳 KV 後自動抓配色，套到章節標籤、表頭、封面展名與色帶、大數字、站位表；可點色塊微調。</p>
     </div>
   </div>
 </section><div class="pv" data-pv="s1"></div></div>
@@ -369,7 +369,7 @@ table.flow tr.lock td{background:#fafbfa}
 
 <script>
 /* ===================== Config ===================== */
-const VERSION = 'V8';
+const VERSION = 'V9';
 // namecard 專案的網頁設定：填好 apiKey 等欄位後，所有人打開就會自動連線
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAg_Od-P53Qw3zTbaVxx_TRi8UjSQYZFfo",
@@ -560,7 +560,7 @@ async function setImg(key, file){
   try{ IMG[key]= pdfOk ? await loadPdfFirstPage(file) : await loadImage(file); }
   catch(e){ console.error(e); busy(false); toast('讀取失敗：'+e.message); return; }
   busy(false);
-  if(key==='cover'){ const th=await extractPalette(IMG.cover.url); if(th){ S.theme=th; save(); renderTheme(); toast('已從主視覺抓取配色'); } }
+  if(key==='cover'){ const th=await extractPalette(IMG.cover.url); if(th){ S.theme=th; save(); renderTheme(); renderPreviews(); toast('已從 KV 抓取配色'); } }
   if(key==='p16'){ S.stars=[]; save(); renderMap(); } else paintBox(key);
 }
 function paintBox(key){
@@ -862,14 +862,17 @@ function buildSlides(){
   /* 封面 */
   PAGES.s1=()=>{
   if(isOn('s1')){ const s=slide('s1');
-    const hasCover=img(s, IMG.cover, 6.4,0,6.93,7.5);
-    if(!hasCover) s.els.push({t:'shape', shape:'rect', x:8.6,y:0,w:4.73,h:7.5, fill:TH.c1});
+    // 封面：KV 只抓色、不放圖；Logo 右上；文字置中；上下色帶用 KV 配色
+    s.els.push({t:'shape', shape:'rect', x:0,y:0,w:W,h:0.12, fill:TH.c1});
+    s.els.push({t:'shape', shape:'rect', x:0,y:6.78,w:W,h:0.1, fill:TH.c2});
+    s.els.push({t:'shape', shape:'rect', x:0,y:6.88,w:W,h:0.62, fill:TH.c1});
+    img(s, IMG.logo, 11.85,0.25,1.3,1.05);
     const lines=nm.split('\n').map(x=>x.trim()).filter(Boolean);
-    if(lines.length) s.els.push({t:'text', x:0.6,y:1.5,w:6.2,h:1.3, paras:lines.map((t,i)=>P([{text:t,size:i===0&&lines.length>1?26:30}])), color:TH.c3, bold:true, valign:'bottom', margin:0, fit:true});
-    s.els.push({t:'text', x:0.6,y:2.95,w:6.2,h:0.8, paras:[P(T('s1'))], size:34, bold:true, color:'262626', margin:0});
-    s.els.push({t:'text', x:0.6,y:4.6,w:6,h:0.45, paras:[P(rangeEN())], font:'Arial', size:20, color:'595959', margin:0});
-    s.els.push({t:'text', x:0.6,y:5.1,w:6,h:0.45, paras:[P(S.loc||'')], size:20, color:'595959', margin:0});
-    if(!hasCover) img(s, IMG.logo, 9.2,2.5,3.5,2.5);
+    if(lines.length) s.els.push({t:'text', x:1,y:1.45,w:W-2,h:1.45, paras:lines.map((t,i)=>P([{text:t,size:i===0&&lines.length>1?28:34}])), color:TH.c3, bold:true, align:'center', valign:'bottom', margin:0, fit:true});
+    s.els.push({t:'text', x:1,y:3.05,w:W-2,h:0.95, paras:[P(T('s1'))], size:40, bold:true, color:'262626', align:'center', valign:'middle', margin:0, fit:true});
+    s.els.push({t:'shape', shape:'rect', x:W/2-0.6,y:4.18,w:1.2,h:0.06, fill:TH.c2});
+    s.els.push({t:'text', x:1,y:4.5,w:W-2,h:0.45, paras:[P(rangeEN())], font:'Arial', size:20, color:'595959', align:'center', margin:0});
+    s.els.push({t:'text', x:1,y:5.0,w:W-2,h:0.45, paras:[P(S.loc||'')], size:20, color:'595959', align:'center', margin:0});
   }
 
   };
