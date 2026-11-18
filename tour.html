@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>開幕巡場產出台 V9</title>
+<title>開幕巡場產出台 V11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- 內建：PptxGenJS 3.12.0（產生 PPT）、pdf.js 3.11.174（讀 PDF 主視覺），不需連外部網站 -->
@@ -160,6 +160,46 @@ table.flow tr.lock td{background:#fafbfa}
 .hchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:13px;cursor:grab;user-select:none;touch-action:none}
 .hchip b{background:var(--brand);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
 .hchip.off{opacity:.5}
+.imgbox .alb{position:absolute;top:6px;left:6px;z-index:2}
+.album{position:fixed;inset:0;background:rgba(20,30,26,.6);display:none;align-items:center;justify-content:center;z-index:65;padding:20px}
+.album.on{display:flex}
+.albox{background:#fff;border-radius:14px;width:min(1200px,100%);height:min(820px,100%);display:flex;flex-direction:column;overflow:hidden}
+.alhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.alhead b{font-size:16px;flex:1}
+.shooter{display:flex;align-items:center;gap:6px;margin:0;font-size:12px}
+.shooter input{width:130px;padding:5px 8px}
+.albody{flex:1;display:flex;min-height:0}
+.alside{width:220px;border-right:1px solid var(--line);padding:12px;overflow:auto;background:#fafbfa}
+#folderList a{display:flex;justify-content:space-between;gap:6px;padding:7px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13px}
+#folderList a span{color:var(--mute);font-size:11px}
+#folderList a.on{background:var(--brand);color:#fff}
+#folderList a.on span{color:#d6efe5}
+.almain{flex:1;padding:14px;overflow:auto}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.ph{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f4f6f5;cursor:pointer}
+.ph img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.phm{font-size:11px;color:var(--mute);padding:4px 8px}
+.phbtn{display:flex;gap:4px;padding:0 6px 6px}
+.phbtn .btn{flex:1;padding:3px 0}
+.phpick{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,122,92,.0);color:transparent;font-weight:700;transition:.15s}
+.ph:hover .phpick{background:rgba(15,122,92,.55);color:#fff}
+.cam{position:fixed;inset:0;background:#000;z-index:80;display:none}
+.cam.on{display:block}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.camflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.camflash.go{animation:fl .35s ease-out}
+@keyframes fl{0%{opacity:.85}100%{opacity:0}}
+.camtop{position:absolute;top:0;left:0;right:0;display:flex;gap:8px;padding:12px;background:linear-gradient(rgba(0,0,0,.55),transparent)}
+.camtop select,.camtop input{width:auto;flex:1;max-width:260px;background:rgba(255,255,255,.92);border:0;padding:8px 10px;border-radius:8px}
+.camx{margin-left:auto;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:18px;cursor:pointer}
+.cambot{position:absolute;bottom:0;left:0;right:0;height:130px;display:flex;align-items:center;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.camshot{width:74px;height:74px;border-radius:50%;border:5px solid #fff;background:rgba(255,255,255,.35);cursor:pointer}
+.camshot:active{transform:scale(.92);background:#fff}
+.camflip{position:absolute;right:28px;width:50px;height:50px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;font-size:22px;cursor:pointer}
+#camLast{position:absolute;left:24px;width:56px;height:56px;object-fit:cover;border-radius:10px;border:2px solid #fff;display:none;cursor:pointer}
+.camstat{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#fff;font-size:12px;opacity:.9}
+header .btn{white-space:nowrap}
+@media (max-width:700px){header{flex-wrap:wrap;gap:6px;padding:8px 10px}header h1{flex:1 1 100%;font-size:14px}header .ver{display:none}header .btn{padding:6px 10px;font-size:12px}header .btn-go{margin-left:auto}.alside{width:130px}.albody{font-size:12px}.shooter input{width:90px}header .btn-ghost{padding:4px 7px}}
 .slot.dragging{opacity:.75;outline:2px dashed var(--brand);cursor:grabbing;transform:scale(1.04)}
 .stand{user-select:none}
 .sbar{margin-left:10px;font-size:11px;color:var(--mute)}
@@ -214,7 +254,9 @@ table.flow tr.lock td{background:#fafbfa}
 <body>
 <header>
   <h1>開幕活動及巡場介紹｜產出台</h1>
-  <span class="ver">V9</span>
+  <span class="ver">V11</span>
+  <button class="btn btn-ghost btn-sm" id="btnCam" title="開相機拍照，照片自動存進共用相簿">📷 相機</button>
+  <button class="btn btn-ghost btn-sm" id="btnAlbum" title="大家拍的照片都在這裡">🖼 相簿</button>
   <button class="btn btn-ghost btn-sm" id="btnClear" title="清掉畫面，從空白模板開始（線上存檔不受影響）">開新頁</button>
   <button class="btn btn-go" id="btnExport">產出 PPT</button>
 </header>
@@ -345,6 +387,7 @@ table.flow tr.lock td{background:#fafbfa}
       <button class="btn btn-ghost btn-sm" id="starUndo">復原上一顆</button>
       <button class="btn btn-ghost btn-sm" id="starClear">清除全部星星</button>
       <button class="btn btn-del btn-sm" id="mapRemove">換圖</button>
+      <button class="btn btn-ghost btn-sm" data-alb="p16">🖼 從相簿換圖</button>
       <span class="hint" style="margin:0">星星大小 <input type="range" min="16" max="60" value="30" id="starSize" style="vertical-align:middle"></span>
     </div>
   </div>
@@ -366,10 +409,44 @@ table.flow tr.lock td{background:#fafbfa}
 <div class="toast" id="toast"></div>
 <div class="busy" id="busy">處理中…</div>
 <div class="zoom" id="zoom"><div id="zoomBody"></div></div>
+<div class="album" id="album">
+  <div class="albox">
+    <div class="alhead"><b id="albumTitle">共用相簿</b>
+      <label class="shooter">拍攝者 <input type="text" id="shooterIn" placeholder="你的名字"></label>
+      <button class="btn btn-ghost btn-sm" id="albumClose">關閉</button></div>
+    <div class="albody">
+      <div class="alside"><div id="folderList"></div><button class="btn btn-ghost btn-sm" id="newFolder" style="width:100%;margin-top:8px">＋ 新資料夾</button></div>
+      <div class="almain">
+        <div class="row" style="margin-bottom:10px"><b id="albumFolder" style="font-size:15px"></b>
+          <span style="flex:1"></span>
+          <button class="btn btn-pri btn-sm" id="albumCam">📷 開相機拍到這裡</button>
+          <button class="btn btn-ghost btn-sm" id="albumUpload">⬆ 上傳照片</button>
+          <button class="btn btn-del btn-sm" id="delFolder">刪除空資料夾</button></div>
+        <div class="pgrid" id="photoGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="cam" id="cam">
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div class="camflash" id="camFlash"></div>
+  <div class="camtop">
+    <select id="camFolder"></select>
+    <input type="text" id="camShooter" placeholder="拍攝者">
+    <button class="camx" id="camClose">✕</button>
+  </div>
+  <div class="cambot">
+    <img id="camLast" alt="" title="看相簿">
+    <button class="camshot" id="camShot" aria-label="拍照"></button>
+    <button class="camflip" id="camFlip" title="切換前後鏡頭">⟲</button>
+    <div class="camstat" id="camStatus"></div>
+  </div>
+</div>
+<input type="file" id="albumFiles" accept="image/*" multiple hidden>
 
 <script>
 /* ===================== Config ===================== */
-const VERSION = 'V9';
+const VERSION = 'V11';
 // namecard 專案的網頁設定：填好 apiKey 等欄位後，所有人打開就會自動連線
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAg_Od-P53Qw3zTbaVxx_TRi8UjSQYZFfo",
@@ -560,18 +637,25 @@ async function setImg(key, file){
   try{ IMG[key]= pdfOk ? await loadPdfFirstPage(file) : await loadImage(file); }
   catch(e){ console.error(e); busy(false); toast('讀取失敗：'+e.message); return; }
   busy(false);
+  await afterImg(key);
+}
+// 從相簿選的照片也走同一條路
+async function applyImg(key, im){ IMG[key]=im; dirty=true; await afterImg(key); }
+async function afterImg(key){
   if(key==='cover'){ const th=await extractPalette(IMG.cover.url); if(th){ S.theme=th; save(); renderTheme(); renderPreviews(); toast('已從 KV 抓取配色'); } }
   if(key==='p16'){ S.stars=[]; save(); renderMap(); } else paintBox(key);
 }
 function paintBox(key){
   document.querySelectorAll(`.imgbox[data-img="${key}"]`).forEach(b=>{
     const im=IMG[key];
-    b.innerHTML = im ? `<img src="${im.url}"><button class="btn btn-del btn-sm clr" data-clr="${key}">移除</button>` : (b.dataset.ph||'點擊或拖曳圖片');
+    b.innerHTML = (im ? `<img src="${im.url}"><button class="btn btn-del btn-sm clr" data-clr="${key}">移除</button>` : (b.dataset.ph||'點擊或拖曳圖片'))
+      + `<button class="btn btn-ghost btn-sm alb" data-alb="${key}" title="從共用相簿挑一張">🖼 從相簿選</button>`;
   });
   schedulePreview();
 }
-function paintAllBoxes(){ document.querySelectorAll('.imgbox[data-img]').forEach(b=>{ if(b.dataset.img!=='p16') paintBox(b.dataset.img); }); }
+function paintAllBoxes(){ document.querySelectorAll('.imgbox[data-img]').forEach(b=>paintBox(b.dataset.img)); }
 document.addEventListener('click', e=>{
+  const alb=e.target.dataset?.alb; if(alb){ e.stopPropagation(); openAlbum('pick', alb); return; }
   const clr=e.target.dataset?.clr; if(clr){ e.stopPropagation(); delete IMG[clr]; dirty=true; paintBox(clr); return; }
   const box=e.target.closest('.imgbox'); if(box){ pickTarget=box.dataset.img; $('#filePick').accept = pickTarget==='cover' ? 'image/*,application/pdf,.pdf' : 'image/*'; $('#filePick').click(); }
 });
@@ -1146,6 +1230,127 @@ $('#cfgSave').onclick=()=>{
   try{ localStorage.setItem(LS_CFG, JSON.stringify(c)); }catch(e){}
   toast('已儲存設定，重新連線…'); setTimeout(()=>location.reload(),600);
 };
+
+/* ===================== 相機＋共用相簿（存在 Firebase：openTour/photos） ===================== */
+const PH = { meta:{}, folders:{}, listening:false, folder:'default', mode:'browse', pickKey:null, stream:null, facing:'environment', uploading:0, saved:0 };
+const SHOOTER_LS='openTour_shooter';
+const shooter = () => { try{ return localStorage.getItem(SHOOTER_LS)||''; }catch(e){ return ''; } };
+const folderName = id => id==='default' ? '未分類' : ((PH.folders[id]||{}).name || '（已刪除的資料夾）');
+function phListen(){
+  if(PH.listening || !db) return; PH.listening=true;
+  db.ref(DB_PATH+'/photos/meta').on('value', s=>{ PH.meta=s.val()||{}; renderAlbum(); });
+  db.ref(DB_PATH+'/photos/folders').on('value', s=>{ PH.folders=s.val()||{}; renderAlbum(); renderCamFolders(); });
+}
+function needDb(){ if(db && fbOK) return true; toast('還沒連上線上資料庫，相機和相簿暫時不能用'); return false; }
+function shrink(src, max, q){
+  const w0=src.videoWidth||src.naturalWidth||src.width, h0=src.videoHeight||src.naturalHeight||src.height;
+  const k=Math.min(1,max/Math.max(w0,h0)); const w=Math.round(w0*k), h=Math.round(h0*k);
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(src,0,0,w,h);
+  return {url:c.toDataURL('image/jpeg',q), w, h};
+}
+async function uploadPhoto(src, folder){
+  const full=shrink(src,1920,0.82), th=shrink(src,320,0.65);
+  const id=db.ref(DB_PATH+'/photos/meta').push().key;
+  PH.uploading++; renderCamStatus();
+  try{
+    await db.ref(DB_PATH+'/photos').update({
+      ['full/'+id]: full.url,
+      ['meta/'+id]: {folder, by:shooter()||'未署名', at:Date.now(), w:full.w, h:full.h, thumb:th.url, kb:Math.round(full.url.length*0.75/1024)}
+    });
+    PH.saved++;
+  }catch(e){ console.error(e); toast('照片上傳失敗：'+(e.code||e.message)); }
+  PH.uploading--; renderCamStatus();
+}
+/* ---------- 相簿 ---------- */
+function openAlbum(mode='browse', key=null){
+  if(!needDb()) return; phListen();
+  PH.mode=mode; PH.pickKey=key;
+  $('#album').classList.add('on'); $('#albumTitle').textContent = mode==='pick' ? `選一張照片放進「${slotLabel(key)}」` : '共用相簿';
+  $('#shooterIn').value=shooter(); renderAlbum();
+}
+function closeAlbum(){ $('#album').classList.remove('on'); }
+const slotLabel = k => ({logo:'展覽 Logo', cover:'主視覺 KV', p9:'P9 示意圖', p12:'大會舞台', p13:'座次表', p14:'典禮前合影', p15:'揭幕儀式', p16:'巡場動線地圖'}[k] || (k&&k.startsWith('hall') ? `第 ${+k.slice(4)+1} 館佔位圖` : k));
+function renderAlbum(){
+  if(!$('#album').classList.contains('on')) return;
+  const items=Object.entries(PH.meta).map(([id,m])=>({id,...m}));
+  const fids=['default',...Object.keys(PH.folders).sort((a,b)=>(PH.folders[a].at||0)-(PH.folders[b].at||0))];
+  if(!fids.includes(PH.folder)) PH.folder='default';
+  $('#folderList').innerHTML = fids.map(f=>{ const n=items.filter(p=>(p.folder||'default')===f).length;
+    return `<a href="#" data-fd="${f}" class="${f===PH.folder?'on':''}">📁 ${esc(folderName(f))}<span>${n}</span></a>`; }).join('');
+  const list=items.filter(p=>(p.folder||'default')===PH.folder).sort((a,b)=>b.at-a.at);
+  $('#albumFolder').textContent=folderName(PH.folder);
+  $('#delFolder').style.display = PH.folder!=='default' && !list.length ? '' : 'none';
+  $('#photoGrid').innerHTML = list.length ? list.map(p=>`
+    <div class="ph" data-ph="${p.id}">
+      <img src="${p.thumb}" loading="lazy" alt="">
+      <div class="phm">${esc(p.by||'')}・${fmtTime(p.at)}</div>
+      ${PH.mode==='pick' ? `<div class="phpick">選這張</div>` : `<div class="phbtn"><button class="btn btn-ghost btn-sm" data-dl="${p.id}">下載</button><button class="btn btn-del btn-sm" data-rm="${p.id}">刪除</button></div>`}
+    </div>`).join('') : `<div class="hint" style="padding:30px;text-align:center">這個資料夾還沒有照片。按「📷 開相機」直接拍，或「⬆ 上傳照片」。</div>`;
+}
+async function fullOf(id){ const s=await db.ref(`${DB_PATH}/photos/full/${id}`).get(); return s.val(); }
+$('#album').addEventListener('click', async e=>{
+  const t=e.target;
+  if(t.id==='album' || t.id==='albumClose'){ closeAlbum(); return; }
+  const fd=t.closest('[data-fd]'); if(fd){ e.preventDefault(); PH.folder=fd.dataset.fd; renderAlbum(); renderCamFolders(); return; }
+  if(t.dataset.rm){ if(!confirm('確定刪除這張照片？大家的相簿都會一起消失。')) return;
+    await db.ref(DB_PATH+'/photos').update({['meta/'+t.dataset.rm]:null, ['full/'+t.dataset.rm]:null}); toast('已刪除'); return; }
+  if(t.dataset.dl){ busy(true,'下載中…'); const url=await fullOf(t.dataset.dl); busy(false); if(!url) return;
+    const a=document.createElement('a'); a.href=url; a.download=`photo_${t.dataset.dl}.jpg`; document.body.appendChild(a); a.click(); a.remove(); return; }
+  const ph=t.closest('.ph');
+  if(ph && PH.mode==='pick'){ busy(true,'載入照片…'); const url=await fullOf(ph.dataset.ph); busy(false); if(!url){ toast('這張照片讀不到'); return; }
+    const m=PH.meta[ph.dataset.ph]||{}; await applyImg(PH.pickKey, {url, w:m.w, h:m.h, ext:'jpeg'}); closeAlbum(); toast(`已放進「${slotLabel(PH.pickKey)}」`); return; }
+  if(ph && PH.mode==='browse'){ busy(true,'載入照片…'); const url=await fullOf(ph.dataset.ph); busy(false); if(url){ $('#zoomBody').innerHTML=`<img src="${url}" style="max-width:100%;max-height:88vh;display:block;margin:auto;border-radius:6px">`; $('#zoom').classList.add('on'); } }
+});
+$('#newFolder').onclick=async ()=>{ if(!needDb()) return; const n=(prompt('新資料夾名稱（例：TIE 2026 開幕、未來科技館）')||'').trim(); if(!n) return;
+  const id=db.ref(DB_PATH+'/photos/folders').push().key; await db.ref(`${DB_PATH}/photos/folders/${id}`).set({name:n, at:Date.now()}); PH.folder=id; renderAlbum(); renderCamFolders(); };
+$('#delFolder').onclick=async ()=>{ if(!confirm(`刪除空的資料夾「${folderName(PH.folder)}」？`)) return; await db.ref(`${DB_PATH}/photos/folders/${PH.folder}`).remove(); PH.folder='default'; };
+$('#shooterIn').addEventListener('input', e=>{ try{ localStorage.setItem(SHOOTER_LS, e.target.value.trim()); }catch(_){} $('#camShooter').value=e.target.value; });
+$('#albumUpload').onclick=()=>$('#albumFiles').click();
+$('#albumFiles').addEventListener('change', async e=>{
+  const files=[...e.target.files]; e.target.value=''; if(!files.length) return;
+  busy(true,`上傳 ${files.length} 張…`);
+  for(const f of files){ if(!f.type.startsWith('image/')) continue; try{ const im=await fileToImage(f); await uploadPhoto(im, PH.folder); }catch(err){ console.error(err); } }
+  busy(false); toast(`已上傳到「${folderName(PH.folder)}」`);
+});
+function fileToImage(f){ return new Promise((res,rej)=>{ const u=URL.createObjectURL(f); const im=new Image(); im.onload=()=>{ URL.revokeObjectURL(u); res(im); }; im.onerror=rej; im.src=u; }); }
+$('#albumCam').onclick=()=>{ closeAlbum(); openCamera(); };
+
+/* ---------- 相機 ---------- */
+function renderCamFolders(){
+  const sel=$('#camFolder'); if(!sel) return;
+  const fids=['default',...Object.keys(PH.folders)];
+  sel.innerHTML=fids.map(f=>`<option value="${f}" ${f===PH.folder?'selected':''}>📁 ${esc(folderName(f))}</option>`).join('');
+}
+function renderCamStatus(){ const el=$('#camStatus'); if(el) el.textContent = PH.uploading ? `上傳中 ${PH.uploading} 張…（已存 ${PH.saved} 張）` : `已存 ${PH.saved} 張到「${folderName(PH.folder)}」`; }
+async function startStream(){
+  if(PH.stream){ PH.stream.getTracks().forEach(t=>t.stop()); PH.stream=null; }
+  PH.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:PH.facing}, width:{ideal:1920}, height:{ideal:1080}}, audio:false});
+  const v=$('#camVideo'); v.srcObject=PH.stream; await v.play().catch(()=>{});
+}
+async function openCamera(){
+  if(!needDb()) return; phListen();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast('這個瀏覽器不支援網頁相機，請改用「⬆ 上傳照片」'); openAlbum(); return; }
+  PH.saved=0; renderCamFolders(); $('#camShooter').value=shooter(); $('#cam').classList.add('on'); renderCamStatus();
+  try{ await startStream(); }
+  catch(e){ console.error(e); $('#cam').classList.remove('on'); toast(e.name==='NotAllowedError'?'相機權限被拒絕，請在瀏覽器網址列允許相機':'無法開啟相機：'+e.message); }
+}
+function closeCamera(){ if(PH.stream){ PH.stream.getTracks().forEach(t=>t.stop()); PH.stream=null; } $('#cam').classList.remove('on'); }
+$('#camClose').onclick=closeCamera;
+$('#camFlip').onclick=async ()=>{ PH.facing = PH.facing==='environment'?'user':'environment'; try{ await startStream(); }catch(e){ toast('切換鏡頭失敗'); } };
+$('#camFolder').onchange=e=>{ PH.folder=e.target.value; renderCamStatus(); };
+$('#camShooter').addEventListener('input', e=>{ try{ localStorage.setItem(SHOOTER_LS, e.target.value.trim()); }catch(_){} });
+$('#camShot').onclick=()=>{
+  const v=$('#camVideo'); if(!v.videoWidth){ toast('相機還沒準備好'); return; }
+  if(!shooter()){ const n=(prompt('第一次拍照，請輸入你的名字（會標在照片上，方便大家知道誰拍的）')||'').trim(); if(n){ try{ localStorage.setItem(SHOOTER_LS,n); }catch(_){} $('#camShooter').value=n; } }
+  const f=$('#camFlash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  const th=shrink(v,160,0.6); $('#camLast').src=th.url; $('#camLast').style.display='block';
+  uploadPhoto(v, PH.folder);
+};
+$('#camLast').onclick=()=>{ closeCamera(); openAlbum(); };
+$('#btnCam').onclick=()=>openCamera();
+$('#btnAlbum').onclick=()=>openAlbum();
+// 網址加 ?cam=1 → 連上資料庫後直接開相機（手機可存成書籤）
+if(/[?&]cam=1/.test(location.search)){ const t0=Date.now(); const wait=setInterval(()=>{ if(db&&fbOK){ clearInterval(wait); openCamera(); } else if(Date.now()-t0>15000){ clearInterval(wait); toast('連不上線上資料庫，無法開啟相機'); } },300); }
 
 /* ===================== Init ===================== */
 renderAll(); renderRecs(); initFirebase(); dirty=false;
