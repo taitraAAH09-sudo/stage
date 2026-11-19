@@ -216,6 +216,21 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
 
+  .flow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px;}
+  .flow .fl{display:inline-flex; align-items:center; gap:6px; background:#f2f6ff; border:1px solid #dce6f7; border-radius:99px; padding:3px 12px 3px 4px; font-size:12.5px; font-weight:700; color:var(--ink);}
+  .flow .fl b{width:22px; height:22px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:12px;}
+  .flow i{font-style:normal; color:#9aa5b3; font-weight:800;}
+  .tpl-map{border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:2px 0 10px; font-size:12px; background:#fff;}
+  .tm-row{display:flex; border-bottom:1px solid var(--line);}
+  .tm-k{flex:0 0 78px; background:#f6f8fb; padding:7px 9px; font-weight:800; color:var(--ink-soft); border-right:1px solid var(--line);}
+  .tm-v{flex:1; padding:7px 10px; font-weight:700; color:var(--accent);}
+  .tm-cap{padding:6px 10px; font-size:11.5px; color:var(--ink-soft); background:#fffbea;}
+  .legend{display:flex; gap:14px; font-size:12px; font-weight:700; color:var(--ink-soft); margin:2px 0 8px; align-items:center;}
+  .legend .conf-dot{margin-right:2px;}
+  .dl-map{display:flex; flex-direction:column; gap:6px; margin:2px 0 10px;}
+  .dl-row{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--ink); background:#f6f8fb; border-radius:8px; padding:6px 10px;}
+  .dl-ic{min-width:52px; text-align:center; letter-spacing:1px;}
+  .dl-row i{font-style:normal; color:#9aa5b3;}
   .conf-dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#0f8a5f;}
   .conf-dot.conf-medium{background:#e0a021;}
   .conf-dot.conf-low{background:#d64545;}
@@ -401,8 +416,13 @@
 
   <div class="topbar">
     <div>
-      <h1>圖卡製作（EDM 用） <span id="versionTag" style="font-size:12px; color:#fff; background:var(--accent); font-weight:700; margin-left:8px; padding:2px 8px; border-radius:10px; letter-spacing:.03em;">V18</span></h1>
-      <div class="sub">廠商圖文素材合成一張張圖卡，可下載單張或全部打包 ZIP → 直接拖進 Canva 使用</div>
+      <h1>圖卡製作（EDM 用） <span id="versionTag" style="font-size:12px; color:#fff; background:var(--accent); font-weight:700; margin-left:8px; padding:2px 8px; border-radius:10px; letter-spacing:.03em;">V19</span></h1>
+      <div class="flow">
+        <span class="fl"><b>📄</b><span id="fl1">上傳 Word</span></span><i>→</i>
+        <span class="fl"><b>✏️</b><span id="fl2">點文字直接改</span></span><i>→</i>
+        <span class="fl"><b>☑</b><span id="fl3">勾選圖卡</span></span><i>→</i>
+        <span class="fl"><b>⭳</b><span id="fl4">下載進 Canva / AI</span></span>
+      </div>
     </div>
     <div class="topbar-actions">
       <button id="btnLang" class="ghost" title="切換介面語言 / Switch language">🌐 English</button>
@@ -418,12 +438,14 @@
       <details open id="tourStep1">
         <summary>① 匯入廠商資料（AI 自動解析）<span class="chev">▶</span></summary>
         <div class="details-body">
-          <p class="hint">還沒有文案？先下載空白範本，發給廠商或自己填寫。</p>
+          <div class="tpl-map">
+            <div class="tm-row"><span class="tm-k" id="tmK1">公司名稱</span><span class="tm-v">🏷️ Logo</span></div>
+            <div class="tm-row"><span class="tm-k" id="tmK2">產品名稱</span><span class="tm-v">📷 <span id="tmV2">產品照</span></span></div>
+            <div class="tm-row"><span class="tm-k" id="tmK3">產品介紹</span><span class="tm-v" id="tmV3">中文 ＋ English</span></div>
+            <div class="tm-cap" id="tmCap">↑ Word 範本照這樣貼，AI 自動抓</div>
+          </div>
           <button id="btnDownloadTemplate" style="width:100%; margin-bottom:10px;">⭳ 下載空白範本（Word）</button>
-
           <div class="field">
-            <label>方法一：上傳 Word 檔（.docx）— 建議</label>
-            <p class="hint">AI 會自動辨識公司名稱、產品名稱、中英文介紹；Logo 與產品圖片會直接從文件的表格結構中取出，不需要另外上傳。</p>
             <div id="wordDropZone" class="word-drop-zone">
             <div class="wdz-icon">📄</div>
             <div class="wdz-title">上傳 Word 檔案並自動解析</div>
@@ -441,8 +463,10 @@
       <details open id="tourStep2">
         <summary>② 產品區塊管理<span class="chev">▶</span></summary>
         <div class="details-body">
-          <p class="hint"><span class="conf-dot conf-medium"></span> / <span class="conf-dot conf-low"></span> 表示 AI 辨識信心較低的區塊，請重點檢查該卡片內容。</p>
-          <p class="hint">調整順序：直接拖曳下面的列，或按住畫布上圖卡右上角的 <strong>⠿</strong> 把手拖曳。</p>
+          <div class="legend">
+            <span><span class="conf-dot conf-medium"></span><span class="conf-dot conf-low"></span> <span id="lg1">要檢查</span></span>
+            <span><b>⠿</b> <span id="lg2">拖曳排序</span></span>
+          </div>
           <div id="cardListPanel"></div>
         </div>
       </details>
@@ -450,10 +474,10 @@
       <details open id="tourStep3">
         <summary>③ 下載<span class="chev">▶</span></summary>
         <div class="details-body">
-          <p class="hint">
-            <strong>合併下載</strong>：在畫布上把要的圖卡按右上角的 ☐ 勾起來，再按下面的合併鈕 —— 全部會排在同一頁 PDF，丟進 Canva 一次匯入，再自己拖去要的位置。<br>
-            <strong>單張下載</strong>：點畫布上任一張圖卡（出現藍色外框），再按單張下載鈕。
-          </p>
+          <div class="dl-map">
+            <div class="dl-row"><span class="dl-ic">☑☑☑</span><i>→</i><span id="dl1">多張合成一份 PDF</span></div>
+            <div class="dl-row"><span class="dl-ic">👆</span><i>→</i><span id="dl2">點一張，單張下載</span></div>
+          </div>
           <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
             <span id="batchCount" style="font-size:12px; font-weight:700; color:var(--ink-soft); flex:1;">已勾選 0 張</span>
             <button id="btnBatchAll" class="ghost" style="font-size:11.5px; padding:4px 8px;">全選</button>
@@ -461,12 +485,7 @@
           </div>
           <button id="btnDownloadBatchPdf" class="primary" style="width:100%; margin-bottom:12px; padding:10px 14px; line-height:1.5;">⭳ 合併下載勾選的圖卡（同一份 PDF）<br><span style="font-size:11.5px; font-weight:600; opacity:.85;">Canva 可支援此檔案，幫分解</span></button>
           <button id="btnDownloadCanvaPanel" style="width:100%; margin-bottom:8px;">⭳ 單張下載給 Canva（PDF）</button>
-          <button id="btnDownloadAIPanel" style="width:100%; margin-bottom:8px;">⭳ 單張下載給 Illustrator（SVG）</button>
-          <p class="hint" style="margin-top:10px; line-height:1.7;">
-            <strong>字型載入：</strong>頁面打開時就會在背景載入中文字型（jf 粉圓，約 4.5MB，用來把文字轉成向量外框）。停留幾秒後再下載會較快。<br><br>
-            <strong>SVG 內容：</strong>純向量圖，文字已轉外框路徑（不依賴字型、絕不亂碼）。Illustrator 打開即可編輯每個元素。<br><br>
-            <strong>1:1 還原：</strong>SVG 逐字使用畫面上的實際位置繪製，與你看到的版面完全一致。
-          </p>
+          <button id="btnDownloadAIPanel" style="width:100%; margin-bottom:8px;" title="文字已轉外框，不會亂碼 / Text converted to outlines, never garbles">⭳ 單張下載給 Illustrator（SVG）</button>
         </div>
       </details>
 
@@ -497,7 +516,7 @@
 const ACCENTS = ["#e0342a","#f2811d","#0f8a5f","#1c6fd6","#a3327a","#c9971e","#2f5fe0","#606a76"];
 
 // Delivery version — only changes when a new build is shipped by Claude.
-const DELIVERY_VERSION = 18;
+const DELIVERY_VERSION = 19;
 function bumpVersion(){ /* delivery version is static; user edits do not change it */ }
 
 /* =========================================================
@@ -510,28 +529,34 @@ function L(zh, en){ return (LANG === 'en' && en) ? en : zh; }
 
 // [selector, 第幾個（querySelectorAll 的索引）, 英文 innerHTML]
 const I18N_STATIC = [
-  ['.topbar .sub', 0, 'Turn supplier text and images into product cards. Download one card or a whole set, then drag them straight into Canva.'],
+  ['#fl1', 0, 'Upload Word'],
+  ['#fl2', 0, 'Click text to edit'],
+  ['#fl3', 0, 'Tick cards'],
+  ['#fl4', 0, 'Download to Canva / AI'],
   ['#btnTour', 0, '❓ Guide'],
   ['#btnResetDemo', 0, '↺ Reset sample'],
   ['#btnClearAll', 0, 'Clear all'],
   ['#tourStep1 > summary', 0, '① Import supplier data (AI parsing)<span class="chev">▶</span>'],
-  ['#tourStep1 .details-body > p.hint', 0, 'No copy yet? Download the blank template and send it to the supplier, or fill it in yourself.'],
+  ['#tmK1', 0, 'Company'],
+  ['#tmK2', 0, 'Product'],
+  ['#tmK3', 0, 'Description'],
+  ['#tmV2', 0, 'Product photo'],
+  ['#tmV3', 0, 'Chinese ＋ English'],
+  ['#tmCap', 0, '↑ Fill the Word template like this and the AI picks it up'],
   ['#btnDownloadTemplate', 0, '⭳ Download blank template (Word)'],
-  ['#tourStep1 .field > label', 0, 'Option 1: Upload a Word file (.docx) — recommended'],
-  ['#tourStep1 .field > p.hint', 0, 'The AI picks out the company name, product name and the Chinese and English descriptions. The logo and product photos are taken straight from the table in the document, so you don’t need to upload them separately.'],
   ['.wdz-title', 0, 'Upload a Word file to parse it automatically'],
   ['.wdz-sub', 0, 'Click to choose a file, or drag a .docx here'],
   ['#tourStep2 > summary', 0, '② Manage product blocks<span class="chev">▶</span>'],
-  ['#tourStep2 .details-body > p.hint', 0, '<span class="conf-dot conf-medium"></span> / <span class="conf-dot conf-low"></span> marks blocks the AI was less sure about. Check those cards carefully.'],
-  ['#tourStep2 .details-body > p.hint', 1, 'To reorder: drag a row in the list below, or hold the <strong>⠿</strong> handle at the top right of a card on the canvas and drag it.'],
+  ['#lg1', 0, 'Please check'],
+  ['#lg2', 0, 'Drag to reorder'],
   ['#tourStep3 > summary', 0, '③ Download<span class="chev">▶</span>'],
-  ['#tourStep3 .details-body > p.hint', 0, '<strong>Combined download</strong>: on the canvas, tick the cards you want with the ☐ at the top right of each card, then press the combine button below. They all go on one PDF page, so you import into Canva once and drag them where you want.<br><strong>Single download</strong>: click any card on the canvas (a blue outline appears), then press a single-download button.'],
+  ['#dl1', 0, 'Several cards → one PDF'],
+  ['#dl2', 0, 'Click one → single download'],
   ['#btnBatchAll', 0, 'Select all'],
   ['#btnBatchNone', 0, 'Clear'],
   ['#btnDownloadBatchPdf', 0, '⭳ Download ticked cards as one PDF<br><span style="font-size:11.5px; font-weight:600; opacity:.85;">Canva can split this file into separate cards</span>'],
   ['#btnDownloadCanvaPanel', 0, '⭳ Download one card for Canva (PDF)'],
   ['#btnDownloadAIPanel', 0, '⭳ Download one card for Illustrator (SVG)'],
-  ['#tourStep3 .details-body > p.hint', 1, '<strong>Font loading:</strong> a Chinese font (jf Open Huninn, about 4.5 MB, used to turn text into vector outlines) starts loading in the background when the page opens. Downloads are faster if you wait a few seconds first.<br><br><strong>What’s in the SVG:</strong> pure vector artwork with the text already converted to outline paths, so it doesn’t depend on fonts and never garbles. Open it in Illustrator to edit every element.<br><br><strong>1:1 match:</strong> the SVG draws every character at its exact on-screen position, so it looks exactly like what you see.'],
   ['#btnAddCard', 0, '＋ Add product block'],
 ];
 const I18N_ZH = new Map();   // 第一次切換前，先記下原本的中文
@@ -2305,7 +2330,7 @@ window.addEventListener('resize', ()=>{
 });
 
 // Auto-show once on first load (per page session)
-setTimeout(()=>{ openTour(); }, 600);
+// V19：不再自動跳出導覽，需要時按右上角「❓ 操作導覽」
 
 /* init */
 render();
