@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EDM Builder V8 · 中東採購媒合會 版型產生器</title>
+<title>EDM Builder V9 · 中東採購媒合會 版型產生器</title>
 <style>
 /* ===== 編輯器外殼 ===== */
 :root{--c1:#16305C;--c2:#6B2FA0;--c3:#2E6BE6;--c4:#ffffff;--ink:#1f2733;--dim:#5a6577;--line:#39414F}
@@ -141,6 +141,38 @@ img{display:block}
 .t2-ic{width:22px;height:22px;border-radius:50%;background:var(--c2);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-style:normal;flex:0 0 22px}
 .t2-pill a{background:#F5A623;color:#111;font-size:10.5px;font-weight:800;text-decoration:underline;padding:6px 12px;border-radius:5px;display:inline-block}
 
+/* ===== 版型 3：個人信件＋參展公司介紹 ===== */
+.t3-head{padding:26px 48px 0;display:flex;align-items:center;gap:10px}
+.t3-mark{width:30px;height:30px;border-radius:6px;background:var(--c1);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 30px}
+.t3-org{font-size:13px;font-weight:700;color:var(--c1)}
+.t3-body{padding:24px 48px 6px;font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.75;color:#2b3442}
+.t3-body p{margin:0 0 16px}
+.t3-box{border-left:3px solid #c8992f;background:#faf8f3;padding:14px 18px;margin:4px 0 20px;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.8;color:#2b3442}
+.t3-box b{display:inline-block;width:62px;color:#8a94a6;font-size:12px;letter-spacing:.08em}
+.t3-cos{padding:0 48px 4px}
+.t3-co{display:flex;gap:16px;padding:14px 0;border-top:1px solid #e6e9ef;align-items:flex-start}
+.t3-co>img{flex:0 0 150px;width:150px;height:112px;object-fit:cover;border-radius:6px;display:block}
+.t3-cx{flex:1;min-width:0}
+.t3-coh{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.t3-logo{flex:0 0 auto;position:relative}
+.t3-logo img{height:26px;width:auto;max-width:90px;display:block}
+.t3-name{font-size:15px;font-weight:800;color:var(--c1);line-height:1.3}
+.t3-tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#8a6a1f;background:#faf3e2;border-radius:3px;padding:2px 7px;margin-bottom:6px}
+.t3-intro{margin:0 0 6px;font-size:13px;line-height:1.55;color:#4a5566}
+.t3-link{font-size:12.5px;font-weight:700;color:var(--c1);text-decoration:underline}
+.t3-more{border-top:1px solid #e6e9ef;padding:12px 0 0;font-size:13px}
+.t3-more a{color:var(--c1);font-weight:700;text-decoration:underline}
+.t3-cta{padding:18px 48px 4px;font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.75;color:#2b3442}
+.t3-cta p{margin:14px 0 0}
+.t3-btn{display:inline-block;background:var(--c1);color:#fff;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;font-weight:800;text-decoration:none;padding:14px 28px;border-radius:6px}
+.t3-sig{display:flex;gap:14px;align-items:center;padding:16px 48px 24px}
+.t3-av{width:52px;height:52px;border-radius:50%;background:#c8992f;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 52px}
+.t3-sigt{font-size:13px;line-height:1.55;color:#4a5566}
+.t3-sigt b{color:var(--c1);font-size:14.5px}
+.t3-ps{margin:0 48px 26px;padding-top:16px;border-top:1px solid #e6e9ef;font-family:Georgia,"Times New Roman",serif;font-size:14px;line-height:1.65;color:#4a5566}
+.t3-ps a{color:inherit;text-decoration:underline}
+.t3-foot{background:#f5f7fa;font-size:11px;color:#8a94a6;text-align:center;padding:16px 40px;line-height:1.7}
+
 /* ===== 編輯輔助 ===== */
 .sec{position:relative}
 /* 編輯時每個區塊有淡邊界，方便單獨辨識與縮放；Export時移除 */
@@ -221,7 +253,7 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
 <body>
 <div class="app">
   <aside class="side">
-    <h1><span class="verBadge" id="verBadge">V8</span>EDM <span>Builder</span></h1>
+    <h1><span class="verBadge" id="verBadge">V9</span>EDM <span>Builder</span></h1>
     <div class="tip">Email layout · 600px width</div>
 
     <h5>Template / Language</h5>
@@ -230,8 +262,10 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
       <button type="button" data-tpl="1" data-lang="tr">B-1 · Türkçe<em>版型 1</em></button>
       <button type="button" data-tpl="2" data-lang="en">A-2 · English<em>版型 2</em></button>
       <button type="button" data-tpl="2" data-lang="tr">B-2 · Türkçe<em>版型 2</em></button>
+      <button type="button" data-tpl="3" data-lang="en">A-3 · English<em>版型 3 · 個人信件</em></button>
+      <button type="button" data-tpl="3" data-lang="tr">B-3 · Türkçe<em>版型 3 · 個人信件</em></button>
     </div>
-    <p class="tip">版型 1＝原信件（A-1／B-1）；版型 2＝PDF 第 7–9 頁（A-2／B-2）。切換時各版型與各語言的編輯內容會分開保留。</p>
+    <p class="tip">版型 1＝原信件（A-1／B-1）；版型 2＝PDF 第 7–9 頁（A-2／B-2）；版型 3＝個人信件＋參展公司介紹（A-3／B-3）。切換時各版型與各語言的編輯內容會分開保留。</p>
 
     <h5>雲端存檔紀錄（Firebase · 5 格）</h5>
     <div id="slots"></div>
@@ -248,6 +282,8 @@ body.exporting .secResize,body.exporting .imgRz,body.exporting .imgH,body.export
       底部橫幅　<b>1200×390</b><br>
       版型2 四宮格　<b>600×300</b><br>
       版型2 卡片小圖　<b>200×200</b><br>
+      版型3 產品照片　<b>300×224</b><br>
+      版型3 公司 Logo　<b>160×52</b>（橫式、去背 PNG 最好）<br>
       <span style="opacity:.7">＊皆為顯示尺寸的 2 倍，手機高解析螢幕才不會糊。滑到圖片上也會顯示建議尺寸。</span>
     </p>
 
@@ -366,7 +402,7 @@ const page=document.getElementById('page');
 const $=id=>document.getElementById(id);
 
 /* ---------- 版本號（每次改版 +1）---------- */
-const APP_VER='V8';
+const APP_VER='V9';
 try{document.title='EDM Builder '+APP_VER+' · 中東採購媒合會 版型產生器';}catch(e){}
 
 /* ---------- 原始骨架 + 圖片素材（務必在還原草稿前擷取）---------- */
@@ -405,6 +441,48 @@ function buildTPL2(){
   +'        <span class="t2-pill"><i class="t2-ic">☎</i><a contenteditable data-lk="m14">(0212) 290 40 00</a></span>\n'
   +'      </div>\n'
   +'    </div>\n  </section>\n';
+}
+
+/* ---------- 版型 3：個人信件＋參展公司介紹（A-3 / B-3）---------- */
+const LOGO_PH='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="52" viewBox="0 0 160 52"><rect x="1" y="1" width="158" height="50" rx="5" fill="#f5f7fa" stroke="#b9c2d0" stroke-width="2" stroke-dasharray="6 4"/><text x="80" y="32" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#9aa5b3" text-anchor="middle">LOGO</text></svg>');
+function t3Company(n,img){
+  const b=5+n*4;   /* 每家公司佔 4 個文案鍵：名稱、產業、介紹、連結 */
+  return '      <div class="t3-co"><img src="'+img+'" alt="">'
+    +'<div class="t3-cx"><div class="t3-coh"><span class="t3-logo"><img src="'+LOGO_PH+'" alt="Logo"></span><div class="t3-name" contenteditable data-lk="n'+b+'"></div></div>'
+    +'<span class="t3-tag" contenteditable data-lk="n'+(b+1)+'"></span>'
+    +'<p class="t3-intro" contenteditable data-lk="n'+(b+2)+'"></p>'
+    +'<a class="t3-link" contenteditable data-lk="n'+(b+3)+'"></a></div></div>\n';
+}
+function buildTPL3(){
+  return '\n  <!-- T3-1 信頭 -->\n'
+  +'  <section class="sec" data-k="t3head" data-n="Letter Head">\n'
+  +'    <div class="t3-head"><span class="t3-mark">TTC</span><span class="t3-org" contenteditable data-lk="n23"></span></div>\n'
+  +'  </section>\n\n'
+  +'  <!-- T3-2 信件開頭＋日期地點 -->\n'
+  +'  <section class="sec" data-k="t3letter" data-n="Letter">\n'
+  +'    <div class="t3-body">\n'
+  +'      <p contenteditable data-lk="n0"></p>\n'
+  +'      <p contenteditable data-lk="n1"></p>\n'
+  +'      <p contenteditable data-lk="n2"></p>\n'
+  +'      <div class="t3-box" contenteditable data-lk="n3"></div>\n'
+  +'      <p contenteditable data-lk="n4"></p>\n'
+  +'    </div>\n  </section>\n\n'
+  +'  <!-- T3-3 參展公司介紹＋產品照 -->\n'
+  +'  <section class="sec" data-k="t3cos" data-n="Companies">\n'
+  +'    <div class="t3-cos">\n'
+  +t3Company(0,ASSETS.cat1)+t3Company(1,ASSETS.cat3)+t3Company(2,ASSETS.cat2)
+  +'      <div class="t3-more"><a contenteditable data-lk="n17"></a></div>\n'
+  +'    </div>\n  </section>\n\n'
+  +'  <!-- T3-4 報名按鈕＋簽名＋P.S. -->\n'
+  +'  <section class="sec" data-k="t3cta" data-n="Button &amp; Signature">\n'
+  +'    <div class="t3-cta"><a class="t3-btn" contenteditable data-lk="n18"></a><p contenteditable data-lk="n19"></p></div>\n'
+  +'    <div class="t3-sig"><span class="t3-av">OG</span><div class="t3-sigt" contenteditable data-lk="n20"></div></div>\n'
+  +'    <div class="t3-ps" contenteditable data-lk="n21"></div>\n'
+  +'  </section>\n\n'
+  +'  <!-- T3-5 頁尾 -->\n'
+  +'  <section class="sec" data-k="t3foot" data-n="Footer">\n'
+  +'    <div class="t3-foot" contenteditable data-lk="n22"></div>\n'
+  +'  </section>\n';
 }
 
 /* ---------- 工具：顏色轉 rgb（給 PNG 用）---------- */
@@ -481,7 +559,7 @@ function addSecResize(sec){
 }
 
 /* ---------- 區塊工具（複製/縮放/刪除）---------- */
-const BLK_SEL='.info,.meta,.org,.lead,.pillars,.pillars .h,.pillars .ps p,.regbar,.reg2,.gcard,.twocards,.look-t,.cat,.darkinfo,.card3,.t2-tile,.t2-card,.t2-cards,.t2-blk,.t2-cta,.t2-lead,.t2-h1,.imgHold';
+const BLK_SEL='.info,.meta,.org,.lead,.pillars,.pillars .h,.pillars .ps p,.regbar,.reg2,.gcard,.twocards,.look-t,.cat,.darkinfo,.card3,.t2-tile,.t2-card,.t2-cards,.t2-blk,.t2-cta,.t2-lead,.t2-h1,.imgHold,.t3-co,.t3-box,.t3-sig,.t3-ps,.t3-cta,.t3-more';
 /* 橫向並排的容器：在裡面的項目按「⧉ 複製」時，複製的是整排並放到下一排，
    而不是硬塞成同一排的第 4 張（TAITRA 要的是往下長，不是往右擠）。 */
 const HROW_SEL='.t2-cards,.twocards';
@@ -502,7 +580,7 @@ function bindBlockTools(el){
   el.appendChild(t);
   t.querySelectorAll('button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=e=>{e.stopPropagation();const a=b.dataset.a;
     if(a==='small'||a==='big'){let sc=+el.dataset.scale+(a==='big'?10:-10);sc=Math.max(40,Math.min(200,sc));el.dataset.scale=sc;el.style.transform=sc===100?'':'scale('+sc/100+')';el.style.transformOrigin='top left';}
-    if(a==='copy'){const tg=rowToDuplicate(el);const c=scrubClone(tg.cloneNode(true));
+    if(a==='copy'){const tg=rowToDuplicate(el);const c=rekeyClone(scrubClone(tg.cloneNode(true)));
       if(tg!==el&&!c.style.marginTop)c.style.marginTop='12px';
       tg.parentNode.insertBefore(c,tg.nextSibling);initAll();c.scrollIntoView({behavior:'smooth',block:'center'});}
     if(a==='del'){if(confirm('Delete this block?'))el.remove();}
@@ -545,7 +623,9 @@ const IMG_HINTS=[
   {sel:'.imgHold',  name:'商洽照片',     w:1200, h:0  },
   {sel:'.cat',      name:'產業類別圖',   w:600,  h:450},
   {sel:'.t2-tile',  name:'四宮格圖',     w:600,  h:300},
-  {sel:'.t2-card',  name:'卡片小圖',     w:200,  h:200}
+  {sel:'.t2-card',  name:'卡片小圖',     w:200,  h:200},
+  {sel:'.t3-logo',  name:'公司 Logo',    w:160,  h:52 },
+  {sel:'.t3-co',    name:'產品照片',     w:300,  h:224}
 ];
 function hintFor(img){
   for(const h of IMG_HINTS){try{if(img.closest(h.sel))return h;}catch(e){}}
@@ -725,15 +805,32 @@ const ADD_ROWS=[
   {sel:'.twocards', label:'＋ 複製整排卡片（2 張）往下 / Duplicate this row'},
   {sel:'.t2-tiles', label:'＋ 複製整組圖格（4 格）往下 / Duplicate this grid'},
   {sel:'.cat',      label:'＋ 複製這一個產業往下 / Duplicate this item'},
-  {sel:'.imgHold',  label:'＋ 複製這一張照片往下 / Duplicate this photo'}
+  {sel:'.imgHold',  label:'＋ 複製這一張照片往下 / Duplicate this photo'},
+  {sel:'.t3-co',    label:'＋ 複製這一家公司往下 / Duplicate this company'}
 ];
 const ADD_SEL=ADD_ROWS.map(r=>r.sel).join(',');
 
+
+/* 複製出來的區塊：文案鍵改成新的唯一鍵，避免和原本那份共用翻譯／編輯紀錄
+   （否則改了複製品、切語言後兩份會被同一段文字蓋掉）。 */
+function rekeyClone(c){
+  const uid=Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  [c,...c.querySelectorAll('[data-lk]')].forEach(el=>{
+    if(!(el instanceof HTMLElement)||!el.dataset||!el.dataset.lk)return;
+    const ok=el.dataset.lk, nk=ok.split('_')[0]+'_'+uid;
+    ['en','tr'].forEach(L=>{
+      const v=(L===curLang)?el.innerHTML:(userEdits[L][ok]!==undefined?userEdits[L][ok]:(DICT[L]&&DICT[L][ok]));
+      if(v!==undefined)userEdits[L][nk]=v;
+    });
+    el.dataset.lk=nk;
+  });
+  return c;
+}
 function duplicateRow(row){
   if(!row||!row.parentNode)return;
-  const c=scrubClone(row.cloneNode(true));
+  const c=rekeyClone(scrubClone(row.cloneNode(true)));
   c.style.position='';                       /* 讓 addRowButtons 重新設定 */
-  if(!c.classList.contains('imgHold')&&!c.classList.contains('cat')&&!c.style.marginTop)c.style.marginTop='12px';
+  if(!c.classList.contains('imgHold')&&!c.classList.contains('cat')&&!c.classList.contains('t3-co')&&!c.style.marginTop)c.style.marginTop='12px';
   row.parentNode.insertBefore(c,row.nextSibling);
   initAll();persist();pushHistory();
   try{c.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
@@ -779,7 +876,7 @@ $('fsMinus').onmousedown=e=>e.preventDefault();$('fsMinus').onclick=()=>bump(-1)
 $('fsPlus').onmousedown=e=>e.preventDefault();$('fsPlus').onclick=()=>bump(1);
 $('fsBold').onmousedown=e=>e.preventDefault();$('fsBold').onclick=()=>{document.execCommand('bold');persist();};
 $('fsReset2').onmousedown=e=>e.preventDefault();$('fsReset2').onclick=()=>{if(fsTarget){fsTarget.style.fontSize='';$('fsVal').textContent=curSize(fsTarget)+'px';persist();}};
-$('fsCopy').onmousedown=e=>e.preventDefault();$('fsCopy').onclick=()=>{if(!fsTarget||!page.contains(fsTarget))return;let blk=fsTarget.closest(BLK_SEL)||fsTarget;if(blk===page)return;const c=scrubClone(blk.cloneNode(true));c.style.marginTop='19px';blk.parentNode.insertBefore(c,blk.nextSibling);initAll();c.scrollIntoView({behavior:'smooth',block:'center'});persist();pushHistory();fsBar.classList.remove('on');};
+$('fsCopy').onmousedown=e=>e.preventDefault();$('fsCopy').onclick=()=>{if(!fsTarget||!page.contains(fsTarget))return;let blk=fsTarget.closest(BLK_SEL)||fsTarget;if(blk===page)return;const c=rekeyClone(scrubClone(blk.cloneNode(true)));c.style.marginTop='19px';blk.parentNode.insertBefore(c,blk.nextSibling);initAll();c.scrollIntoView({behavior:'smooth',block:'center'});persist();pushHistory();fsBar.classList.remove('on');};
 document.addEventListener('mousedown',e=>{if(!fsBar.contains(e.target)&&!page.contains(e.target))fsBar.classList.remove('on');});
 
 /* ---------- 上色（側邊常駐面板）---------- */
@@ -849,7 +946,7 @@ const slotsEl=$('slots');
 function slotTag(m){
   if(!m||!m.at)return '';
   const L=(m.lang==='tr')?'B':'A';
-  const T=(+m.tpl===2)?'2':'1';
+  const T=String(+m.tpl||1);
   return L+'-'+T;
 }
 function renderSlots(){
@@ -1007,8 +1104,44 @@ Object.assign(DICT.tr,{
   m14:"(0212) 290 40 00"
 });
 
+/* ---- 版型 3（A-3 / B-3）文案 ---- */
+Object.assign(DICT.en,{
+  n23:"Taiwan Trade Center Istanbul",
+  n0:"Dear [First Name],",
+  n1:"On <b>23 September</b>, a group of Taiwanese manufacturers will be in Istanbul to meet buyers like you — in ICT &amp; AI, industrial &amp; energy, and automotive &amp; consumer products.",
+  n2:"I'd like to arrange a few 1:1 meetings for you with suppliers that fit what you're sourcing.",
+  n3:"<b>DATE</b>Wednesday, 23 September 2026<br><b>TIME</b>10:00 – 16:00<br><b>VENUE</b>Hilton Istanbul Maslak Hotel",
+  n4:"Here are a few of the companies you can meet:",
+  n5:"[Company Name A]", n6:"ICT &amp; AI", n7:"[Two-line company introduction — main products, certifications, export markets.]", n8:"View company profile →",
+  n9:"[Company Name B]", n10:"Industrial &amp; Energy", n11:"[Two-line company introduction — main products, certifications, export markets.]", n12:"View company profile →",
+  n13:"[Company Name C]", n14:"Automotive", n15:"[Two-line company introduction — main products, certifications, export markets.]", n16:"View company profile →",
+  n17:"See all participating companies (PDF) →",
+  n18:"Reserve my meetings",
+  n19:"Just reply to this email if you have any questions.",
+  n20:"<b>Osman GEDIK</b><br>Taiwan Trade Center Istanbul<br>+90 (212) 290 40 00 · osman@taitra.org.tw",
+  n21:"P.S. Here's the <a>event brochure</a> with full details of the programme.",
+  n22:"Organized by Taiwan External Trade Development Council (TAITRA)<br>Eski Büyükdere Cad., Meydan Sok No:3 Veko Giz Plaza, Kat:13, Maslak, Istanbul · Unsubscribe"
+});
+Object.assign(DICT.tr,{
+  n23:"Tayvan Ticaret Merkezi İstanbul",
+  n0:"Sayın [Ad Soyad],",
+  n1:"<b>23 Eylül</b>'de bir grup Tayvanlı üretici, sizin gibi alıcılarla görüşmek üzere İstanbul'da olacak — bilişim ve yapay zekâ, endüstriyel üretim ve enerji, otomotiv ve tüketim ürünleri alanlarında.",
+  n2:"Aradığınız ürünlere uygun tedarikçilerle sizin için birkaç birebir görüşme ayarlamak isterim.",
+  n3:"<b>TARİH</b>23 Eylül 2026, Çarşamba<br><b>SAAT</b>10:00 – 16:00<br><b>YER</b>Hilton İstanbul Maslak Hotel",
+  n4:"Görüşebileceğiniz firmalardan bazıları:",
+  n5:"[Firma Adı A]", n6:"Bilişim ve Yapay Zekâ", n7:"[İki satırlık firma tanıtımı — ana ürünler, sertifikalar, ihracat pazarları.]", n8:"Firma profilini görüntüle →",
+  n9:"[Firma Adı B]", n10:"Endüstri ve Enerji", n11:"[İki satırlık firma tanıtımı — ana ürünler, sertifikalar, ihracat pazarları.]", n12:"Firma profilini görüntüle →",
+  n13:"[Firma Adı C]", n14:"Otomotiv", n15:"[İki satırlık firma tanıtımı — ana ürünler, sertifikalar, ihracat pazarları.]", n16:"Firma profilini görüntüle →",
+  n17:"Katılımcı firmaların tam listesi (PDF) →",
+  n18:"Görüşmelerimi ayarlayın",
+  n19:"Sorularınız için bu e-postayı yanıtlamanız yeterli.",
+  n20:"<b>Osman GEDİK</b><br>Tayvan Ticaret Merkezi İstanbul<br>+90 (212) 290 40 00 · osman@taitra.org.tw",
+  n21:"Not: Programın tüm ayrıntılarını içeren <a>etkinlik broşürü</a> ektedir.",
+  n22:"Organizatör: Tayvan Dış Ticareti Geliştirme Konseyi (TAITRA)<br>Eski Büyükdere Cad., Meydan Sok No:3 Veko Giz Plaza, Kat:13, Maslak, İstanbul · Abonelikten çık"
+});
+
 let curLang='en',curTpl=1;
-const tplSnap={1:null,2:null};
+const tplSnap={1:null,2:null,3:null};
 const userEdits={en:{},tr:{}};   /* 記錄使用者「改過」的內容，切換時保留 */
 /* 監看編輯：記到目前語言 */
 page.addEventListener('input',e=>{const el=e.target.closest('[data-lk]');if(el){userEdits[curLang][el.dataset.lk]=el.innerHTML;}});
@@ -1034,7 +1167,7 @@ function switchTL(tpl,lang){
   const tplChanged=(tpl!==curTpl);
   curTpl=tpl;curLang=lang;
   if(tplChanged){
-    page.innerHTML = tplSnap[tpl] || (tpl===2?buildTPL2():TPL1_HTML);
+    page.innerHTML = tplSnap[tpl] || (tpl===2?buildTPL2():tpl===3?buildTPL3():TPL1_HTML);
     initAll();
   }
   applyLang(lang);
@@ -1049,7 +1182,7 @@ const ONB_STEPS=[
   {t:'② Edit text / font size / copy',b:'Click any text to edit it. A small toolbar pops up: A− / A+ for size, B for bold, ⧉ to copy the whole block.'},
   {t:'③ Colors',b:'First click the element you want to color (a heading, block, or button). The "Colors" panel on the left shows what is selected; pick "Text" or "Background", choose a color, and press "✓ Apply".'},
   {t:'④ Move / delete / resize (ALT)',b:'ALT + left-click drag moves any element — the bin sits between the panel and the email; drop an item on it to delete. / ALT + sol tık ile sürükleyerek her ögeyi taşıyın; silmek için çöp kutusuna bırakın. Images have a corner handle to resize; each section has an "↕ height" handle.'},
-  {t:'⑤ Templates A-1 / B-1 / A-2 / B-2',b:'Top-left of the panel: A-1 = template 1 in English, B-1 = the same in Turkish. A-2 / B-2 switch to template 2 (the 4-tile "If you are looking for…" grid plus the Elevate block). Each template keeps its own edits.'},
+  {t:'⑤ Templates A-1 / B-1 / A-2 / B-2 / A-3 / B-3',b:'Top-left of the panel: A-1 = template 1 in English, B-1 = the same in Turkish. A-2 / B-2 switch to template 2 (the 4-tile "If you are looking for…" grid plus the Elevate block). A-3 / B-3 = template 3, a personal letter with company introductions and product photos — click any photo or LOGO box to replace it, and use the ＋ on a company row to add another company. Each template keeps its own edits.'},
   {t:'⑥ Save / export',b:'The three slots on the left save to the cloud (Firebase) so you can reload across devices. When done, use "Download PNG" or "Export HTML". Undo anytime with Ctrl+Z.'}
 ];
 let onbIdx=0;
@@ -1087,7 +1220,7 @@ function addAllSecResize(){page.querySelectorAll('.sec').forEach(sec=>{sec.query
     page.innerHTML=d.html;
     if(d.css)['--c1','--c2','--c3','--c4'].forEach((v,i)=>{if(d.css[i])document.documentElement.style.setProperty(v,d.css[i]);});
     if(d.tpl)curTpl=+d.tpl; if(d.lang)curLang=d.lang;
-    if(d.snaps){tplSnap[1]=d.snaps[1]||null;tplSnap[2]=d.snaps[2]||null;}
+    if(d.snaps){tplSnap[1]=d.snaps[1]||null;tplSnap[2]=d.snaps[2]||null;tplSnap[3]=d.snaps[3]||null;}
     if(d.edits){Object.assign(userEdits.en,d.edits.en||{});Object.assign(userEdits.tr,d.edits.tr||{});}
   }}catch(e){}
   paintTplBtns();
