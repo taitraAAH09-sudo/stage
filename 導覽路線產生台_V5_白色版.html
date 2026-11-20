@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>導覽路線產生台 V5 白色版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 展務工作台，安靜俐落，路線是主角
+   IDEA: 展場攤位圖上用紅筆畫出的導覽動線
+   PICTURE: 上傳的平面圖本身＋編號紅圈與箭頭
+   COLOUR and TYPE: 白底、墨黑、朱紅 #e8481c 當唯一路線色；Noto Sans TC + Sofia Sans Condensed 數字
+   LAYOUT: 左欄表單（站點清單），右側大地圖，下方行程表 */
+:root{color-scheme:light;--bg:#fff;--panel:#f6f4f2;--ink:#16120f;--mute:#6b625c;--line:#e2ddd8;--red:#e8481c;--ok:#1d7a3e;--warn:#b26a00;--bad:#c0261b}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:light}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Noto Sans TC",system-ui,sans-serif;overflow-x:clip}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:16px max(2vw,14px) 12px;border-bottom:3px solid var(--ink)}
+header h1{margin:0;font-size:26px;font-weight:900;letter-spacing:.02em}
+.ver{font:800 15px "Sofia Sans Condensed",sans-serif;background:var(--red);color:#fff;padding:2px 8px;border-radius:3px}
+header p{margin:0;color:var(--mute);font-size:13.5px}
+main{display:grid;grid-template-columns:minmax(330px,420px) minmax(0,1fr);min-height:calc(100vh - 70px)}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:14px}
+section h2{font-size:13px;font-weight:700;color:var(--mute);margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label.f{display:flex;flex-direction:column;font-size:12.5px;color:var(--mute);gap:3px}
+input,select,button{font:inherit;font-size:16px;color:var(--ink)}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 9px;min-height:40px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+button{cursor:pointer;border:1px solid var(--ink);background:var(--bg);border-radius:6px;padding:8px 12px;min-height:40px;font-size:14.5px;font-weight:500}
+button.pri{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+button.ghost{border-color:var(--line)}
+button.sm{min-height:34px;padding:4px 9px;font-size:13px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:14px;text-align:center;cursor:pointer;color:var(--mute);font-size:13.5px}
+.drop.on{border-color:var(--red);color:var(--ink)}
+.drop b{color:var(--ink)}
+.start{display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+.pin{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:800 16px "Sofia Sans Condensed",sans-serif}
+.stop .pin{background:var(--red);color:#fff}
+.stops{display:flex;flex-direction:column;gap:8px}
+.stop{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.stop.sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.row{display:flex;gap:6px;align-items:center}
+.row>input{flex:1}
+.chip{font-size:12px;padding:2px 7px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
+.chip.ok{color:var(--ok)}.chip.fz{color:var(--warn)}.chip.no{color:var(--bad)}.chip.man{color:var(--mute)}
+.cands{display:flex;flex-wrap:wrap;gap:5px}
+.cands button{min-height:30px;padding:2px 8px;font-size:12.5px;border-color:var(--line)}
+.cands button.on{border-color:var(--red);color:var(--red);font-weight:700}
+.tools{display:flex;gap:4px;flex-wrap:wrap}
+.tools button{min-height:32px;padding:2px 8px;font-size:12.5px;border-color:var(--line)}
+.note{font-size:12.5px;color:var(--mute);margin:4px 0 0}
+.stage{display:flex;flex-direction:column;min-width:0}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.bar .sum{margin-left:auto;font-size:13.5px;color:var(--mute)}
+.bar .sum b{color:var(--ink);font:800 18px "Sofia Sans Condensed",sans-serif}
+.mode{background:var(--red);color:#fff;padding:6px 10px;border-radius:6px;font-size:13.5px;display:none}
+.mode.on{display:inline-block}
+.mapbox{position:relative;overflow:hidden}.mapwrap{position:relative;height:clamp(460px,calc(100vh - 150px),1100px);overflow:auto;background:#d9dce1;scrollbar-width:none;cursor:grab}.mapwrap::-webkit-scrollbar{display:none}.zpct{min-width:52px;text-align:center;font:800 15px 'Sofia Sans Condensed',sans-serif}
+.map{position:relative;transform-origin:0 0;margin:0}
+.map canvas,.map img{display:block;width:100%;height:auto;background:#fff}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map.picking{cursor:crosshair}
+.empty{display:grid;place-items:center;height:100%;min-height:420px;color:var(--mute);text-align:center;padding:30px}
+.empty b{display:block;font-size:20px;color:var(--ink);margin-bottom:6px}
+.sched{padding:16px 14px 30px;border-top:1px solid var(--line)}
+.sched h2{margin:0 0 4px;font-size:20px}
+.sched .meta{color:var(--mute);margin:0 0 10px}
+.tw{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--panel);font-weight:700}
+td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
+.modal{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:9;padding:16px}
+.modal.on{display:grid}
+.modal .box{background:var(--bg);border-radius:10px;padding:14px;max-width:min(1100px,96vw);max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.modal img{max-width:100%;border:1px solid var(--line)}
+.exp{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14.5px}.exp label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.exp input{width:auto;min-height:0}.exp small{color:var(--mute)}.exp .sub{display:flex;flex-wrap:wrap;gap:6px 16px;padding-left:26px;color:var(--mute);font-size:13.5px}
+.slotbar{padding:10px max(2vw,14px);border-bottom:1px solid var(--line);background:var(--panel)}
+.slothead{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.slot{background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.slot.has{border-style:solid;border-color:var(--ink)}
+.slot .sn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:800 14px "Sofia Sans Condensed",sans-serif}
+.slot .sname{min-height:34px;font-size:15px;padding:5px 8px}
+.smeta{font-size:12.5px;color:var(--mute)}
+.slot button:disabled{opacity:.4;cursor:default}
+.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap;font-size:13.5px}
+.steps li{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;color:var(--mute);border:1px solid var(--line);cursor:pointer}
+.steps li b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--line);color:var(--ink);font:800 13px "Sofia Sans Condensed",sans-serif}
+.steps li.done{color:var(--ink)}.steps li.done b{background:var(--ink);color:var(--bg)}
+.steps li.now{color:#fff;background:var(--red);border-color:var(--red);font-weight:700}.steps li.now b{background:#fff;color:var(--red)}
+.gt{position:relative}
+.gtip{display:none}
+.gt.now{outline:3px solid var(--red);outline-offset:4px;border-radius:8px;animation:gpulse 1.6s ease-in-out infinite}
+.gt.now>.gtip{display:block;background:var(--red);color:#fff;font-size:13.5px;font-weight:700;padding:6px 10px;border-radius:6px;margin-bottom:8px}
+.gt.now>.gtip.down{position:absolute;top:calc(100% + 10px);left:0;z-index:5;white-space:nowrap;margin:0;box-shadow:0 4px 12px #0003}
+span.gt{display:inline-block}
+@keyframes gpulse{50%{outline-color:transparent}}
+@media(prefers-reduced-motion:reduce){.gt.now{animation:none}}
+.helpbtn{margin-left:auto;background:#ff7a1a;border-color:#ff7a1a;color:#fff;font-weight:700;border-radius:8px}
+.helpl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:560px}
+.helpl li{display:flex;gap:12px;align-items:flex-start}
+.helpl .hn{flex:none;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font:800 16px "Sofia Sans Condensed",sans-serif}
+.helpl b{font-size:16px}.helpl p{margin:2px 0 0;color:var(--mute);font-size:14px}
+#hBlock{position:fixed;inset:0;z-index:30}
+#hSpot{position:fixed;z-index:31;border-radius:10px;box-shadow:0 0 0 9999px rgba(10,8,6,.74);outline:3px solid #ff7a1a;pointer-events:none;transition:all .2s}
+#hArrow{position:fixed;z-index:32;width:110px;height:60px;pointer-events:none;animation:hpoke 1s ease-in-out infinite}
+@keyframes hpoke{50%{transform:translateX(-10px)}}
+#hBox{position:fixed;z-index:32;background:var(--bg);color:var(--ink);border-radius:12px;padding:16px 18px;box-shadow:0 12px 40px #0008;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 24px);overflow:auto}
+.helpl li.first .hn{background:#ff7a1a;box-shadow:0 0 0 4px #ff7a1a44}
+@media(prefers-reduced-motion:reduce){#hArrow{animation:none}}
+#frame{position:absolute;border:3px solid #e8481c;box-shadow:0 0 0 9999px rgba(20,18,16,.32);pointer-events:none;border-radius:2px}
+#frame span{position:absolute;left:-3px;top:-28px;background:#e8481c;color:#fff;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:4px 4px 0 0;white-space:nowrap}
+.empty{min-height:100%}
+header{background:#1b3a6b;color:#fff;border-bottom:0}header h1{color:#fff}header p{color:#c9d4e6}
+body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
+.stop,.slot,.start{box-shadow:0 1px 2px #1b3a6b14}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+@media(max-width:900px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V5</span>
+  <button class="helpbtn" id="help">❓ 操作導覽</button>
+</header>
+<section class="slotbar">
+  <div class="slothead"><b>雲端存檔點</b><span class="note" id="slotMsg" style="margin:0"></span></div>
+  <div class="slots" id="slots"></div>
+</section>
+<main>
+<aside>
+  <section class="gt" id="g1">
+    <span class="gtip">第 1 步：請先上傳攤位圖 PDF</span>
+    <h2>1　攤位圖</h2>
+    <div class="drop" id="drop" tabindex="0"><b>點這裡或拖曳上傳地圖</b><br>PDF（可自動讀廠商名）或 JPG／PNG（需手動點位置）</div>
+    <input type="file" id="file" accept=".pdf,image/*" hidden>
+    <div class="row" id="pageRow" style="display:none;margin-top:6px"><span class="note" style="margin:0">頁次</span><select id="page"></select></div>
+    <p class="note" id="mapInfo"></p>
+  </section>
+  <section>
+    <h2>2　活動資訊</h2>
+    <div class="grid2">
+      <label class="f" style="grid-column:1/-1">展名<input id="expo" placeholder="例：TaipeiPLAS 2026"></label>
+      <label class="f">日期<input id="date" type="date" min="2000-01-01" max="2099-12-31"></label>
+      <label class="f">導覽開始<input id="time" type="time" value="13:30"></label>
+      <label class="f">每家預設（分）<input id="per" type="number" min="5" step="5" value="20"></label>
+      <label class="f">提前集合（分）<input id="gather" type="number" min="0" step="5" value="10"></label>
+      <label class="f" style="grid-column:1/-1">說明（印在廠商資料表上，可空白）<input id="note" placeholder="例：14 位國際記者（來自 12 個國家），廠商用全英文介紹"></label>
+      <label class="f" style="grid-column:1/-1">類型<select id="kind"><option>媒體導覽</option><option>貴賓導覽</option><option>長官巡場</option></select></label>
+    </div>
+  </section>
+  <section>
+    <h2>3　起點（第 0 站）</h2>
+    <div class="start">
+      <span class="pin">0</span>
+      <input id="startName" value="舞台區" aria-label="起點名稱">
+      <button class="sm ghost" id="startPick" title="在地圖上點一下設定起點">點地圖</button>
+    </div>
+    <p class="note" id="startInfo">地圖若有「舞台」字樣會自動定位；沒有的話按「點地圖」，例如點 K 區入口，再把名稱改成「1F K區入口」。</p>
+  </section>
+  <section class="gt" id="g2">
+    <span class="gtip">第 2 步：在這裡輸入要導覽的廠商（可按「貼上整串名單」）</span>
+    <h2>4　導覽廠商（第 1、2、3… 站）</h2>
+    <div class="stops" id="stops"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="ghost" id="add">＋ 新增一站</button>
+      <button class="ghost" id="paste">貼上整串名單</button>
+    </div>
+    <p class="note">打字時會等你選完字才比對。全對＝綠、模糊＝橘（請點下方候選確認）、找不到＝紅。也可直接打攤位號，例如 N0224。</p>
+  </section>
+</aside>
+<div class="stage">
+  <div class="bar">
+    <span class="gt" id="g3"><button class="pri" id="opt">自動排最佳路線</button><span class="gtip down">第 3 步：按這裡排路線，再拖曳編號／線段自己調整</span></span>
+    <button class="ghost" id="keep">照我的順序</button>
+    <button class="ghost sm" id="zout" aria-label="縮小 5%">－</button>
+    <span class="zpct" id="zpct">100%</span>
+    <button class="ghost sm" id="zin" aria-label="放大 5%">＋</button>
+    <span class="gt" id="g4"><button class="ghost sm" id="zfit">符合路線</button><span class="gtip down">第 4 步：調整完按這裡，會自動抓好角度與範圍</span></span>
+    <button class="ghost sm" id="zall">整張圖</button>
+    <span class="gt" id="g5"><button class="pri" id="png" style="background:var(--ink);border-color:var(--ink);color:var(--bg)">匯出檔案</button><span class="gtip down">第 5 步：匯出檔案</span></span>
+    <span class="mode" id="mode"></span>
+    <span class="sum" id="sum"></span>
+  </div>
+  <div class="mapbox"><div class="mapwrap" id="wrap">
+    <div class="empty" id="empty"><div><b>先上傳攤位圖</b>上傳後：拖曳紅色編號＝調整位置；預設沿白色走道走（優先 6.1m 主走道）；拖曳箭頭線段＝改走別條走道；點一下線段＝切換 自動／先橫後直／先直後橫／直線</div></div>
+    <div class="map" id="map" hidden></div>
+  </div><div id="frame" hidden><span>PPT 輸出範圍（不滿意就用 ＋／－ 或拖曳地圖調整）</span></div></div>
+  <div class="sched">
+    <h2 id="sTitle">導覽行程表</h2>
+    <p class="meta" id="sMeta"></p>
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+      <button class="ghost sm" id="cpZh">複製中文表（可貼 Word）</button>
+      <button class="ghost sm" id="cpEn">複製英文表</button>
+      <button class="ghost sm" id="cpVen">複製廠商通知用清單</button>
+    </div>
+    <div class="tw"><div id="tZh"></div><div id="tEn"></div></div>
+  </div>
+</div>
+</main>
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+/* ===== aisle grid: white = walkway, wide = main aisle ===== */
+const Grid = (() => {
+  function build(img, W, H, codes) {
+    const cs = Math.max(4, Math.round(W / 330)), gw = Math.ceil(W / cs), gh = Math.ceil(H / cs), d = img.data;
+    const walk = new Uint8Array(gw * gh);
+    // area limit: booth area (from booth codes) plus a margin, so routes stay inside the hall
+    let lim = [0, 0, W, H];
+    if (codes && codes.length > 8) { const m = W * .06; lim = [Math.min(...codes.map(q => q.x)) - m, Math.min(...codes.map(q => q.y)) - m, Math.max(...codes.map(q => q.x)) + m, Math.max(...codes.map(q => q.y)) + m]; }
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+      const px = (gx + .5) * cs, py = (gy + .5) * cs;
+      if (px < lim[0] || py < lim[1] || px > lim[2] || py > lim[3]) continue;
+      let n = 0, f = 0;
+      for (let y = gy * cs; y < Math.min(H, gy * cs + cs); y++) for (let x = gx * cs; x < Math.min(W, gx * cs + cs); x++) {
+        const k = (y * W + x) * 4, r = d[k], g2 = d[k + 1], b = d[k + 2], mx = Math.max(r, g2, b), mn = Math.min(r, g2, b);
+        n++;
+        // booth fill = coloured or mid-grey area; black lines/text and white floor are walkable
+        if (mn < 226 && mx > 90) f++;
+      }
+      walk[gy * gw + gx] = f / n < .4 ? 1 : 0;
+    }
+    // keep only the main connected floor area (drop pockets inside booths / stage)
+    { const comp = new Int32Array(gw * gh).fill(-1), sizes = []; const st = new Int32Array(gw * gh);
+      for (let i = 0; i < walk.length; i++) { if (!walk[i] || comp[i] >= 0) continue; const id = sizes.length; let sp = 0, n = 0; st[sp++] = i; comp[i] = id;
+        while (sp) { const j = st[--sp]; n++; const x = j % gw, y = (j / gw) | 0;
+          for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) { if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue; const q = ny * gw + nx; if (walk[q] && comp[q] < 0) { comp[q] = id; st[sp++] = q; } } }
+        sizes.push(n); }
+      const big = sizes.indexOf(Math.max(...sizes)); for (let i = 0; i < walk.length; i++) if (comp[i] !== big) walk[i] = 0; }
+    // clearance = distance (cells) to nearest blocked cell, chamfer 2-pass
+    const INF = 1e9, c = new Float32Array(gw * gh);
+    for (let i = 0; i < c.length; i++) c[i] = walk[i] ? INF : 0;
+    const at = (x, y) => (x < 0 || y < 0 || x >= gw || y >= gh) ? 0 : c[y * gw + x];
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { const i = y * gw + x; if (!c[i]) continue; c[i] = Math.min(c[i], at(x - 1, y) + 1, at(x, y - 1) + 1, at(x - 1, y - 1) + 1.414, at(x + 1, y - 1) + 1.414); }
+    for (let y = gh - 1; y >= 0; y--) for (let x = gw - 1; x >= 0; x--) { const i = y * gw + x; if (!c[i]) continue; c[i] = Math.min(c[i], at(x + 1, y) + 1, at(x, y + 1) + 1, at(x + 1, y + 1) + 1.414, at(x - 1, y + 1) + 1.414); }
+    // estimate aisle widths from ridge cells inside the booth area
+    let bx0 = 0, by0 = 0, bx1 = gw, by1 = gh;
+    if (codes && codes.length > 8) { bx0 = Math.min(...codes.map(q => q.x)) / cs; bx1 = Math.max(...codes.map(q => q.x)) / cs; by0 = Math.min(...codes.map(q => q.y)) / cs; by1 = Math.max(...codes.map(q => q.y)) / cs; }
+    const ridge = [];
+    for (let y = Math.max(1, by0 | 0); y < Math.min(gh - 1, by1); y++) for (let x = Math.max(1, bx0 | 0); x < Math.min(gw - 1, bx1); x++) {
+      const v = c[y * gw + x]; if (v < 1.5) continue;
+      if ((v >= at(x - 1, y) && v >= at(x + 1, y)) || (v >= at(x, y - 1) && v >= at(x, y + 1))) ridge.push(v);
+    }
+    ridge.sort((a, b) => a - b);
+    const med = ridge.length ? ridge[ridge.length >> 1] : 3;
+    const T = Math.max(2.5, med * 1.3);
+    const cost = new Float32Array(gw * gh);
+    for (let i = 0; i < cost.length; i++) cost[i] = c[i] < 1 ? 0 : 1 + 3.2 * Math.max(0, T - c[i]) / T;
+    return { cs, gw, gh, walk, c, cost, T, med };
+  }
+  // nearest walkable cell (prefer some clearance) to a map point
+  function snap(G, p) {
+    const sx = Math.min(G.gw - 1, Math.max(0, Math.floor(p.x / G.cs))), sy = Math.min(G.gh - 1, Math.max(0, Math.floor(p.y / G.cs)));
+    let best = -1, bd = 1e9; const R = Math.round(G.gw / 6);
+    for (let r = 0; r <= R; r++) {
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = sx + dx, y = sy + dy; if (x < 0 || y < 0 || x >= G.gw || y >= G.gh) continue;
+        const i = y * G.gw + x; if (G.c[i] < 1.5) continue;
+        const dd = Math.hypot(dx, dy); if (dd < bd) { bd = dd; best = i; }
+      }
+      if (best >= 0 && r > bd + 1) break;
+    }
+    return best;
+  }
+  // Dijkstra with direction state (turn penalty) from one source cell to all
+  function run(G, src) {
+    const N = G.gw * G.gh, dist = new Float64Array(N * 4).fill(Infinity), prev = new Int32Array(N * 4).fill(-1);
+    let cap = 1 << 16, hk = new Float64Array(cap), hv = new Int32Array(cap), hn = 0;
+    const push = (d, s) => { if (hn === cap) { cap *= 2; const k2 = new Float64Array(cap), v2 = new Int32Array(cap); k2.set(hk); v2.set(hv); hk = k2; hv = v2; }
+      let i = hn++; while (i) { const p = (i - 1) >> 1; if (hk[p] <= d) break; hk[i] = hk[p]; hv[i] = hv[p]; i = p; } hk[i] = d; hv[i] = s; };
+    let popK = 0;
+    const pop = () => { const top = hv[0]; popK = hk[0]; const lk = hk[--hn], lv = hv[hn]; let i = 0;
+      for (;;) { const l = 2 * i + 1, r = l + 1; let m = -1, mk = lk; if (l < hn && hk[l] < mk) { m = l; mk = hk[l]; } if (r < hn && hk[r] < mk) { m = r; mk = hk[r]; } if (m < 0) break; hk[i] = hk[m]; hv[i] = hv[m]; i = m; }
+      hk[i] = lk; hv[i] = lv; return top; };
+    const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1], TURN = 5;
+    for (let k = 0; k < 4; k++) { dist[src * 4 + k] = 0; push(0, src * 4 + k); }
+    while (hn) {
+      const s = pop(), d = popK; if (d > dist[s]) continue;
+      const i = s >> 2, k = s & 3, x = i % G.gw, y = (i / G.gw) | 0;
+      for (let nk = 0; nk < 4; nk++) {
+        const nx = x + DX[nk], ny = y + DY[nk]; if (nx < 0 || ny < 0 || nx >= G.gw || ny >= G.gh) continue;
+        const ni = ny * G.gw + nx, w = G.cost[ni]; if (!w) continue;
+        const nd = d + w + (nk !== k ? TURN : 0), ns = ni * 4 + nk;
+        if (nd < dist[ns]) { dist[ns] = nd; prev[ns] = s; push(nd, ns); }
+      }
+    }
+    return { dist, prev };
+  }
+  function costTo(R, cell) { let b = Infinity; for (let k = 0; k < 4; k++) b = Math.min(b, R.dist[cell * 4 + k]); return b; }
+  function pathTo(G, R, cell) {
+    let bs = -1, b = Infinity; for (let k = 0; k < 4; k++) if (R.dist[cell * 4 + k] < b) { b = R.dist[cell * 4 + k]; bs = cell * 4 + k; }
+    if (bs < 0 || !isFinite(b)) return null;
+    const cells = []; let s = bs; while (s >= 0) { const i = s >> 2; if (!cells.length || cells[cells.length - 1] !== i) cells.push(i); s = R.prev[s]; }
+    cells.reverse();
+    // keep only turning points
+    const pt = i => ({ x: (i % G.gw + .5) * G.cs, y: (((i / G.gw) | 0) + .5) * G.cs });
+    const out = [pt(cells[0])];
+    for (let j = 1; j < cells.length - 1; j++) { const a = cells[j - 1], m = cells[j], c = cells[j + 1]; if ((m - a) !== (c - m)) out.push(pt(m)); }
+    if (cells.length > 1) out.push(pt(cells[cells.length - 1]));
+    return out;
+  }
+  return { build, snap, run, costTo, pathTo };
+})();
+
+/* ===== core: label extraction + fuzzy + routing (shared with node test) ===== */
+const Core = (() => {
+  const CJK = /[㐀-鿿]/;
+  const CODE = /^[A-Z]{1,2}\d{3,4}[A-Z]?$/;
+  const STOP = /此攤位圖|僅供位置|平面圖|Exhibition|Nangang|Jingmao|經貿|南港|MRT|計程車|接駁|公車|Bus|Taxi|Shuttle|Arrival|走道|^\d+(\.\d+)?m$|^[←→↑↓]|Sec\.|Hall/i;
+  function items2boxes(items, vt, scale) {
+    // vt = viewport transform matrix; returns boxes in device px
+    const out = [];
+    for (const it of items) {
+      const s = (it.str || '').trim(); if (!s) continue;
+      const t = it.transform, m = [
+        vt[0]*t[0]+vt[2]*t[1], vt[1]*t[0]+vt[3]*t[1],
+        vt[0]*t[2]+vt[2]*t[3], vt[1]*t[2]+vt[3]*t[3],
+        vt[0]*t[4]+vt[2]*t[5]+vt[4], vt[1]*t[4]+vt[3]*t[5]+vt[5]];
+      const al = Math.hypot(m[0], m[1]) || 1, size = Math.hypot(m[2], m[3]);
+      const ax = m[0]/al*it.width*scale, ay = m[1]/al*it.width*scale;
+      const xs = [m[4], m[4]+ax, m[4]+m[2], m[4]+ax+m[2]], ys = [m[5], m[5]+ay, m[5]+m[3], m[5]+ay+m[3]];
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      out.push({ s, size, x0, x1, y0, y1, horiz: Math.abs(m[0]) >= Math.abs(m[1]) });
+    }
+    return out;
+  }
+  const cx = b => (b.x0+b.x1)/2, cy = b => (b.y0+b.y1)/2;
+  function buildLabels(boxes) {
+    const codes = [], texts = [];
+    for (const b of boxes) {
+      if (CODE.test(b.s)) codes.push(b);
+      else if (!STOP.test(b.s) && (CJK.test(b.s) || /[A-Za-z]{2,}/.test(b.s))) texts.push(b);
+    }
+    const near = (a, b, k) => Math.abs(a - b) < k;
+    // 1) merge vertical stacks of single CJK chars
+    const singles = texts.filter(b => [...b.s].length === 1).sort((a, b) => a.y0 - b.y0);
+    const used = new Set(), merged = [];
+    for (const a of singles) {
+      if (used.has(a)) continue;
+      const grp = [a]; used.add(a); let cur = a;
+      for (;;) {
+        const nx = singles.find(b => !used.has(b) && near(b.size, cur.size, cur.size*.08) && near(cx(b), cx(cur), cur.size*.3) && b.y0 >= cur.y1 - cur.size*.2 && b.y0 - cur.y1 < cur.size*.95);
+        if (!nx) break; grp.push(nx); used.add(nx); cur = nx;
+      }
+      merged.push(grp.length === 1 ? a : { s: grp.map(g => g.s).join(''), size: a.size, x0: Math.min(...grp.map(g => g.x0)), x1: Math.max(...grp.map(g => g.x1)), y0: grp[0].y0, y1: grp[grp.length-1].y1 });
+    }
+    const base = texts.filter(b => [...b.s].length > 1).concat(merged);
+    // 2) also offer stacked-line combinations (威猛+巴頓菲爾、樹脂+公會)
+    const combos = [];
+    for (const a of base) {
+      const b = base.find(b => b !== a && near(b.size, a.size, a.size*.12) && b.y0 >= a.y1 - a.size*.3 && b.y0 - a.y1 < a.size*.7 && Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) > -a.size*.2);
+      if (b) combos.push({ s: a.s + b.s, size: a.size, x0: Math.min(a.x0, b.x0), x1: Math.max(a.x1, b.x1), y0: a.y0, y1: b.y1, combo: 1 });
+    }
+    const all = base.concat(combos);
+    for (const l of all) {
+      l.x = cx(l); l.y = cy(l);
+      let best = null, bd = 1e9;
+      for (const c of codes) { const d = Math.hypot(cx(c) - l.x, cy(c) - l.y); if (d < bd) { bd = d; best = c; } }
+      l.code = best && bd < Math.max(60, l.size*6) ? best.s : '';
+    }
+    for (const c of codes) { c.x = cx(c); c.y = cy(c); }
+    return { labels: all, codes };
+  }
+  function norm(s) {
+    return (s || '').toUpperCase()
+      .replace(/^(德商|日商|美商|台商|韓商|義商|瑞商|奧商|港商|陸商|英商|法商)[\/／\s]*/, '')
+      .replace(/股份有限公司|有限公司|分公司|公司|CO\.?|LTD\.?|INC\.?|CORP\.?|GMBH|TAIWAN BRANCH/g, '')
+      .replace(/[\s\/／、，,.。()（）\-–&+·・'"]/g, '');
+  }
+  function bigrams(s) { const a = [...s], r = []; for (let i = 0; i < a.length - 1; i++) r.push(a[i] + a[i+1]); return r.length ? r : a; }
+  function score(q, l) {
+    if (!q || !l) return 0;
+    if (q === l) return 100;
+    if (l.includes(q)) return Math.max(60, 92 - (l.length - q.length) * 3);
+    if (q.includes(l) && [...l].length >= 2) return 55 + 35 * [...l].length / [...q].length;
+    const A = bigrams(q), B = bigrams(l); let hit = 0; const pool = B.slice();
+    for (const g of A) { const i = pool.indexOf(g); if (i >= 0) { hit++; pool.splice(i, 1); } }
+    const dice = 2 * hit / (A.length + B.length);
+    let ch = 0; for (const c of new Set(q)) if (l.includes(c)) ch++;
+    return Math.max(dice * 80, ch / Math.max([...new Set(q)].length, 1) * 45);
+  }
+  function match(query, data) {
+    const raw = (query || '').trim(); if (!raw) return [];
+    const up = raw.toUpperCase().replace(/\s/g, '');
+    if (CODE.test(up)) {
+      const c = data.codes.find(c => c.s === up);
+      if (c) { const lab = data.labels.filter(l => l.code === up && !l.combo)[0]; return [{ label: lab ? lab.s : up, code: up, x: lab ? lab.x : c.x, y: lab ? lab.y : c.y, score: 100 }]; }
+    }
+    const q = norm(raw), seen = new Map();
+    for (const l of data.labels) {
+      const sc = score(q, norm(l.s)); if (sc < 30) continue;
+      const k = l.s + '@' + Math.round(l.x/20) + ',' + Math.round(l.y/20);
+      if (!seen.has(k) || seen.get(k).score < sc) seen.set(k, { label: l.s, code: l.code, x: l.x, y: l.y, score: Math.round(sc) });
+    }
+    return [...seen.values()].sort((a, b) => b.score - a.score).slice(0, 6);
+  }
+  const dist = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  function pathLen(start, pts, order) { let d = 0, p = start; for (const i of order) { d += dist(p, pts[i]); p = pts[i]; } return d; }
+  function bestOrder(start, pts, fixedLast) {
+    const n = pts.length, idx = [...Array(n).keys()];
+    if (n <= 1) return idx;
+    if (n <= 8) {
+      let best = idx.slice(), bl = Infinity;
+      const perm = (arr, k) => {
+        if (k === arr.length) { const L = pathLen(start, pts, arr); if (L < bl) { bl = L; best = arr.slice(); } return; }
+        for (let i = k; i < arr.length; i++) { [arr[k], arr[i]] = [arr[i], arr[k]]; perm(arr, k + 1); [arr[k], arr[i]] = [arr[i], arr[k]]; }
+      };
+      perm(idx.slice(), 0); return best;
+    }
+    // nearest neighbour + 2-opt
+    let left = new Set(idx), p = start, ord = [];
+    while (left.size) { let bi = -1, bd = Infinity; for (const i of left) { const d = dist(p, pts[i]); if (d < bd) { bd = d; bi = i; } } ord.push(bi); left.delete(bi); p = pts[bi]; }
+    let improved = true;
+    while (improved) { improved = false;
+      for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) {
+        const c = ord.slice(0, i).concat(ord.slice(i, j + 1).reverse(), ord.slice(j + 1));
+        if (pathLen(start, pts, c) + 1e-6 < pathLen(start, pts, ord)) { ord = c; improved = true; }
+      } }
+    return ord;
+  }
+  return { items2boxes, buildLabels, match, norm, bestOrder, pathLen, dist };
+})();
+
+
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const KEY = 'tourRoute_V2';
+try { const old = localStorage.getItem('tourRoute_V1'); if (!localStorage.getItem(KEY) && old) { const o = JSON.parse(old); (o.stops || []).forEach(s => s.rt = null); localStorage.setItem(KEY, JSON.stringify(o)); } } catch (e) {}
+let mapSrc = null, lastSegs = [], lastMarks = [], curPage = null, curScale = 1, G = null, pathCache = new Map(), snapCache = new Map(), dragFast = false, lastBox = null;
+let pdfDoc = null, mapW = 0, mapH = 0, data = { labels: [], codes: [] }, zoom = 1, mode = null, selected = -1;
+let st = { expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [] };
+const blank = () => ({ q: '', en: '', min: null, label: '', code: '', x: null, y: null, score: 0, cands: [], manual: false, rt: null });
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.stops) st = Object.assign(st, s); } catch (e) {}
+if (!st.stops.length) for (let i = 0; i < 6; i++) st.stops.push(blank());
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('on'), 1800); }
+
+/* ---------- map loading ---------- */
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const drop = $('drop'), file = $('file');
+drop.onclick = () => file.click();
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('on'); };
+drop.ondragleave = () => drop.classList.remove('on');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('on'); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+file.onchange = () => file.files[0] && loadFile(file.files[0]);
+function toB64(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+function fromB64(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+let restoring = false;
+async function loadFile(f, keep) {
+  $('mapInfo').textContent = '讀取中…'; restoring = !!keep;
+  try {
+    const buf = await f.arrayBuffer(); mapSrc = { name: f.name, type: f.type || '', b64: toB64(buf), page: 1 };
+    if (/pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)) {
+      if (!window.pdfjsLib) throw new Error('PDF 元件沒載入（網路？）');
+      pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+      $('page').innerHTML = Array.from({ length: pdfDoc.numPages }, (_, i) => `<option value="${i + 1}">第 ${i + 1} 頁</option>`).join('');
+      $('pageRow').style.display = pdfDoc.numPages > 1 ? 'flex' : 'none';
+      const pg = keep && keep.page && keep.page <= pdfDoc.numPages ? keep.page : 1; $('page').value = pg; mapSrc.page = pg;
+      await renderPdfPage(pg, f.name);
+    } else {
+      pdfDoc = null; curPage = null; $('pageRow').style.display = 'none';
+      const url = URL.createObjectURL(f), img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+      mapW = img.naturalWidth; mapH = img.naturalHeight; data = { labels: [], codes: [] };
+      const c = document.createElement('canvas'); c.width = mapW; c.height = mapH; c.getContext('2d').drawImage(img, 0, 0);
+      mountMap(c);
+      $('mapInfo').textContent = `${f.name}｜圖片檔讀不到文字，請每站按「點地圖」放位置`;
+      afterMap(true);
+    }
+  } catch (err) { $('mapInfo').textContent = '讀取失敗：' + err.message; }
+}
+$('page').onchange = () => { if (mapSrc) mapSrc.page = +$('page').value; renderPdfPage(+$('page').value); };
+async function renderPdfPage(n, name) {
+  const page = await pdfDoc.getPage(n), v1 = page.getViewport({ scale: 1 });
+  const scale = Math.min(3, 2600 / Math.max(v1.width, v1.height));
+  const vp = page.getViewport({ scale }); curPage = page; curScale = scale;
+  const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+  mapW = c.width; mapH = c.height;
+  const tc = await page.getTextContent();
+  data = Core.buildLabels(Core.items2boxes(tc.items, vp.transform, scale));
+  mountMap(c);
+  $('mapInfo').textContent = `${name || ''}｜讀到 ${data.labels.filter(l => !l.combo).length} 個名稱、${data.codes.length} 個攤位號`;
+  afterMap(false);
+}
+function mountMap(canvas) {
+  const m = $('map'); m.innerHTML = ''; m.appendChild(canvas);
+  m.insertAdjacentHTML('beforeend', `<svg id="ov" viewBox="0 0 ${mapW} ${mapH}" xmlns="http://www.w3.org/2000/svg"></svg>`);
+  m.hidden = false; $('empty').hidden = true; fit();
+  pathCache.clear(); snapCache.clear(); G = null;
+  try { G = Grid.build(canvas.getContext('2d').getImageData(0, 0, mapW, mapH), mapW, mapH, data.codes); } catch (e) { G = null; }
+  $('ov').addEventListener('pointerdown', onDown);
+  m.onclick = onMapClick;
+}
+function afterMap(isImg) {
+  if (!restoring) { st.routed = false; st.fitted = false; }
+  if (restoring) { restoring = false; renderAll(); fitRoute(); return; }
+  // reset positions computed for a previous map, keep typed names
+  const stage = !isImg && Core.match('舞台', data).find(m => m.score >= 90);
+  if (stage) { st.start.x = stage.x; st.start.y = stage.y + mapW * .02; if (!st.start.name) st.start.name = '舞台區'; $('startInfo').textContent = '已自動定位到地圖上的「舞台」。要改起點就按「點地圖」。'; }
+  else { st.start.x = st.start.y = null; $('startInfo').textContent = '這張圖沒找到「舞台」，請按「點地圖」設定起點（例如入口）。'; }
+  st.stops.forEach(s => { s.x = s.y = null; s.label = s.code = ''; s.manual = false; doMatch(s); });
+  sizeWrap(); renderAll();
+}
+
+/* ---------- matching ---------- */
+function doMatch(s) {
+  s.cands = s.q.trim() ? Core.match(s.q, data) : [];
+  const [a, b] = s.cands;
+  if (a && (a.score >= 85 && (!b || a.score - b.score >= 8 || b.label.includes(a.label) || a.label.includes(b.label))) || (a && s.cands.length === 1 && a.score >= 60)) pick(s, a, false);
+  else if (!s.manual) { s.x = s.y = null; s.label = s.code = ''; s.score = a ? a.score : 0; }
+}
+function dispName(s) {
+  const q = (s.q || '').trim(); if (!s.label) return q;
+  const a = Core.norm(q), b = Core.norm(s.label);
+  if (b.includes(a) && b.length > a.length) return s.label;
+  return q;
+}
+function pick(s, c, confirmed) { s.label = c.label; s.code = c.code; s.x = c.x; s.y = c.y; s.score = confirmed ? 100 : c.score; s.manual = false; }
+const status = s => !s.q.trim() ? null : s.manual ? ['man', '手動放置'] : s.x == null ? (s.cands.length ? ['fz', '請選候選'] : ['no', '找不到']) : s.score >= 100 ? ['ok', '全對'] : ['fz', '模糊 ' + s.score];
+
+/* ---------- side panel ---------- */
+function stopParts(s, i) {
+  const sb = status(s);
+  const longer = s.x != null && s.label ? s.cands.filter(c => c.label !== s.label && c.label.includes(s.label) && (!s.code || c.code === s.code || Math.hypot(c.x - s.x, c.y - s.y) < mapW * .04)) : [];
+  const fullHint = longer.length && dispName(s) === s.label ? `<div class="cands"><span class="note" style="margin:0;align-self:center">全名可能是：</span>${longer.map(c => `<button data-c="${i}:${s.cands.indexOf(c)}">${esc(c.label)}</button>`).join('')}</div>` : '';
+  const cands = fullHint || (s.cands.length && !(s.score >= 100 && s.x != null) ? `<div class="cands">${s.cands.map((c, k) => `<button data-c="${i}:${k}" class="${s.x != null && s.label === c.label && Math.abs(s.x - c.x) < 1 ? 'on' : ''}">${esc(c.label)}${c.code ? ' · ' + esc(c.code) : ''} <small>${c.score}</small></button>`).join('')}</div>` : '');
+  const info = (s.x != null && s.label && s.label !== s.q ? `<div class="note" style="margin:0">對到地圖：<b>${esc(s.label)}</b>${s.code ? '（' + esc(s.code) + '）' : ''}${dispName(s) !== s.q.trim() ? '　→ 表上寫「' + esc(dispName(s)) + '」' : ''}</div>` : s.x != null && s.code ? `<div class="note" style="margin:0">攤位 ${esc(s.code)}</div>` : '') + cands;
+  return { chip: sb ? `<span class="chip ${sb[0]}">${sb[1]}</span>` : '', info };
+}
+function renderStops() {
+  $('stops').innerHTML = st.stops.map((s, i) => {
+    const P = stopParts(s, i);
+    return `<div class="stop ${i === selected ? 'sel' : ''}" data-i="${i}">
+      <div class="row"><span class="pin">${i + 1}</span><input data-f="q" value="${esc(s.q)}" placeholder="廠商名稱或攤位號"><span class="chipw">${P.chip}</span></div>
+      <div class="info">${P.info}</div>
+      <div class="row"><input data-f="en" value="${esc(s.en)}" placeholder="英文名稱（英文表用，可空白）" style="font-size:14px;min-height:34px"><input data-f="min" type="number" min="5" step="5" value="${s.min ?? ''}" placeholder="${st.per}分" style="max-width:76px;font-size:14px;min-height:34px" title="這站停留分鐘"></div>
+      <div class="tools"><button data-a="up">↑</button><button data-a="down">↓</button><button data-a="place">點地圖放置</button><button data-a="del">刪除</button></div>
+    </div>`;
+  }).join('');
+}
+function refreshStop(i) {
+  const box = document.querySelector(`.stop[data-i="${i}"]`); if (!box) return;
+  const P = stopParts(st.stops[i], i); box.querySelector('.chipw').innerHTML = P.chip; box.querySelector('.info').innerHTML = P.info;
+}
+// typing: never re-render the input itself, and wait for IME (注音/倉頡) to finish composing
+function queueMatch(i, el) {
+  const s = st.stops[i]; s.q = el.value; clearTimeout(s._t);
+  s._t = setTimeout(() => { if (el._comp) return; s.manual = false; s.rt = null; doMatch(s); refreshStop(i); drawRoute(); renderSched(); save(); }, 450);
+}
+$('stops').addEventListener('compositionstart', e => { e.target._comp = true; });
+$('stops').addEventListener('compositionend', e => { e.target._comp = false; const box = e.target.closest('.stop'); if (box && e.target.dataset.f === 'q') queueMatch(+box.dataset.i, e.target); });
+$('stops').addEventListener('input', e => {
+  const box = e.target.closest('.stop'); if (!box) return; const s = st.stops[+box.dataset.i], f = e.target.dataset.f;
+  if (f === 'q') { if (e.isComposing || e.target._comp) { s.q = e.target.value; return; } queueMatch(+box.dataset.i, e.target); }
+  else if (f === 'en') { s.en = e.target.value; renderSched(); save(); }
+  else if (f === 'min') { s.min = e.target.value ? +e.target.value : null; renderSched(); save(); }
+});
+$('stops').addEventListener('click', e => {
+  const b = e.target.closest('button'), box = e.target.closest('.stop'); if (!box) return;
+  const i = +box.dataset.i, s = st.stops[i];
+  if (!b) { selected = i; drawRoute(); document.querySelectorAll('.stop').forEach(x => x.classList.toggle('sel', +x.dataset.i === i)); return; }
+  if (b.dataset.c) { const [, k] = b.dataset.c.split(':').map(Number); pick(s, s.cands[k], true); s.rt = null; }
+  const a = b.dataset.a;
+  if (a === 'up' && i > 0) [st.stops[i - 1], st.stops[i]] = [st.stops[i], st.stops[i - 1]];
+  if (a === 'down' && i < st.stops.length - 1) [st.stops[i + 1], st.stops[i]] = [st.stops[i], st.stops[i + 1]];
+  if (a === 'del') st.stops.splice(i, 1);
+  if (a === 'place') { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'place', i }); return; }
+  renderAll();
+});
+$('add').onclick = () => { st.stops.push(blank()); renderAll(); const l = document.querySelectorAll('.stop input[data-f=q]'); l[l.length - 1]?.focus(); };
+$('paste').onclick = () => {
+  $('mbox').innerHTML = `<b>一行一家（可直接從 Word／Excel 表格貼上；有「1. 」編號或 tab 會自動去掉）</b><textarea id="pasteTa" rows="10" style="font:inherit;font-size:16px;padding:8px;width:min(560px,86vw);border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"></textarea><div class="row"><button class="pri" id="pasteOk">取代目前清單</button><button class="ghost" id="pasteAdd">加在後面</button><button class="ghost" id="mclose">取消</button></div>`;
+  $('modal').classList.add('on'); $('pasteTa').focus();
+  const go = replace => {
+    const names = $('pasteTa').value.split(/\n/).map(l => { const cols = l.split('\t').map(c => c.trim()).filter(Boolean); const c = cols.find(c => !/^\d+$/.test(c)) || ''; return c.replace(/^\d+[.、)\s]+/, '').trim(); }).filter(Boolean);
+    const add = names.map(n => { const s = blank(); s.q = n; doMatch(s); return s; });
+    st.stops = replace ? add : st.stops.filter(s => s.q.trim()).concat(add); st.routed = false; st.fitted = false;
+    $('modal').classList.remove('on'); renderAll();
+  };
+  $('pasteOk').onclick = () => go(true); $('pasteAdd').onclick = () => go(false); $('mclose').onclick = () => $('modal').classList.remove('on');
+};
+$('modal').onclick = e => { if (e.target === $('modal')) $('modal').classList.remove('on'); };
+['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { const el = $(k); el.value = st[k] ?? el.value; el.oninput = () => {
+    if (k === 'date' && el.value && !/^\d{4}-/.test(el.value)) { toast('年份請輸入 4 碼（例如 2027）'); return; } st[k] = el.type === 'number' ? +el.value : el.value; if (k === 'per') renderStops(); renderSched(); save(); }; });
+$('startName').value = st.start.name; $('startName').oninput = e => { st.start.name = e.target.value; renderSched(); save(); };
+$('startPick').onclick = () => { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'start' }); };
+
+/* ---------- map interaction ---------- */
+function setMode(m) { mode = m; const el = $('mode'); el.classList.toggle('on', !!m); el.textContent = m ? (m.t === 'start' ? '在地圖上點「起點」位置（Esc 取消）' : `在地圖上點第 ${m.i + 1} 站位置（Esc 取消）`) : ''; $('map').classList.toggle('picking', !!m); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { setMode(null); $('modal').classList.remove('on'); } });
+function toMap(e) { const r = $('ov').getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * mapW, y: (e.clientY - r.top) / r.height * mapH }; }
+let dragging = null, moved = false;
+function onMapClick(e) {
+  if (moved) { moved = false; return; }
+  if (!mode) return; const p = toMap(e);
+  if (mode.t === 'start') { st.start.x = p.x; st.start.y = p.y; $('startInfo').textContent = '起點已設定。可直接拖曳地圖上的 0 號調整。'; $('startName').focus(); }
+  else { const s = st.stops[mode.i]; s.x = p.x; s.y = p.y; s.manual = true; s.label = ''; s.code = nearestCode(p); }
+  setMode(null); renderAll();
+}
+function nearestCode(p) { let b = '', bd = 1e9; for (const c of data.codes) { const d = Math.hypot(c.x - p.x, c.y - p.y); if (d < bd) { bd = d; b = c.s; } } return bd < mapW * .04 ? b : ''; }
+$('wrap').addEventListener('pointerdown', e => {
+  if (mode || e.button !== 0 || e.target.closest('[data-pt],[data-seg]') || !mapW) return;
+  const w = $('wrap'), sx = e.clientX, sy = e.clientY, sl = w.scrollLeft, sT = w.scrollTop; let panned = false;
+  const mv = ev => { const dx = ev.clientX - sx, dy = ev.clientY - sy; if (!panned && Math.hypot(dx, dy) < 5) return; panned = true; moved = true; w.scrollLeft = sl - dx; w.scrollTop = sT - dy; w.style.cursor = 'grabbing'; };
+  const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); w.style.cursor = ''; if (panned) setTimeout(() => moved = false, 0); };
+  addEventListener('pointermove', mv); addEventListener('pointerup', up);
+});
+function onDown(e) {
+  const g = e.target.closest('[data-pt]'), seg = e.target.closest('[data-seg]');
+  if (mode || (!g && !seg)) return;
+  e.preventDefault(); moved = false; const ov = $('ov'); ov.setPointerCapture(e.pointerId);
+  const p0 = toMap(e);
+  if (g) {
+    dragging = g.dataset.pt;
+    ov.onpointermove = ev => { const p = toMap(ev); if (Math.hypot(p.x - p0.x, p.y - p0.y) > 3) moved = true; if (!moved) return; dragFast = true; const o = dragging === 's' ? st.start : st.stops[+dragging]; o.x = p.x; o.y = p.y; if (dragging !== 's') o.manual = true; drawRoute(); };
+    ov.onpointerup = () => { ov.onpointermove = ov.onpointerup = null; dragFast = false; if (moved && dragging !== 's') { const s = st.stops[+dragging]; s.code = nearestCode(s) || s.code; } dragging = null; renderAll(); setTimeout(() => moved = false, 0); };
+  } else {
+    // drag a route segment: slides its middle leg onto another aisle; plain click switches direction
+    const s = st.stops[+seg.dataset.seg], rt = getRt(s);
+    ov.onpointermove = ev => { const p = toMap(ev); if (Math.hypot(p.x - p0.x, p.y - p0.y) > 3) moved = true; if (!moved) return;
+      if (rt.t === 'line' || rt.t === 'auto') { rt.t = Math.abs(p.x - p0.x) > Math.abs(p.y - p0.y) ? 'x' : 'y'; }
+      rt.c = rt.t === 'y' ? p.y : p.x; s.rt = rt; drawRoute(); };
+    ov.onpointerup = () => { ov.onpointermove = ov.onpointerup = null;
+      if (!moved) { rt.t = { auto: 'y', y: 'x', x: 'line', line: 'auto' }[rt.t]; rt.c = null; s.rt = rt; toast({ auto: '沿走道（自動）', y: '先橫後直', x: '先直後橫', line: '直線' }[rt.t]); }
+      renderAll(); setTimeout(() => moved = false, 0); };
+  }
+}
+function getRt(s) {
+  if (!s.rt) s.rt = { t: 'auto', c: null };
+  return s.rt;
+}
+function segPoly(a, b, rt) {
+  if (rt.t === 'auto') {
+    if (dragFast || !G) return [a, b];
+    const p = gridPath(a, b); if (p) return [a, ...p, b].filter((q, i, P) => i === 0 || Math.hypot(q.x - P[i - 1].x, q.y - P[i - 1].y) > .5);
+    return legs(a, b, { t: 'y', c: null });
+  }
+  return legs(a, b, rt);
+}
+function legs(a, b, rt) {
+  let P;
+  if (rt.t === 'line') P = [a, b];
+  else if (rt.t === 'y') { const c = rt.c ?? a.y; P = [a, { x: a.x, y: c }, { x: b.x, y: c }, b]; }
+  else { const c = rt.c ?? a.x; P = [a, { x: c, y: a.y }, { x: c, y: b.y }, b]; }
+  return P.filter((p, i) => i === 0 || Math.hypot(p.x - P[i - 1].x, p.y - P[i - 1].y) > .5);
+}
+function trim(pts, r0, r1) {
+  const p = pts.map(q => ({ x: q.x, y: q.y })), mv = (from, to, r) => { const d = Math.hypot(to.x - from.x, to.y - from.y); if (d < 1e-6) return from; const k = Math.min(r, d * .9) / d; return { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }; };
+  if (p.length < 2) return p;
+  p[0] = mv(p[0], p[1], r0); const n = p.length; p[n - 1] = mv(p[n - 1], p[n - 2], r1); return p;
+}
+function drawRoute() {
+  const ov = $('ov'); if (!ov) return;
+  const R = mapW / 75, sw = R * .36, out = [], handles = []; let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
+  out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
+  const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && o.s.q.trim());
+  let prev = st.start.x != null ? { x: st.start.x, y: st.start.y, r: R * .9 } : null;
+  for (const { s, i } of pts) {
+    if (prev) {
+      const rt = getRt(s), L = segPoly(prev, s, rt), P = trim(L, prev.r * 1.15, R * 1.35); segsNow.push({ P, n: segsNow.length + 1 }); const d0 = 0, d = 'M' + P.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' L');
+      out.push(`<path d="${d}" fill="none" stroke="#fff" stroke-width="${sw * 2.2}" stroke-linejoin="round" opacity=".85"/><path d="${d}" fill="none" stroke="#e8481c" stroke-width="${sw}" stroke-linejoin="round" marker-end="url(#ah)"/>`);
+      const cur = rt.t === 'y' ? 'ns-resize' : rt.t === 'x' ? 'ew-resize' : 'move'; for (const q of L) { bx0 = Math.min(bx0, q.x); by0 = Math.min(by0, q.y); bx1 = Math.max(bx1, q.x); by1 = Math.max(by1, q.y); }
+      out.push(`<path data-seg="${i}" data-h="1" d="${d}" fill="none" stroke="transparent" stroke-width="${R * 1.4}" style="cursor:${cur}"><title>拖曳：把這段移到別的走道／點一下：切換轉彎方向</title></path>`);
+      if ((rt.t === 'y' || rt.t === 'x') && L.length >= 3) { const k = Math.floor((L.length - 1) / 2), m = { x: (L[k].x + L[k + 1].x) / 2, y: (L[k].y + L[k + 1].y) / 2 };
+        handles.push(`<circle data-seg="${i}" data-h="1" cx="${m.x}" cy="${m.y}" r="${R * .42}" fill="#fff" stroke="#e8481c" stroke-width="${R * .14}" style="cursor:${cur}"><title>拖曳把這段移到別的走道</title></circle>`); }
+    }
+    prev = { x: s.x, y: s.y, r: R };
+  }
+  out.push(...handles);
+  if (st.start.x != null) out.push(`<g data-pt="s" style="cursor:grab"><circle cx="${st.start.x}" cy="${st.start.y}" r="${R * .9}" fill="#16120f" stroke="#fff" stroke-width="${R * .15}"/><text x="${st.start.x}" y="${st.start.y + R * .34}" font-size="${R * 1}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">0</text><title>起點：${esc(st.start.name)}（可拖曳）</title></g>`);
+  pts.forEach(({ s, i }, k) => {
+    out.push(`<g data-pt="${i}" style="cursor:grab">${i === selected ? `<circle data-h="1" cx="${s.x}" cy="${s.y}" r="${R * 1.55}" fill="none" stroke="#16120f" stroke-width="${R * .12}" stroke-dasharray="${R * .3}"/>` : ''}<circle cx="${s.x}" cy="${s.y}" r="${R}" fill="#e8481c" stroke="#fff" stroke-width="${R * .16}"/><text x="${s.x}" y="${s.y + R * .38}" font-size="${R * 1.12}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">${k + 1}</text><title>${esc(s.q)}（可拖曳）</title></g>`);
+  });
+  for (const q of [st.start.x != null ? st.start : null, ...pts.map(o => o.s)]) if (q) { bx0 = Math.min(bx0, q.x - R); by0 = Math.min(by0, q.y - R); bx1 = Math.max(bx1, q.x + R); by1 = Math.max(by1, q.y + R); }
+  lastSegs = segsNow; lastMarks = (st.start.x != null ? [{ x: st.start.x, y: st.start.y, n: 0 }] : []).concat(pts.map(({ s }, k) => ({ x: s.x, y: s.y, n: k + 1 })));
+  lastBox = isFinite(bx0) ? { x0: bx0, y0: by0, x1: bx1, y1: by1 } : null;
+  ov.innerHTML = out.join('');
+  let L = 0; if (pts.length) { let p = st.start.x != null ? st.start : pts[0].s; for (const { s } of pts) { const Q = segPoly(p, s, getRt(s)); for (let j = 1; j < Q.length; j++) L += Math.hypot(Q[j].x - Q[j - 1].x, Q[j].y - Q[j - 1].y); p = s; } }
+  const miss = st.stops.filter(s => s.q.trim() && s.x == null).length;
+  $('sum').innerHTML = pts.length ? `已定位 <b>${pts.length}</b> 站${miss ? `，<span style="color:var(--bad)">${miss} 站未定位</span>` : ''}｜路線長度 <b>${Math.round(L / mapW * 1000)}</b>` : '';
+}
+
+/* ---------- ordering ---------- */
+function snapC(p) { const k = Math.round(p.x) + ',' + Math.round(p.y); if (!snapCache.has(k)) snapCache.set(k, Grid.snap(G, p)); return snapCache.get(k); }
+function gridPath(a, b) {
+  const ca = snapC(a), cb = snapC(b); if (ca < 0 || cb < 0) return null; if (ca === cb) return [];
+  const key = ca + '>' + cb; if (pathCache.has(key)) return pathCache.get(key);
+  const R = Grid.run(G, ca), p = Grid.pathTo(G, R, cb); pathCache.set(key, p); return p;
+}
+function orderD(D, m) {
+  // node 0 = start, nodes 1..m = stops; open path from 0
+  const idx = Array.from({ length: m }, (_, i) => i + 1), L = o => { let d = 0, p = 0; for (const i of o) { d += D[p][i]; p = i; } return d; };
+  if (m <= 8) { let best = idx.slice(), bl = Infinity; const perm = (arr, k) => { if (k === arr.length) { const l = L(arr); if (l < bl) { bl = l; best = arr.slice(); } return; } for (let i = k; i < arr.length; i++) { [arr[k], arr[i]] = [arr[i], arr[k]]; perm(arr, k + 1); [arr[k], arr[i]] = [arr[i], arr[k]]; } }; perm(idx.slice(), 0); return best; }
+  let left = new Set(idx), p = 0, o = []; while (left.size) { let bi = -1, bd = Infinity; for (const i of left) if (D[p][i] < bd) { bd = D[p][i]; bi = i; } o.push(bi); left.delete(bi); p = bi; }
+  let imp = true; while (imp) { imp = false; for (let i = 0; i < m - 1; i++) for (let j = i + 1; j < m; j++) { const c = o.slice(0, i).concat(o.slice(i, j + 1).reverse(), o.slice(j + 1)); if (L(c) + 1e-6 < L(o)) { o = c; imp = true; } } }
+  return o;
+}
+$('opt').onclick = () => {
+  const ok = st.stops.filter(s => s.q.trim() && s.x != null), rest = st.stops.filter(s => !(s.q.trim() && s.x != null));
+  if (ok.length < 2) return toast('至少要 2 站已定位');
+  toast('計算路線中…');
+  setTimeout(() => {
+    const hasStart = st.start.x != null, nodes = hasStart ? [st.start, ...ok] : ok, n = nodes.length;
+    if (!hasStart) toast('尚未設定起點，先以第 1 站為起點計算');
+    let D;
+    if (G) {
+      const cells = nodes.map(snapC);
+      D = nodes.map((_, i) => { const row = new Array(n).fill(Infinity); if (cells[i] < 0) return nodes.map(q => Core.dist(nodes[i], q) / G.cs * 1.6); const R = Grid.run(G, cells[i]);
+        for (let j = 0; j < n; j++) { if (i === j || cells[j] < 0) { row[j] = i === j ? 0 : Core.dist(nodes[i], nodes[j]) / G.cs * 1.6; continue; } row[j] = Grid.costTo(R, cells[j]); if (!pathCache.has(cells[i] + '>' + cells[j])) pathCache.set(cells[i] + '>' + cells[j], Grid.pathTo(G, R, cells[j])); }
+        return row; });
+    } else D = nodes.map(a => nodes.map(b => Core.dist(a, b)));
+    const curOrder = Array.from({ length: n - 1 }, (_, i) => i + 1), Lc = o => { let d = 0, p = 0; for (const i of o) { d += D[p][i]; p = i; } return d; };
+    const before = Lc(curOrder), ord = orderD(D, n - 1), after = Lc(ord);
+    const picked = ord.map(i => nodes[i]);
+    st.stops = (hasStart ? picked : [nodes[0], ...picked]).concat(rest.filter(s => s.q.trim()));
+    st.stops.forEach(s => s.rt = null);
+    st.routed = true; st.fitted = false; renderAll(); fitRoute();
+    toast(after < before - 1 ? `已改走主走道，路線縮短 ${Math.round((1 - after / before) * 100)}%` : '目前順序已是最佳（沿走道）');
+  }, 30);
+};
+$('keep').onclick = () => { st.stops.forEach(s => s.rt = null); st.routed = true; st.fitted = false; renderAll(); toast('維持你輸入的順序，線段重新沿走道'); };
+/* 紅色取景框＝PPT 輸出範圍（固定 8.7:5.9），地圖在框下移動／縮放 */
+const FR = 87 / 59;
+function frameRect() {
+  const w = $('wrap'), cw = w.clientWidth, ch = w.clientHeight, pad = 28;
+  let fw = cw - pad * 2, fh = fw / FR; if (fh > ch - pad * 2) { fh = ch - pad * 2; fw = fh * FR; }
+  return { fx: (cw - fw) / 2, fy: (ch - fh) / 2, fw, fh };
+}
+function sizeWrap() { const w = $('wrap'), top = w.getBoundingClientRect().top + scrollY; w.style.height = Math.max(420, innerHeight - top - 14) + 'px'; }
+function drawFrame() {
+  const f = frameRect(), el = $('frame'); if (!el) return;
+  Object.assign(el.style, { left: f.fx + 'px', top: f.fy + 'px', width: f.fw + 'px', height: f.fh + 'px' });
+  el.hidden = !mapW;
+}
+const kNow = () => ($('map').clientWidth || 1) / (mapW || 1);
+function setScale(k) { const w = $('wrap'), m = $('map'); m.style.width = mapW * k + 'px'; m.style.margin = `${w.clientHeight}px ${w.clientWidth}px`; zoom = mapW * k / frameRect().fw; zlabel(); }
+function centerOn(mx, my) { const w = $('wrap'), m = $('map'), f = frameRect(), k = kNow(); w.scrollLeft = m.offsetLeft + mx * k - (f.fx + f.fw / 2); w.scrollTop = m.offsetTop + my * k - (f.fy + f.fh / 2); }
+function viewCenter() { const r = viewRaw(); return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
+function fitRoute() {
+  if (!mapW) return; if (!lastBox) return fit();
+  const r = routeRect(), f = frameRect(); setScale(Math.min(f.fw / r.w, f.fh / r.h)); centerOn(r.x + r.w / 2, r.y + r.h / 2); drawFrame();
+}
+function routeRect() {
+  if (!lastBox) return { x: 0, y: 0, w: mapW, h: mapH };
+  const b = lastBox, R = mapW / 75, pad = Math.max(b.x1 - b.x0, b.y1 - b.y0) * .06 + R * 2.2;
+  const x0 = Math.max(0, b.x0 - pad), y0 = Math.max(0, b.y0 - pad * 1.9), x1 = Math.min(mapW, b.x1 + pad), y1 = Math.min(mapH, b.y1 + pad);
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+function zlabel() { const el = $('zpct'); if (el) el.textContent = Math.round(zoom * 100) + '%'; }
+function setZoom(z) { if (!mapW) return; const c = viewCenter(); setScale(Math.max(.2, Math.min(8, z)) * frameRect().fw / mapW); centerOn(c.x, c.y); }
+function fit() { sizeWrap(); if (!mapW) return; const f = frameRect(); setScale(Math.min(f.fw / mapW, f.fh / mapH)); centerOn(mapW / 2, mapH / 2); drawFrame(); }
+$('zin').onclick = () => setZoom((Math.round(zoom * 20) + 1) / 20);
+$('zout').onclick = () => setZoom((Math.round(zoom * 20) - 1) / 20);
+$('zfit').onclick = () => { fitRoute(); if (st.routed) { st.fitted = true; save(); guide(); } };
+$('zall').onclick = fit;
+
+/* ---------- schedule ---------- */
+const WD = ['日', '一', '二', '三', '四', '五', '六'], WDE = ['Sun.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.'];
+const hm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+function rows() {
+  const [h, m] = (st.time || '13:30').split(':').map(Number); let t = h * 60 + m;
+  const list = st.stops.filter(s => s.q.trim()), out = [{ a: t - (+st.gather || 0), b: t, zh: '集合', en: 'Meeting at ' + (st.start.name || 'meeting point'), gather: 1 }];
+  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code }); t += d; }
+  return out;
+}
+function dateTxt(en) {
+  if (!st.date) return ''; const d = new Date(st.date + 'T00:00'); if (isNaN(d)) return '';
+  return en ? `${d.getMonth() + 1}/${d.getDate()}(${WDE[d.getDay()]})` : `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`;
+}
+function tableHtml(en) {
+  const r = rows(); const th = en ? '<tr><th>Time</th><th>Exhibitor</th></tr>' : '<tr><th>時間</th><th>導覽廠商</th><th>攤位</th></tr>';
+  return `<table>${th}${r.map(x => `<tr><td class="t">${hm(x.a)}-${hm(x.b)}</td><td>${esc(en ? x.en : x.zh)}</td>${en ? '' : `<td class="t">${esc(x.code || '')}</td>`}</tr>`).join('')}</table>`;
+}
+function renderSched() {
+  const r = rows(), last = r[r.length - 1];
+  $('sTitle').textContent = `${st.expo ? st.expo + '「' + st.kind + '」' : st.kind + '行程表'}`;
+  $('sMeta').textContent = [dateTxt(), `集合地點：${st.start.name || '—'}`, r.length > 1 ? `共 ${r.length - 1} 家，${hm(r[1].a)}–${hm(last.b)}（${last.b - r[1].a} 分鐘）` : ''].filter(Boolean).join('　');
+  $('tZh').innerHTML = `<p class="note" style="margin:0 0 4px">${esc(dateTxt())} 集合地點：${esc(st.start.name)}</p>` + tableHtml(false);
+  $('tEn').innerHTML = `<p class="note" style="margin:0 0 4px">${esc(dateTxt(true))} Meeting Point: ${esc(st.start.name)}</p>` + tableHtml(true);
+}
+async function copyRich(html, text) {
+  try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]); toast('已複製，可直接貼到 Word'); }
+  catch (e) { try { await navigator.clipboard.writeText(text); toast('已複製（純文字）'); } catch (e2) { toast('瀏覽器不允許複製'); } }
+}
+const tsv = en => rows().map(x => `${hm(x.a)}-${hm(x.b)}\t${en ? x.en : x.zh}${en ? '' : '\t' + (x.code || '')}`).join('\n');
+$('cpZh').onclick = () => copyRich(`<p>${esc(st.expo)}「${esc(st.kind)}」<br>${esc(dateTxt())}<br>集合地點：${esc(st.start.name)}</p>` + tableHtml(false).replace(/<table>/, '<table border="1" cellpadding="4" style="border-collapse:collapse">'), tsv(false));
+$('cpEn').onclick = () => copyRich(`<p>${esc(st.expo)} Guided Tour Schedule<br>${esc(dateTxt(true))}<br>Meeting Point: ${esc(st.start.name)}</p>` + tableHtml(true).replace(/<table>/, '<table border="1" cellpadding="4" style="border-collapse:collapse">'), tsv(true));
+$('cpVen').onclick = () => { const r = rows().slice(1); copyRich(`<table border="1" cellpadding="4" style="border-collapse:collapse"><tr><th>路線順序</th><th>公司名稱</th><th>攤位</th><th>時段</th></tr>${r.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.zh)}</td><td>${esc(x.code || '')}</td><td>${hm(x.a)}-${hm(x.b)}</td></tr>`).join('')}</table>`, r.map((x, i) => `${i + 1}\t${x.zh}\t${x.code || ''}\t${hm(x.a)}-${hm(x.b)}`).join('\n')); };
+
+/* ---------- export: PNG + 2 docx, one click ---------- */
+const dlP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+$('date').addEventListener('change', () => { const v = $('date').value; if (v && !/^\d{4}-/.test(v)) { $('date').value = ''; st.date = ''; toast('年份請填 4 碼'); renderSched(); save(); } });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function saveFile(name, blob) {
+  const dl = await Promise.race([dlP, sleep(1500).then(() => null)]);
+  if (dl) { await dl.save({ filename: name, data: blob }); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000); await sleep(500);
+}
+const safe = s => String(s || '').replace(/[\\/:*?"<>|]/g, '').trim();
+function baseName() { const d = st.date ? st.date.slice(5).replace('-', '') : ''; return [safe(st.expo) || '導覽', d, safe(st.kind)].filter(Boolean).join('_'); }
+function viewRect() {
+  const w = $('wrap'), k = $('map').clientWidth / mapW;
+  let x = w.scrollLeft / k, y = w.scrollTop / k, rw = w.clientWidth / k, rh = w.clientHeight / k;
+  x = Math.max(0, x); y = Math.max(0, y); rw = Math.min(mapW - x, rw); rh = Math.min(mapH - y, rh);
+  return { x, y, w: rw, h: rh };
+}
+function viewRaw() { const w = $('wrap'), m = $('map'), k = kNow(), f = frameRect(); return { x: (w.scrollLeft + f.fx - m.offsetLeft) / k, y: (w.scrollTop + f.fy - m.offsetTop) / k, w: f.fw / k, h: f.fh / k }; }
+async function renderCrop(scope, withRoute, minW) {
+  const r0 = scope === 'view' ? viewRaw() : scope === 'route' ? routeRect() : { x: 0, y: 0, w: mapW, h: mapH };
+  const f = curPage ? Math.max(1, Math.min((minW || 2400) / r0.w, 9000 / mapW, 4)) : 1;
+  const full = document.createElement('canvas'); full.width = Math.round(mapW * f); full.height = Math.round(mapH * f);
+  const fg = full.getContext('2d'); fg.fillStyle = '#fff'; fg.fillRect(0, 0, full.width, full.height);
+  if (f > 1.05) await curPage.render({ canvasContext: fg, viewport: curPage.getViewport({ scale: curScale * f }) }).promise;
+  else fg.drawImage($('map').querySelector('canvas'), 0, 0, full.width, full.height);
+  if (withRoute) {
+    const svg = new XMLSerializer().serializeToString($('ov')).replace(/<(path|circle)[^>]*data-h="1"[^>]*>(?:<title>.*?<\/title>)?<\/\1>/g, '').replace(/<(path|circle)[^>]*data-h="1"[^>]*\/>/g, '');
+    const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await new Promise(r => { img.onload = r; img.onerror = r; }); fg.drawImage(img, 0, 0, full.width, full.height);
+  }
+  const c = document.createElement('canvas'); c.width = Math.round(r0.w * f); c.height = Math.round(r0.h * f);
+  const cg = c.getContext('2d'); cg.fillStyle = '#fff'; cg.fillRect(0, 0, c.width, c.height); cg.drawImage(full, -r0.x * f, -r0.y * f);
+  return { canvas: c, r0 };
+}
+/* PowerPoint: map on the left, numbered list on the right; arrows and number circles are editable shapes */
+async function buildPpt(scope) {
+  if (!window.PptxGenJS) throw new Error('PPT 元件沒載入，請檢查網路');
+  const { canvas, r0 } = await renderCrop(scope, false, 2600);
+  const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE';
+  const FONT = 'Microsoft JhengHei', RED = 'E8481C', INK = '16120F', GREY = '6B625C';
+  const s = pptx.addSlide(); s.background = { color: 'FFFFFF' };
+  const rr = rows();
+  s.addText(`${dateTxt()} ${st.kind}路線`.trim(), { x: .4, y: .22, w: 8.6, h: .6, fontFace: FONT, fontSize: 26, bold: true, color: INK, margin: 0 });
+  s.addText(`集合時間：${hm(rr[0].a)}-${hm(rr[0].b)}　集合地點：${st.start.name || ''}${st.expo ? '　｜　' + st.expo : ''}`, { x: .4, y: .82, w: 8.6, h: .35, fontFace: FONT, fontSize: 13, color: GREY, margin: 0 });
+  // map image fitted into the left box
+  const BX = .4, BY = 1.32, BW = 8.7, BH = 5.9, ar = canvas.width / canvas.height;
+  let iw = BW, ih = BW / ar; if (ih > BH) { ih = BH; iw = BH * ar; }
+  const ix = BX + (BW - iw) / 2, iy = BY;
+  s.addImage({ data: canvas.toDataURL('image/png'), x: ix, y: iy, w: iw, h: ih, altText: '攤位圖' });
+  const tx = x => ix + (x - r0.x) / r0.w * iw, ty = y => iy + (y - r0.y) / r0.h * ih;
+  // route arrows: one shape per leg between stops (select & delete / drag points to edit)
+  for (const seg of lastSegs) {
+    const pts = seg.P.map(q => ({ x: tx(q.x), y: ty(q.y) }));
+    const x0 = Math.min(...pts.map(q => q.x)), y0 = Math.min(...pts.map(q => q.y)), w = Math.max(.01, Math.max(...pts.map(q => q.x)) - x0), h = Math.max(.01, Math.max(...pts.map(q => q.y)) - y0);
+    s.addShape(pptx.ShapeType.custGeom, { x: x0, y: y0, w, h, points: pts.map(q => ({ x: q.x - x0, y: q.y - y0 })), line: { color: RED, width: 3.5, endArrowType: 'triangle' }, objectName: `箭頭 ${seg.n - (st.start.x != null ? 1 : 0)}→${seg.n + (st.start.x != null ? 0 : 1)}` });
+  }
+  // number circles on the map (above the arrows)
+  const D = .36;
+  for (const m of lastMarks) s.addText(String(m.n), { shape: pptx.ShapeType.ellipse, x: tx(m.x) - D / 2, y: ty(m.y) - D / 2, w: D, h: D, fill: { color: m.n ? RED : INK }, line: { color: 'FFFFFF', width: 1.5 }, color: 'FFFFFF', bold: true, fontSize: 14, fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0, objectName: m.n ? `站點 ${m.n}` : '起點' });
+  // spare straight arrow beside the map (delete if unused)
+  s.addShape(pptx.ShapeType.line, { x: 9.95, y: 6.3, w: 0, h: .95, line: { color: RED, width: 3.5, endArrowType: 'triangle' }, objectName: '備用直箭頭' });
+  s.addText('(不用請自行刪掉)', { x: 10.25, y: 6.6, w: 2.8, h: .4, fontFace: FONT, fontSize: 14, bold: true, color: RED, margin: 0, objectName: '備用箭頭說明' });
+  // right column: numbered list
+  const LX = 9.75, list = rr.slice(1), rowH = Math.min(.82, 4.85 / Math.max(1, list.length + 1));
+  s.addText('導覽順序', { x: LX, y: .3, w: 3.3, h: .45, fontFace: FONT, fontSize: 18, bold: true, color: INK, margin: 0 });
+  let y = 1.32;
+  s.addText('0', { shape: pptx.ShapeType.ellipse, x: LX, y: y + .04, w: .42, h: .42, fill: { color: INK }, color: 'FFFFFF', bold: true, fontSize: 15, fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0 });
+  s.addText([{ text: st.start.name || '集合地點', options: { bold: true, fontSize: 15, color: INK, breakLine: true } }, { text: `集合 ${hm(rr[0].a)}-${hm(rr[0].b)}`, options: { fontSize: 11, color: GREY } }], { x: LX + .55, y, w: 2.85, h: rowH, fontFace: FONT, valign: 'top', margin: 0 });
+  y += rowH;
+  list.forEach((o, i) => {
+    s.addText(String(i + 1), { shape: pptx.ShapeType.ellipse, x: LX, y: y + .04, w: .42, h: .42, fill: { color: RED }, color: 'FFFFFF', bold: true, fontSize: 15, fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0 });
+    s.addText([{ text: o.zh, options: { bold: true, fontSize: 15, color: INK, breakLine: true } }, { text: `${hm(o.a)}-${hm(o.b)}${o.code ? '　' + o.code : ''}`, options: { fontSize: 11, color: GREY } }], { x: LX + .55, y, w: 2.85, h: rowH, fontFace: FONT, valign: 'top', margin: 0, fit: 'shrink' });
+    y += rowH;
+  });
+  return pptx.write({ outputType: 'blob' });
+}
+async function buildPng(scope, withTitle) {
+  const { canvas: crop } = await renderCrop(scope, true, 2400);
+  const r = { w: crop.width, h: crop.height };
+  const head = withTitle ? Math.round(Math.max(r.w * .085, 90)) : 0, c = document.createElement('canvas');
+  c.width = r.w; c.height = r.h + head; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(crop, 0, head);
+  if (withTitle) {
+    const rr = rows(), u = head / 3.2;
+    g.fillStyle = '#16120f'; g.textBaseline = 'alphabetic';
+    g.font = `900 ${u * 1.25}px "Noto Sans TC",sans-serif`; const t1 = `${dateTxt()} ${st.kind}路線`.trim(); g.fillText(t1, u * .8, u * 1.55);
+    g.font = `500 ${u * .82}px "Noto Sans TC",sans-serif`; g.fillStyle = '#4a423c';
+    g.fillText(`集合時間：${hm(rr[0].a)}-${hm(rr[0].b)}　集合地點：${st.start.name || ''}${st.expo ? '　｜　' + st.expo : ''}`, u * .8, u * 2.75);
+    g.fillStyle = '#e8481c'; g.fillRect(0, head - Math.max(3, u * .1), c.width, Math.max(3, u * .1));
+  }
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+/* minimal .docx writer (JSZip) */
+const X = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function run(t, o = {}) { return `<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="微軟正黑體"/>${o.b ? '<w:b/>' : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}<w:sz w:val="${(o.sz || 11) * 2}"/><w:szCs w:val="${(o.sz || 11) * 2}"/></w:rPr><w:t xml:space="preserve">${X(t)}</w:t></w:r>`; }
+function para(parts, o = {}) { const rs = (Array.isArray(parts) ? parts : [[parts, o]]).map(([t, ro]) => run(t, Object.assign({}, o, ro))).join(''); return `<w:p><w:pPr><w:spacing w:before="${o.before || 0}" w:after="${o.after ?? 80}"/>${o.center ? '<w:jc w:val="center"/>' : ''}</w:pPr>${rs}</w:p>`; }
+function table(head, body, widths, o = {}) {
+  const cell = (t, w, h) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${h ? '<w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/>' : ''}<w:vAlign w:val="center"/></w:tcPr>${String(t ?? '').split('\n').map(l => para(l, { b: h, sz: o.sz || 11, after: 0 })).join('')}</w:tc>`;
+  const tr = (cells, h) => `<w:tr>${o.rowH && !h ? `<w:trPr><w:trHeight w:val="${o.rowH}" w:hRule="atLeast"/></w:trPr>` : ''}${cells.map((t, i) => cell(t, widths[i], h)).join('')}</w:tr>`;
+  const bd = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(k => `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`).join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a, b) => a + b, 0)}" w:type="dxa"/><w:tblBorders>${bd}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${widths.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${tr(head, true)}${body.map(r => tr(r)).join('')}</w:tbl>`;
+}
+async function docx(bodyXml) {
+  const z = new JSZip();
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+  z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${bodyXml}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  return z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+function schedDocx() {
+  const r = rows(), W = [2400, 7238];
+  let x = para(`${st.expo || ''}「${st.kind}」`, { b: 1, sz: 16, after: 160 });
+  x += para(dateTxt(), { b: 1, sz: 12, after: 40 }) + para(`集合地點：${st.start.name || ''}`, { sz: 12, after: 120 });
+  x += table(['時間', '導覽廠商'], r.map(o => [`${hm(o.a)}-${hm(o.b)}`, o.zh]), W, { sz: 12 });
+  x += para('', { after: 240 });
+  x += para(`${st.expo || ''} Guided Tour Schedule`, { b: 1, sz: 16, after: 160 });
+  x += para(dateTxt(true), { b: 1, sz: 12, after: 40 }) + para(`Meeting Point: ${st.start.name || ''}`, { sz: 12, after: 120 });
+  x += table(['Time', 'Exhibitor'], r.map(o => [`${hm(o.a)}-${hm(o.b)}`, o.en]), W, { sz: 12 });
+  return docx(x);
+}
+function vendorDocx() {
+  const r = rows().slice(1), first = r[0], last = r[r.length - 1];
+  const W = [700, 1750, 900, 1300, 1400, 1300, 1488, 800];
+  let x = para(`${st.expo || ''} ${st.kind}廠商資料`, { b: 1, sz: 16, after: 200 });
+  if (st.note) x += para(st.note, { sz: 11, after: 120 });
+  if (first) x += para([[`${dateTxt()} ${hm(first.a)}-${hm(last.b)} 預計 ${r.length} 家廠商，每家約 ${+st.per || 20} 分鐘，共 ${last.b - first.a} 分鐘`, {}]], { sz: 11, after: 60 });
+  x += para(`集合地點：${st.start.name || ''}（集合 ${hm(rows()[0].a)}-${hm(rows()[0].b)}）`, { sz: 11, after: 160 });
+  x += table(['路線順序', '公司名稱', '攤位', '時段', '聯絡人', '電話', 'Email', '備註'], r.map((o, i) => [String(i + 1), o.zh, o.code || '', `${hm(o.a)}-${hm(o.b)}`, '', '', '', '']), W, { sz: 10.5, rowH: 1000 });
+  return docx(x);
+}
+$('png').onclick = () => {
+  if (!mapW) return toast('請先上傳地圖');
+  const n = baseName();
+  $('mbox').innerHTML = `<div class="row" style="flex-wrap:wrap"><b style="flex:1;font-size:17px">匯出（一次下載）</b><button class="ghost sm" id="mclose">關閉</button></div>
+  <div class="exp">
+    <label><input type="checkbox" id="xPpt" checked> 路線圖 PPT（橫式：左圖右名單，箭頭／編號都是可移動、可刪除的圖形） <small>${esc(n)}_路線圖.pptx</small></label>
+    <div class="sub">地圖範圍 <label><input type="radio" name="xs" value="view" checked> 目前地圖視窗（跟畫面一模一樣）</label><label><input type="radio" name="xs" value="full"> 整張圖</label></div>
+    <label><input type="checkbox" id="xSch" checked> 行程表 Word（中＋英） <small>${esc(n)}_行程表.docx</small></label>
+    <label><input type="checkbox" id="xVen" checked> 廠商資料表 Word（聯絡人／電話／Email／備註 留白給大家填） <small>${esc(n)}_廠商資料表.docx</small></label>
+  </div>
+  <div class="row"><button class="pri" id="xGo">一次下載勾選的檔案</button></div>
+  <p class="note" id="xMsg" style="margin:0"></p><div id="xImg"></div>`;
+  $('modal').classList.add('on'); $('mclose').onclick = () => $('modal').classList.remove('on');
+  const scope = () => document.querySelector('input[name=xs]:checked').value;
+  $('xGo').onclick = async () => {
+    const jobs = [];
+    if ($('xPpt').checked) jobs.push([n + '_路線圖.pptx', () => buildPpt(scope())]);
+    if ($('xSch').checked) jobs.push([n + '_行程表.docx', schedDocx]);
+    if ($('xVen').checked) jobs.push([n + '_廠商資料表.docx', vendorDocx]);
+    if (!jobs.length) return toast('至少勾一個');
+    guide.exported = true; guide();
+    if (!window.JSZip && jobs.some(j => /docx$/.test(j[0]))) return toast('Word 元件沒載入，請檢查網路');
+    $('xGo').disabled = true; let ok = 0;
+    try {
+      for (const [name, make] of jobs) { $('xMsg').textContent = `產生中：${name}`; await saveFile(name, await make()); ok++; }
+      $('xMsg').textContent = `完成 ${ok} 個檔案。若瀏覽器問「允許下載多個檔案」，請按允許。`;
+    } catch (e) { $('xMsg').textContent = e && e.code === 'declined' ? `已取消（完成 ${ok} 個）` : '下載失敗：' + (e && (e.message || e.code) || e); }
+    $('xGo').disabled = false;
+  };
+};
+
+/* ---------- Firebase 存檔點（newtest 專案 Realtime Database，節點 tourRoute） ---------- */
+const FB = 'https://newtest-b562b-default-rtdb.firebaseio.com/tourRoute';
+const SLOTS = ['slot1', 'slot2', 'slot3'];
+let slotMeta = {}, armed = {};
+async function fb(path, method = 'GET', body) {
+  const r = await fetch(`${FB}/${path}.json`, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? '沒有權限（請在 Firebase 規則加上 tourRoute 節點）' : 'HTTP ' + r.status);
+  return r.json();
+}
+function renderSlots(msg) {
+  $('slots').innerHTML = SLOTS.map((k, i) => { const m = slotMeta[k];
+    return `<div class="slot ${m ? 'has' : ''}" data-k="${k}">
+      <div class="row"><b class="sn">${i + 1}</b><input class="sname" value="${esc(m ? m.name : '')}" placeholder="存檔點 ${i + 1}（可打名字）"></div>
+      <div class="smeta">${m ? `${esc(m.savedAt)}｜${esc(m.expo || '')} ${esc(m.date || '')}｜${m.n || 0} 站${m.map ? '｜含地圖' : ''}` : '空的'}</div>
+      <div class="tools"><button data-s="save">${armed[k] === 'save' ? '覆蓋？再按一次' : '存檔'}</button><button data-s="load" ${m ? '' : 'disabled'}>讀檔</button><button data-s="del" ${m ? '' : 'disabled'}>${armed[k] === 'del' ? '確定刪除？' : '刪除'}</button></div>
+    </div>`; }).join('');
+  $('slotMsg').textContent = msg || '';
+}
+async function refreshSlots(msg) {
+  try { slotMeta = (await fb('meta')) || {}; renderSlots(msg); }
+  catch (e) { renderSlots('雲端連不上：' + e.message + '（若在 claude.ai 預覽中開啟會被擋，放 GitHub Pages 就能用）'); }
+}
+function applyForm() {
+  ['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { $(k).value = st[k] ?? ''; });
+  $('startName').value = st.start.name || '';
+}
+$('slots').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-s]'); if (!b) return;
+  const box = b.closest('.slot'), k = box.dataset.k, act = b.dataset.s, m = slotMeta[k];
+  if ((act === 'save' && m || act === 'del') && armed[k] !== act) { armed = { [k]: act }; renderSlots(); setTimeout(() => { if (armed[k] === act) { armed = {}; renderSlots(); } }, 4000); return; }
+  armed = {}; b.disabled = true;
+  try {
+    if (act === 'save') {
+      const name = box.querySelector('.sname').value.trim() || [st.expo, dateTxt(), st.kind].filter(Boolean).join(' ') || `存檔點 ${SLOTS.indexOf(k) + 1}`;
+      const now = new Date(), stamp = `${now.getMonth() + 1}/${now.getDate()} ${hm(now.getHours() * 60 + now.getMinutes())}`;
+      renderSlots('上傳中…');
+      await fb('data/' + k, 'PUT', { st: JSON.stringify(st), map: mapSrc || null });
+      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(s => s.q.trim()).length, map: !!mapSrc });
+      await refreshSlots(`已存到「${name}」`);
+    } else if (act === 'load') {
+      renderSlots('讀取中…');
+      const d = await fb('data/' + k); if (!d) throw new Error('這格是空的');
+      st = Object.assign(st, JSON.parse(d.st)); st.stops.forEach(s => { s.cands = s.cands || []; }); applyForm(); save();
+      if (d.map && d.map.b64) {
+        const f = new File([fromB64(d.map.b64)], d.map.name || 'map', { type: d.map.type || '' });
+        await loadFile(f, { page: d.map.page || 1 });
+      } else renderAll();
+      renderSlots(`已讀取「${m ? m.name : ''}」`);
+    } else if (act === 'del') {
+      await fb('data/' + k, 'DELETE'); await fb('meta/' + k, 'DELETE');
+      await refreshSlots('已刪除');
+    }
+  } catch (err) { renderSlots('失敗：' + err.message); }
+});
+$('slots').addEventListener('change', async e => {
+  if (!e.target.classList.contains('sname')) return;
+  const k = e.target.closest('.slot').dataset.k; if (!slotMeta[k]) return;
+  try { await fb('meta/' + k + '/name', 'PUT', e.target.value.trim() || slotMeta[k].name); slotMeta[k].name = e.target.value.trim() || slotMeta[k].name; renderSlots('已改名'); } catch (err) { renderSlots('改名失敗：' + err.message); }
+});
+renderSlots('連線中…'); refreshSlots();
+
+/* ---------- 步驟引導：目前該做哪一步就閃哪一區 ---------- */
+let curStep = 0;
+function guide() {}
+/* 操作導覽：第一次開啟跳出 1–5 步說明，關掉後不再自動出現；按「操作導覽」可再看 */
+const HELP = [
+  ['上傳攤位圖 PDF', '左上「1 攤位圖」上傳 PDF，系統會讀出圖上的廠商名稱與攤位號。'],
+  ['左下輸入導覽廠商', '在左下「4 導覽廠商」逐家輸入，或按「貼上整串名單」一次貼上；打錯字或簡稱會列出候選讓你點選。'],
+  ['自動排最佳路線，再自己調整', '按「自動排最佳路線」，系統沿白色走道（優先 6.1m 主走道）排順序；之後可拖曳紅色編號、拖曳線段改走別條走道。'],
+  ['調整完按「符合路線」', '按「符合路線」，畫面會自動抓好角度與範圍，匯出的圖也用這個範圍。'],
+  ['匯出檔案', '按「匯出檔案」，一次下載路線圖 PPT、行程表 Word、廠商資料表 Word。'],
+];
+function showHelp() {
+  closeHelp(); const tgt = $('g1') || $('drop').closest('section');
+  tgt.scrollIntoView({ block: 'nearest' });
+  document.body.insertAdjacentHTML('beforeend', `<div id="hBlock"></div><div id="hSpot"></div>
+    <svg id="hArrow" viewBox="0 0 120 60" aria-hidden="true"><path d="M116 30 H26" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round"/><path d="M40 8 L8 30 L40 52" fill="none" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div id="hBox"><div class="row"><b style="flex:1;font-size:19px">操作導覽（5 步）</b></div>
+    <ol class="helpl">${HELP.map((h, i) => `<li class="${i ? '' : 'first'}"><span class="hn">${i + 1}</span><div><b>${h[0]}</b><p>${h[1]}</p></div></li>`).join('')}</ol>
+    <div class="row"><button class="pri" id="helpOk">知道了，開始使用</button><span class="note" style="margin:0">之後可按右上「❓ 操作導覽」再看</span></div></div>`);
+  placeHelp();
+  $('helpOk').onclick = () => { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} };
+  $('hBlock').onclick = ev => { const r = tgt.getBoundingClientRect(); if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} $('file').click(); } };
+}
+function closeHelp() { ['hBlock', 'hSpot', 'hArrow', 'hBox'].forEach(id => $(id) && $(id).remove()); }
+function placeHelp() {
+  const spot = $('hSpot'); if (!spot) return;
+  const tgt = $('g1') || $('drop').closest('section'), r = tgt.getBoundingClientRect(), p = 8;
+  Object.assign(spot.style, { left: r.left - p + 'px', top: r.top - p + 'px', width: r.width + p * 2 + 'px', height: r.height + p * 2 + 'px' });
+  const ar = $('hArrow'); Object.assign(ar.style, { left: r.right + 14 + 'px', top: r.top + r.height / 2 - 30 + 'px' });
+  const box = $('hBox'), wr = $('wrap').getBoundingClientRect(), bw = Math.min(540, innerWidth - 24);
+  box.style.width = bw + 'px';
+  const bh = box.offsetHeight, cx = (Math.max(0, wr.left) + Math.min(innerWidth, wr.right)) / 2, cy = (Math.max(0, wr.top) + Math.min(innerHeight, wr.bottom)) / 2;
+  box.style.left = Math.max(12, Math.min(innerWidth - bw - 12, cx - bw / 2)) + 'px'; box.style.top = Math.max(12, Math.min(innerHeight - bh - 12, cy - bh / 2)) + 'px';
+}
+addEventListener('resize', placeHelp); addEventListener('scroll', placeHelp, true);
+$('help').onclick = showHelp;
+try { if (localStorage.getItem('tourHelpSeen') !== '1') setTimeout(showHelp, 300); } catch (e) { setTimeout(showHelp, 300); }
+function renderAll() { renderStops(); drawRoute(); renderSched(); save(); guide(); }
+window.addEventListener('resize', () => { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); });
+renderAll();
+}
+
+</script>
+</body>
+</html>
