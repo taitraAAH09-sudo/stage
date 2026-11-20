@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V5 </title>
+<title>導覽路線產生台 V7 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -60,6 +60,7 @@ button.sm{min-height:34px;padding:4px 9px;font-size:13px}
 .mapbox{position:relative;overflow:hidden}.mapwrap{position:relative;height:clamp(460px,calc(100vh - 150px),1100px);overflow:auto;background:#d9dce1;scrollbar-width:none;cursor:grab}.mapwrap::-webkit-scrollbar{display:none}.zpct{min-width:52px;text-align:center;font:800 15px 'Sofia Sans Condensed',sans-serif}
 .map{position:relative;transform-origin:0 0;margin:0}
 .map canvas,.map img{display:block;width:100%;height:auto;background:#fff}
+.map canvas.hd{position:absolute;display:block;background:transparent;pointer-events:none}
 .map svg{position:absolute;inset:0;width:100%;height:100%}
 .map.picking{cursor:crosshair}
 .empty{display:grid;place-items:center;height:100%;min-height:420px;color:var(--mute);text-align:center;padding:30px}
@@ -117,6 +118,9 @@ span.gt{display:inline-block}
 header{background:#1b3a6b;color:#fff;border-bottom:0}header h1{color:#fff}header p{color:#c9d4e6}
 body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 .stop,.slot,.start{box-shadow:0 1px 2px #1b3a6b14}
+.sty{display:grid;grid-template-columns:auto 1fr 46px;gap:6px 10px;align-items:center;font-size:13.5px}
+.sty input[type=range]{min-height:0;padding:0;border:0;accent-color:var(--red)}
+.sty output{font:800 15px "Sofia Sans Condensed",sans-serif;text-align:right}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 @media(max-width:900px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}}
@@ -125,7 +129,7 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V5</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V7</span>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
 <section class="slotbar">
@@ -172,6 +176,15 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
       <button class="ghost" id="paste">貼上整串名單</button>
     </div>
     <p class="note">打字時會等你選完字才比對。全對＝綠、模糊＝橘（請點下方候選確認）、找不到＝紅。也可直接打攤位號，例如 N0224。</p>
+  </section>
+  <section>
+    <h2>5　圓圈與箭頭</h2>
+    <div class="sty">
+      <span>圓圈大小</span><input type="range" id="syC" min="0.5" max="2.5" step="0.05"><output id="syCv"></output>
+      <span>線條粗細</span><input type="range" id="syA" min="0.3" max="3" step="0.05"><output id="syAv"></output>
+      <span>箭頭頭大小</span><input type="range" id="syH" min="0.5" max="2.5" step="0.05"><output id="syHv"></output>
+    </div>
+    <div class="row" style="margin-top:6px"><button class="ghost sm" id="syReset">還原預設</button><span class="note" style="margin:0">畫面、匯出的 PPT 都會套用；位置用拖曳調整</span></div>
   </section>
 </aside>
 <div class="stage">
@@ -440,7 +453,8 @@ const KEY = 'tourRoute_V2';
 try { const old = localStorage.getItem('tourRoute_V1'); if (!localStorage.getItem(KEY) && old) { const o = JSON.parse(old); (o.stops || []).forEach(s => s.rt = null); localStorage.setItem(KEY, JSON.stringify(o)); } } catch (e) {}
 let mapSrc = null, lastSegs = [], lastMarks = [], curPage = null, curScale = 1, G = null, pathCache = new Map(), snapCache = new Map(), dragFast = false, lastBox = null;
 let pdfDoc = null, mapW = 0, mapH = 0, data = { labels: [], codes: [] }, zoom = 1, mode = null, selected = -1;
-let st = { expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [] };
+let st = { expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [], sty: { c: 1, a: 1, h: 1 } };
+const sty = () => Object.assign({ c: 1, a: 1, h: 1 }, st.sty || {});
 const blank = () => ({ q: '', en: '', min: null, label: '', code: '', x: null, y: null, score: 0, cands: [], manual: false, rt: null });
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.stops) st = Object.assign(st, s); } catch (e) {}
 if (!st.stops.length) for (let i = 0; i < 6; i++) st.stops.push(blank());
@@ -499,7 +513,7 @@ async function renderPdfPage(n, name) {
 function mountMap(canvas) {
   const m = $('map'); m.innerHTML = ''; m.appendChild(canvas);
   m.insertAdjacentHTML('beforeend', `<svg id="ov" viewBox="0 0 ${mapW} ${mapH}" xmlns="http://www.w3.org/2000/svg"></svg>`);
-  m.hidden = false; $('empty').hidden = true; fit();
+  m.hidden = false; $('empty').hidden = true; hdReset(); fit();
   pathCache.clear(); snapCache.clear(); G = null;
   try { G = Grid.build(canvas.getContext('2d').getImageData(0, 0, mapW, mapH), mapW, mapH, data.codes); } catch (e) { G = null; }
   $('ov').addEventListener('pointerdown', onDown);
@@ -597,6 +611,10 @@ $('modal').onclick = e => { if (e.target === $('modal')) $('modal').classList.re
 ['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { const el = $(k); el.value = st[k] ?? el.value; el.oninput = () => {
     if (k === 'date' && el.value && !/^\d{4}-/.test(el.value)) { toast('年份請輸入 4 碼（例如 2027）'); return; } st[k] = el.type === 'number' ? +el.value : el.value; if (k === 'per') renderStops(); renderSched(); save(); }; });
 $('startName').value = st.start.name; $('startName').oninput = e => { st.start.name = e.target.value; renderSched(); save(); };
+function syUI() { const Y = sty(); [['C', 'c'], ['A', 'a'], ['H', 'h']].forEach(([u, k]) => { $('sy' + u).value = Y[k]; $('sy' + u + 'v').textContent = Math.round(Y[k] * 100) + '%'; }); }
+[['C', 'c'], ['A', 'a'], ['H', 'h']].forEach(([u, k]) => $('sy' + u).addEventListener('input', e => { st.sty = Object.assign(sty(), { [k]: +e.target.value }); $('sy' + u + 'v').textContent = Math.round(st.sty[k] * 100) + '%'; drawRoute(); save(); }));
+$('syReset').onclick = () => { st.sty = { c: 1, a: 1, h: 1 }; syUI(); drawRoute(); save(); toast('已還原預設大小'); };
+syUI();
 $('startPick').onclick = () => { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'start' }); };
 
 /* ---------- map interaction ---------- */
@@ -665,8 +683,8 @@ function trim(pts, r0, r1) {
 }
 function drawRoute() {
   const ov = $('ov'); if (!ov) return;
-  const R = mapW / 75, sw = R * .36, out = [], handles = []; let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
-  out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
+  const Y = sty(), R0 = mapW / 75, R = R0 * Y.c, sw = R0 * .36 * Y.a, out = [], handles = []; let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
+  out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="${(3.2 * Y.h).toFixed(2)}" markerHeight="${(3.2 * Y.h).toFixed(2)}" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
   const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && o.s.q.trim());
   let prev = st.start.x != null ? { x: st.start.x, y: st.start.y, r: R * .9 } : null;
   for (const { s, i } of pts) {
@@ -674,9 +692,9 @@ function drawRoute() {
       const rt = getRt(s), L = segPoly(prev, s, rt), P = trim(L, prev.r * 1.15, R * 1.35); segsNow.push({ P, n: segsNow.length + 1 }); const d0 = 0, d = 'M' + P.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' L');
       out.push(`<path d="${d}" fill="none" stroke="#fff" stroke-width="${sw * 2.2}" stroke-linejoin="round" opacity=".85"/><path d="${d}" fill="none" stroke="#e8481c" stroke-width="${sw}" stroke-linejoin="round" marker-end="url(#ah)"/>`);
       const cur = rt.t === 'y' ? 'ns-resize' : rt.t === 'x' ? 'ew-resize' : 'move'; for (const q of L) { bx0 = Math.min(bx0, q.x); by0 = Math.min(by0, q.y); bx1 = Math.max(bx1, q.x); by1 = Math.max(by1, q.y); }
-      out.push(`<path data-seg="${i}" data-h="1" d="${d}" fill="none" stroke="transparent" stroke-width="${R * 1.4}" style="cursor:${cur}"><title>拖曳：把這段移到別的走道／點一下：切換轉彎方向</title></path>`);
+      out.push(`<path data-seg="${i}" data-h="1" d="${d}" fill="none" stroke="transparent" stroke-width="${Math.max(R0 * 1.4, sw * 3)}" style="cursor:${cur}"><title>拖曳：把這段移到別的走道／點一下：切換轉彎方向</title></path>`);
       if ((rt.t === 'y' || rt.t === 'x') && L.length >= 3) { const k = Math.floor((L.length - 1) / 2), m = { x: (L[k].x + L[k + 1].x) / 2, y: (L[k].y + L[k + 1].y) / 2 };
-        handles.push(`<circle data-seg="${i}" data-h="1" cx="${m.x}" cy="${m.y}" r="${R * .42}" fill="#fff" stroke="#e8481c" stroke-width="${R * .14}" style="cursor:${cur}"><title>拖曳把這段移到別的走道</title></circle>`); }
+        handles.push(`<circle data-seg="${i}" data-h="1" cx="${m.x}" cy="${m.y}" r="${R0 * .42}" fill="#fff" stroke="#e8481c" stroke-width="${R0 * .14}" style="cursor:${cur}"><title>拖曳把這段移到別的走道</title></circle>`); }
     }
     prev = { x: s.x, y: s.y, r: R };
   }
@@ -693,6 +711,43 @@ function drawRoute() {
   const miss = st.stops.filter(s => s.q.trim() && s.x == null).length;
   $('sum').innerHTML = pts.length ? `已定位 <b>${pts.length}</b> 站${miss ? `，<span style="color:var(--bad)">${miss} 站未定位</span>` : ''}｜路線長度 <b>${Math.round(L / mapW * 1000)}</b>` : '';
 }
+
+/* ---------- 清晰圖層：把畫面看得到的範圍，用螢幕實際解析度重新從 PDF 畫一次 ----------
+   底圖（長邊 2600px）照舊負責座標、走道計算與存檔，不動；放大時疊一張高解析的局部圖在上面。 */
+let hdTask = null, hdTimer = null, hdSeq = 0;
+function hdReset() { clearTimeout(hdTimer); if (hdTask) { try { hdTask.cancel(); } catch (e) {} hdTask = null; } }
+function hdQueue() { clearTimeout(hdTimer); hdTimer = setTimeout(hdRender, 140); }
+async function hdRender() {
+  const m = $('map'), w = $('wrap'); if (!curPage || !mapW || m.hidden) return;
+  const k = kNow(), dpr = window.devicePixelRatio || 1;
+  let ps = k * dpr;                                   // 每 1 個底圖像素在螢幕上占幾個實體像素
+  let hd = m.querySelector('canvas.hd');
+  if (ps <= 1.05) { if (hd) hd.remove(); return; }    // 沒放大，底圖就夠清楚
+  // 可見範圍（底圖座標），四周多留 30% 讓小幅拖曳不用重畫
+  let x0 = (w.scrollLeft - m.offsetLeft) / k, y0 = (w.scrollTop - m.offsetTop) / k, vw = w.clientWidth / k, vh = w.clientHeight / k;
+  const mx = vw * .3, my = vh * .3;
+  x0 = Math.max(0, x0 - mx); y0 = Math.max(0, y0 - my);
+  let x1 = Math.min(mapW, x0 + vw + mx * 2), y1 = Math.min(mapH, y0 + vh + my * 2);
+  if (x1 <= x0 || y1 <= y0) return;
+  const MAXPX = 20e6; if ((x1 - x0) * (y1 - y0) * ps * ps > MAXPX) ps = Math.sqrt(MAXPX / ((x1 - x0) * (y1 - y0)));
+  const seq = ++hdSeq; if (hdTask) { try { hdTask.cancel(); } catch (e) {} }
+  const c = document.createElement('canvas'); c.className = 'hd';
+  c.width = Math.max(1, Math.round((x1 - x0) * ps)); c.height = Math.max(1, Math.round((y1 - y0) * ps));
+  const vp = curPage.getViewport({ scale: curScale * ps, offsetX: -x0 * ps, offsetY: -y0 * ps });
+  try { hdTask = curPage.render({ canvasContext: c.getContext('2d'), viewport: vp }); await hdTask.promise; }
+  catch (e) { return; } finally { if (seq === hdSeq) hdTask = null; }
+  if (seq !== hdSeq || kNow() !== k) return;            // 畫的途中又縮放了，丟掉這張
+  Object.assign(c.style, { left: x0 * k + 'px', top: y0 * k + 'px', width: (x1 - x0) * k + 'px', height: (y1 - y0) * k + 'px' });
+  hd = m.querySelector('canvas.hd'); if (hd) hd.replaceWith(c); else m.insertBefore(c, $('ov'));
+}
+$('wrap').addEventListener('scroll', () => {
+  const m = $('map'), hd = m.querySelector('canvas.hd'), w = $('wrap'); if (!curPage) return;
+  // 拖出清晰範圍才重畫
+  if (!hd) return hdQueue();
+  const L = parseFloat(hd.style.left), T = parseFloat(hd.style.top), W = parseFloat(hd.style.width), H = parseFloat(hd.style.height);
+  const vx = w.scrollLeft - m.offsetLeft, vy = w.scrollTop - m.offsetTop;
+  if (vx < L - 1 || vy < T - 1 || vx + w.clientWidth > L + W + 1 || vy + w.clientHeight > T + H + 1) hdQueue();
+}, { passive: true });
 
 /* ---------- ordering ---------- */
 function snapC(p) { const k = Math.round(p.x) + ',' + Math.round(p.y); if (!snapCache.has(k)) snapCache.set(k, Grid.snap(G, p)); return snapCache.get(k); }
@@ -747,7 +802,7 @@ function drawFrame() {
   el.hidden = !mapW;
 }
 const kNow = () => ($('map').clientWidth || 1) / (mapW || 1);
-function setScale(k) { const w = $('wrap'), m = $('map'); m.style.width = mapW * k + 'px'; m.style.margin = `${w.clientHeight}px ${w.clientWidth}px`; zoom = mapW * k / frameRect().fw; zlabel(); }
+function setScale(k) { const w = $('wrap'), m = $('map'); m.style.width = mapW * k + 'px'; m.style.margin = `${w.clientHeight}px ${w.clientWidth}px`; zoom = mapW * k / frameRect().fw; zlabel(); hdQueue(); }
 function centerOn(mx, my) { const w = $('wrap'), m = $('map'), f = frameRect(), k = kNow(); w.scrollLeft = m.offsetLeft + mx * k - (f.fx + f.fw / 2); w.scrollTop = m.offsetTop + my * k - (f.fy + f.fh / 2); }
 function viewCenter() { const r = viewRaw(); return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
 function fitRoute() {
@@ -856,13 +911,13 @@ async function buildPpt(scope) {
   for (const seg of lastSegs) {
     const pts = seg.P.map(q => ({ x: tx(q.x), y: ty(q.y) }));
     const x0 = Math.min(...pts.map(q => q.x)), y0 = Math.min(...pts.map(q => q.y)), w = Math.max(.01, Math.max(...pts.map(q => q.x)) - x0), h = Math.max(.01, Math.max(...pts.map(q => q.y)) - y0);
-    s.addShape(pptx.ShapeType.custGeom, { x: x0, y: y0, w, h, points: pts.map(q => ({ x: q.x - x0, y: q.y - y0 })), line: { color: RED, width: 3.5, endArrowType: 'triangle' }, objectName: `箭頭 ${seg.n - (st.start.x != null ? 1 : 0)}→${seg.n + (st.start.x != null ? 0 : 1)}` });
+    s.addShape(pptx.ShapeType.custGeom, { x: x0, y: y0, w, h, points: pts.map(q => ({ x: q.x - x0, y: q.y - y0 })), line: { color: RED, width: +(3.5 * sty().a).toFixed(2), endArrowType: 'triangle' }, objectName: `箭頭 ${seg.n - (st.start.x != null ? 1 : 0)}→${seg.n + (st.start.x != null ? 0 : 1)}` });
   }
   // number circles on the map (above the arrows)
-  const D = .36;
-  for (const m of lastMarks) s.addText(String(m.n), { shape: pptx.ShapeType.ellipse, x: tx(m.x) - D / 2, y: ty(m.y) - D / 2, w: D, h: D, fill: { color: m.n ? RED : INK }, line: { color: 'FFFFFF', width: 1.5 }, color: 'FFFFFF', bold: true, fontSize: 14, fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0, objectName: m.n ? `站點 ${m.n}` : '起點' });
+  const Y = sty(), D = .36 * Y.c;
+  for (const m of lastMarks) s.addText(String(m.n), { shape: pptx.ShapeType.ellipse, x: tx(m.x) - D / 2, y: ty(m.y) - D / 2, w: D, h: D, fill: { color: m.n ? RED : INK }, line: { color: 'FFFFFF', width: 1.5 * Y.c }, color: 'FFFFFF', bold: true, fontSize: Math.round(14 * Y.c), fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0, objectName: m.n ? `站點 ${m.n}` : '起點' });
   // spare straight arrow beside the map (delete if unused)
-  s.addShape(pptx.ShapeType.line, { x: 9.95, y: 6.3, w: 0, h: .95, line: { color: RED, width: 3.5, endArrowType: 'triangle' }, objectName: '備用直箭頭' });
+  s.addShape(pptx.ShapeType.line, { x: 9.95, y: 6.3, w: 0, h: .95, line: { color: RED, width: +(3.5 * sty().a).toFixed(2), endArrowType: 'triangle' }, objectName: '備用直箭頭' });
   s.addText('(不用請自行刪掉)', { x: 10.25, y: 6.6, w: 2.8, h: .4, fontFace: FONT, fontSize: 14, bold: true, color: RED, margin: 0, objectName: '備用箭頭說明' });
   // right column: numbered list
   const LX = 9.75, list = rr.slice(1), rowH = Math.min(.82, 4.85 / Math.max(1, list.length + 1));
@@ -988,6 +1043,7 @@ async function refreshSlots(msg) {
 function applyForm() {
   ['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { $(k).value = st[k] ?? ''; });
   $('startName').value = st.start.name || '';
+  syUI();
 }
 $('slots').addEventListener('click', async e => {
   const b = e.target.closest('button[data-s]'); if (!b) return;
