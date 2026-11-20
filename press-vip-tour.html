@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V4</title>
+<title>導覽路線產生台 V5 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -12,8 +12,8 @@
    PICTURE: 上傳的平面圖本身＋編號紅圈與箭頭
    COLOUR and TYPE: 白底、墨黑、朱紅 #e8481c 當唯一路線色；Noto Sans TC + Sofia Sans Condensed 數字
    LAYOUT: 左欄表單（站點清單），右側大地圖，下方行程表 */
-:root{color-scheme:light dark;--bg:light-dark(#fff,#14110f);--panel:light-dark(#f6f4f2,#1d1916);--ink:light-dark(#16120f,#f1ece8);--mute:light-dark(#6b625c,#a99f97);--line:light-dark(#e2ddd8,#36302b);--red:#e8481c;--ok:light-dark(#1d7a3e,#5fd08a);--warn:light-dark(#b26a00,#f0b44c);--bad:light-dark(#c0261b,#ff7a6e)}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+:root{color-scheme:light;--bg:#fff;--panel:#f6f4f2;--ink:#16120f;--mute:#6b625c;--line:#e2ddd8;--red:#e8481c;--ok:#1d7a3e;--warn:#b26a00;--bad:#c0261b}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:light}
 *{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Noto Sans TC",system-ui,sans-serif;overflow-x:clip}
 header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:16px max(2vw,14px) 12px;border-bottom:3px solid var(--ink)}
@@ -57,7 +57,7 @@ button.sm{min-height:34px;padding:4px 9px;font-size:13px}
 .bar .sum b{color:var(--ink);font:800 18px "Sofia Sans Condensed",sans-serif}
 .mode{background:var(--red);color:#fff;padding:6px 10px;border-radius:6px;font-size:13.5px;display:none}
 .mode.on{display:inline-block}
-.mapwrap{flex:1;overflow:auto;background:light-dark(#ebe8e4,#0d0b0a);min-height:420px;max-height:78vh;position:relative}
+.mapbox{position:relative;overflow:hidden}.mapwrap{position:relative;height:clamp(460px,calc(100vh - 150px),1100px);overflow:auto;background:#d9dce1;scrollbar-width:none;cursor:grab}.mapwrap::-webkit-scrollbar{display:none}.zpct{min-width:52px;text-align:center;font:800 15px 'Sofia Sans Condensed',sans-serif}
 .map{position:relative;transform-origin:0 0;margin:0}
 .map canvas,.map img{display:block;width:100%;height:auto;background:#fff}
 .map svg{position:absolute;inset:0;width:100%;height:100%}
@@ -86,16 +86,47 @@ td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
 .slot .sname{min-height:34px;font-size:15px;padding:5px 8px}
 .smeta{font-size:12.5px;color:var(--mute)}
 .slot button:disabled{opacity:.4;cursor:default}
+.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap;font-size:13.5px}
+.steps li{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;color:var(--mute);border:1px solid var(--line);cursor:pointer}
+.steps li b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--line);color:var(--ink);font:800 13px "Sofia Sans Condensed",sans-serif}
+.steps li.done{color:var(--ink)}.steps li.done b{background:var(--ink);color:var(--bg)}
+.steps li.now{color:#fff;background:var(--red);border-color:var(--red);font-weight:700}.steps li.now b{background:#fff;color:var(--red)}
+.gt{position:relative}
+.gtip{display:none}
+.gt.now{outline:3px solid var(--red);outline-offset:4px;border-radius:8px;animation:gpulse 1.6s ease-in-out infinite}
+.gt.now>.gtip{display:block;background:var(--red);color:#fff;font-size:13.5px;font-weight:700;padding:6px 10px;border-radius:6px;margin-bottom:8px}
+.gt.now>.gtip.down{position:absolute;top:calc(100% + 10px);left:0;z-index:5;white-space:nowrap;margin:0;box-shadow:0 4px 12px #0003}
+span.gt{display:inline-block}
+@keyframes gpulse{50%{outline-color:transparent}}
+@media(prefers-reduced-motion:reduce){.gt.now{animation:none}}
+.helpbtn{margin-left:auto;background:#ff7a1a;border-color:#ff7a1a;color:#fff;font-weight:700;border-radius:8px}
+.helpl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:560px}
+.helpl li{display:flex;gap:12px;align-items:flex-start}
+.helpl .hn{flex:none;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font:800 16px "Sofia Sans Condensed",sans-serif}
+.helpl b{font-size:16px}.helpl p{margin:2px 0 0;color:var(--mute);font-size:14px}
+#hBlock{position:fixed;inset:0;z-index:30}
+#hSpot{position:fixed;z-index:31;border-radius:10px;box-shadow:0 0 0 9999px rgba(10,8,6,.74);outline:3px solid #ff7a1a;pointer-events:none;transition:all .2s}
+#hArrow{position:fixed;z-index:32;width:110px;height:60px;pointer-events:none;animation:hpoke 1s ease-in-out infinite}
+@keyframes hpoke{50%{transform:translateX(-10px)}}
+#hBox{position:fixed;z-index:32;background:var(--bg);color:var(--ink);border-radius:12px;padding:16px 18px;box-shadow:0 12px 40px #0008;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 24px);overflow:auto}
+.helpl li.first .hn{background:#ff7a1a;box-shadow:0 0 0 4px #ff7a1a44}
+@media(prefers-reduced-motion:reduce){#hArrow{animation:none}}
+#frame{position:absolute;border:3px solid #e8481c;box-shadow:0 0 0 9999px rgba(20,18,16,.32);pointer-events:none;border-radius:2px}
+#frame span{position:absolute;left:-3px;top:-28px;background:#e8481c;color:#fff;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:4px 4px 0 0;white-space:nowrap}
+.empty{min-height:100%}
+header{background:#1b3a6b;color:#fff;border-bottom:0}header h1{color:#fff}header p{color:#c9d4e6}
+body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
+.stop,.slot,.start{box-shadow:0 1px 2px #1b3a6b14}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
-@media(max-width:900px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}.mapwrap{max-height:70vh}}
+@media(max-width:900px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V4</span>
-  <p>上傳攤位圖 → 打廠商名稱自動對位 → 系統排最短路線 → 手動微調 → 匯出路線圖與行程表</p>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V5</span>
+  <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
 <section class="slotbar">
   <div class="slothead"><b>雲端存檔點</b><span class="note" id="slotMsg" style="margin:0"></span></div>
@@ -103,7 +134,8 @@ td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
 </section>
 <main>
 <aside>
-  <section>
+  <section class="gt" id="g1">
+    <span class="gtip">第 1 步：請先上傳攤位圖 PDF</span>
     <h2>1　攤位圖</h2>
     <div class="drop" id="drop" tabindex="0"><b>點這裡或拖曳上傳地圖</b><br>PDF（可自動讀廠商名）或 JPG／PNG（需手動點位置）</div>
     <input type="file" id="file" accept=".pdf,image/*" hidden>
@@ -114,7 +146,7 @@ td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
     <h2>2　活動資訊</h2>
     <div class="grid2">
       <label class="f" style="grid-column:1/-1">展名<input id="expo" placeholder="例：TaipeiPLAS 2026"></label>
-      <label class="f">日期<input id="date" type="date"></label>
+      <label class="f">日期<input id="date" type="date" min="2000-01-01" max="2099-12-31"></label>
       <label class="f">導覽開始<input id="time" type="time" value="13:30"></label>
       <label class="f">每家預設（分）<input id="per" type="number" min="5" step="5" value="20"></label>
       <label class="f">提前集合（分）<input id="gather" type="number" min="0" step="5" value="10"></label>
@@ -131,7 +163,8 @@ td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
     </div>
     <p class="note" id="startInfo">地圖若有「舞台」字樣會自動定位；沒有的話按「點地圖」，例如點 K 區入口，再把名稱改成「1F K區入口」。</p>
   </section>
-  <section>
+  <section class="gt" id="g2">
+    <span class="gtip">第 2 步：在這裡輸入要導覽的廠商（可按「貼上整串名單」）</span>
     <h2>4　導覽廠商（第 1、2、3… 站）</h2>
     <div class="stops" id="stops"></div>
     <div class="row" style="margin-top:8px">
@@ -143,20 +176,21 @@ td.t{white-space:nowrap;font-variant-numeric:tabular-nums;width:1%}
 </aside>
 <div class="stage">
   <div class="bar">
-    <button class="pri" id="opt">自動排最佳路線</button>
+    <span class="gt" id="g3"><button class="pri" id="opt">自動排最佳路線</button><span class="gtip down">第 3 步：按這裡排路線，再拖曳編號／線段自己調整</span></span>
     <button class="ghost" id="keep">照我的順序</button>
-    <button class="ghost sm" id="zin" aria-label="放大">＋</button>
-    <button class="ghost sm" id="zout" aria-label="縮小">－</button>
-    <button class="ghost sm" id="zfit">符合路線</button>
+    <button class="ghost sm" id="zout" aria-label="縮小 5%">－</button>
+    <span class="zpct" id="zpct">100%</span>
+    <button class="ghost sm" id="zin" aria-label="放大 5%">＋</button>
+    <span class="gt" id="g4"><button class="ghost sm" id="zfit">符合路線</button><span class="gtip down">第 4 步：調整完按這裡，會自動抓好角度與範圍</span></span>
     <button class="ghost sm" id="zall">整張圖</button>
-    <button class="pri" id="png" style="background:var(--ink);border-color:var(--ink);color:var(--bg)">匯出檔案</button>
+    <span class="gt" id="g5"><button class="pri" id="png" style="background:var(--ink);border-color:var(--ink);color:var(--bg)">匯出檔案</button><span class="gtip down">第 5 步：匯出檔案</span></span>
     <span class="mode" id="mode"></span>
     <span class="sum" id="sum"></span>
   </div>
-  <div class="mapwrap" id="wrap">
+  <div class="mapbox"><div class="mapwrap" id="wrap">
     <div class="empty" id="empty"><div><b>先上傳攤位圖</b>上傳後：拖曳紅色編號＝調整位置；預設沿白色走道走（優先 6.1m 主走道）；拖曳箭頭線段＝改走別條走道；點一下線段＝切換 自動／先橫後直／先直後橫／直線</div></div>
     <div class="map" id="map" hidden></div>
-  </div>
+  </div><div id="frame" hidden><span>PPT 輸出範圍（不滿意就用 ＋／－ 或拖曳地圖調整）</span></div></div>
   <div class="sched">
     <h2 id="sTitle">導覽行程表</h2>
     <p class="meta" id="sMeta"></p>
@@ -472,13 +506,14 @@ function mountMap(canvas) {
   m.onclick = onMapClick;
 }
 function afterMap(isImg) {
+  if (!restoring) { st.routed = false; st.fitted = false; }
   if (restoring) { restoring = false; renderAll(); fitRoute(); return; }
   // reset positions computed for a previous map, keep typed names
   const stage = !isImg && Core.match('舞台', data).find(m => m.score >= 90);
   if (stage) { st.start.x = stage.x; st.start.y = stage.y + mapW * .02; if (!st.start.name) st.start.name = '舞台區'; $('startInfo').textContent = '已自動定位到地圖上的「舞台」。要改起點就按「點地圖」。'; }
   else { st.start.x = st.start.y = null; $('startInfo').textContent = '這張圖沒找到「舞台」，請按「點地圖」設定起點（例如入口）。'; }
   st.stops.forEach(s => { s.x = s.y = null; s.label = s.code = ''; s.manual = false; doMatch(s); });
-  renderAll();
+  sizeWrap(); renderAll();
 }
 
 /* ---------- matching ---------- */
@@ -553,13 +588,14 @@ $('paste').onclick = () => {
   const go = replace => {
     const names = $('pasteTa').value.split(/\n/).map(l => { const cols = l.split('\t').map(c => c.trim()).filter(Boolean); const c = cols.find(c => !/^\d+$/.test(c)) || ''; return c.replace(/^\d+[.、)\s]+/, '').trim(); }).filter(Boolean);
     const add = names.map(n => { const s = blank(); s.q = n; doMatch(s); return s; });
-    st.stops = replace ? add : st.stops.filter(s => s.q.trim()).concat(add);
+    st.stops = replace ? add : st.stops.filter(s => s.q.trim()).concat(add); st.routed = false; st.fitted = false;
     $('modal').classList.remove('on'); renderAll();
   };
   $('pasteOk').onclick = () => go(true); $('pasteAdd').onclick = () => go(false); $('mclose').onclick = () => $('modal').classList.remove('on');
 };
 $('modal').onclick = e => { if (e.target === $('modal')) $('modal').classList.remove('on'); };
-['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { const el = $(k); el.value = st[k] ?? el.value; el.oninput = () => { st[k] = el.type === 'number' ? +el.value : el.value; if (k === 'per') renderStops(); renderSched(); save(); }; });
+['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { const el = $(k); el.value = st[k] ?? el.value; el.oninput = () => {
+    if (k === 'date' && el.value && !/^\d{4}-/.test(el.value)) { toast('年份請輸入 4 碼（例如 2027）'); return; } st[k] = el.type === 'number' ? +el.value : el.value; if (k === 'per') renderStops(); renderSched(); save(); }; });
 $('startName').value = st.start.name; $('startName').oninput = e => { st.start.name = e.target.value; renderSched(); save(); };
 $('startPick').onclick = () => { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'start' }); };
 
@@ -576,6 +612,13 @@ function onMapClick(e) {
   setMode(null); renderAll();
 }
 function nearestCode(p) { let b = '', bd = 1e9; for (const c of data.codes) { const d = Math.hypot(c.x - p.x, c.y - p.y); if (d < bd) { bd = d; b = c.s; } } return bd < mapW * .04 ? b : ''; }
+$('wrap').addEventListener('pointerdown', e => {
+  if (mode || e.button !== 0 || e.target.closest('[data-pt],[data-seg]') || !mapW) return;
+  const w = $('wrap'), sx = e.clientX, sy = e.clientY, sl = w.scrollLeft, sT = w.scrollTop; let panned = false;
+  const mv = ev => { const dx = ev.clientX - sx, dy = ev.clientY - sy; if (!panned && Math.hypot(dx, dy) < 5) return; panned = true; moved = true; w.scrollLeft = sl - dx; w.scrollTop = sT - dy; w.style.cursor = 'grabbing'; };
+  const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); w.style.cursor = ''; if (panned) setTimeout(() => moved = false, 0); };
+  addEventListener('pointermove', mv); addEventListener('pointerup', up);
+});
 function onDown(e) {
   const g = e.target.closest('[data-pt]'), seg = e.target.closest('[data-seg]');
   if (mode || (!g && !seg)) return;
@@ -685,16 +728,31 @@ $('opt').onclick = () => {
     const picked = ord.map(i => nodes[i]);
     st.stops = (hasStart ? picked : [nodes[0], ...picked]).concat(rest.filter(s => s.q.trim()));
     st.stops.forEach(s => s.rt = null);
-    renderAll(); fitRoute();
+    st.routed = true; st.fitted = false; renderAll(); fitRoute();
     toast(after < before - 1 ? `已改走主走道，路線縮短 ${Math.round((1 - after / before) * 100)}%` : '目前順序已是最佳（沿走道）');
   }, 30);
 };
-$('keep').onclick = () => { st.stops.forEach(s => s.rt = null); renderAll(); toast('維持你輸入的順序，線段重新沿走道'); };
+$('keep').onclick = () => { st.stops.forEach(s => s.rt = null); st.routed = true; st.fitted = false; renderAll(); toast('維持你輸入的順序，線段重新沿走道'); };
+/* 紅色取景框＝PPT 輸出範圍（固定 8.7:5.9），地圖在框下移動／縮放 */
+const FR = 87 / 59;
+function frameRect() {
+  const w = $('wrap'), cw = w.clientWidth, ch = w.clientHeight, pad = 28;
+  let fw = cw - pad * 2, fh = fw / FR; if (fh > ch - pad * 2) { fh = ch - pad * 2; fw = fh * FR; }
+  return { fx: (cw - fw) / 2, fy: (ch - fh) / 2, fw, fh };
+}
+function sizeWrap() { const w = $('wrap'), top = w.getBoundingClientRect().top + scrollY; w.style.height = Math.max(420, innerHeight - top - 14) + 'px'; }
+function drawFrame() {
+  const f = frameRect(), el = $('frame'); if (!el) return;
+  Object.assign(el.style, { left: f.fx + 'px', top: f.fy + 'px', width: f.fw + 'px', height: f.fh + 'px' });
+  el.hidden = !mapW;
+}
+const kNow = () => ($('map').clientWidth || 1) / (mapW || 1);
+function setScale(k) { const w = $('wrap'), m = $('map'); m.style.width = mapW * k + 'px'; m.style.margin = `${w.clientHeight}px ${w.clientWidth}px`; zoom = mapW * k / frameRect().fw; zlabel(); }
+function centerOn(mx, my) { const w = $('wrap'), m = $('map'), f = frameRect(), k = kNow(); w.scrollLeft = m.offsetLeft + mx * k - (f.fx + f.fw / 2); w.scrollTop = m.offsetTop + my * k - (f.fy + f.fh / 2); }
+function viewCenter() { const r = viewRaw(); return { x: r.x + r.w / 2, y: r.y + r.h / 2 }; }
 function fitRoute() {
-  const w = $('wrap'); if (!mapW) return; if (!lastBox) return fit();
-  const r = routeRect(), k = Math.min((w.clientWidth - 2) / r.w, (w.clientHeight - 2) / r.h);
-  $('map').style.width = mapW * k + 'px'; zoom = mapW * k / (w.clientWidth - 2);
-  requestAnimationFrame(() => { w.scrollLeft = r.x * k - Math.max(0, (w.clientWidth - r.w * k) / 2); w.scrollTop = r.y * k - Math.max(0, (w.clientHeight - r.h * k) / 2); });
+  if (!mapW) return; if (!lastBox) return fit();
+  const r = routeRect(), f = frameRect(); setScale(Math.min(f.fw / r.w, f.fh / r.h)); centerOn(r.x + r.w / 2, r.y + r.h / 2); drawFrame();
 }
 function routeRect() {
   if (!lastBox) return { x: 0, y: 0, w: mapW, h: mapH };
@@ -702,11 +760,13 @@ function routeRect() {
   const x0 = Math.max(0, b.x0 - pad), y0 = Math.max(0, b.y0 - pad * 1.9), x1 = Math.min(mapW, b.x1 + pad), y1 = Math.min(mapH, b.y1 + pad);
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
-function fit() { const w = $('wrap').clientWidth - 2; zoom = 1; $('map').style.width = w + 'px'; }
-$('zin').onclick = () => { zoom *= 1.3; $('map').style.width = ($('wrap').clientWidth - 2) * zoom + 'px'; };
-$('zout').onclick = () => { zoom = Math.max(.5, zoom / 1.3); $('map').style.width = ($('wrap').clientWidth - 2) * zoom + 'px'; };
-$('zfit').onclick = fitRoute;
-$('zall').onclick = () => { const w = $('wrap'); const k = Math.min((w.clientWidth - 2) / mapW, (w.clientHeight - 2) / mapH); zoom = k * mapW / (w.clientWidth - 2); $('map').style.width = mapW * k + 'px'; w.scrollTop = w.scrollLeft = 0; };
+function zlabel() { const el = $('zpct'); if (el) el.textContent = Math.round(zoom * 100) + '%'; }
+function setZoom(z) { if (!mapW) return; const c = viewCenter(); setScale(Math.max(.2, Math.min(8, z)) * frameRect().fw / mapW); centerOn(c.x, c.y); }
+function fit() { sizeWrap(); if (!mapW) return; const f = frameRect(); setScale(Math.min(f.fw / mapW, f.fh / mapH)); centerOn(mapW / 2, mapH / 2); drawFrame(); }
+$('zin').onclick = () => setZoom((Math.round(zoom * 20) + 1) / 20);
+$('zout').onclick = () => setZoom((Math.round(zoom * 20) - 1) / 20);
+$('zfit').onclick = () => { fitRoute(); if (st.routed) { st.fitted = true; save(); guide(); } };
+$('zall').onclick = fit;
 
 /* ---------- schedule ---------- */
 const WD = ['日', '一', '二', '三', '四', '五', '六'], WDE = ['Sun.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.'];
@@ -743,6 +803,7 @@ $('cpVen').onclick = () => { const r = rows().slice(1); copyRich(`<table border=
 
 /* ---------- export: PNG + 2 docx, one click ---------- */
 const dlP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+$('date').addEventListener('change', () => { const v = $('date').value; if (v && !/^\d{4}-/.test(v)) { $('date').value = ''; st.date = ''; toast('年份請填 4 碼'); renderSched(); save(); } });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function saveFile(name, blob) {
   const dl = await Promise.race([dlP, sleep(1500).then(() => null)]);
@@ -758,8 +819,9 @@ function viewRect() {
   x = Math.max(0, x); y = Math.max(0, y); rw = Math.min(mapW - x, rw); rh = Math.min(mapH - y, rh);
   return { x, y, w: rw, h: rh };
 }
+function viewRaw() { const w = $('wrap'), m = $('map'), k = kNow(), f = frameRect(); return { x: (w.scrollLeft + f.fx - m.offsetLeft) / k, y: (w.scrollTop + f.fy - m.offsetTop) / k, w: f.fw / k, h: f.fh / k }; }
 async function renderCrop(scope, withRoute, minW) {
-  const r0 = scope === 'route' ? routeRect() : { x: 0, y: 0, w: mapW, h: mapH };
+  const r0 = scope === 'view' ? viewRaw() : scope === 'route' ? routeRect() : { x: 0, y: 0, w: mapW, h: mapH };
   const f = curPage ? Math.max(1, Math.min((minW || 2400) / r0.w, 9000 / mapW, 4)) : 1;
   const full = document.createElement('canvas'); full.width = Math.round(mapW * f); full.height = Math.round(mapH * f);
   const fg = full.getContext('2d'); fg.fillStyle = '#fff'; fg.fillRect(0, 0, full.width, full.height);
@@ -771,7 +833,7 @@ async function renderCrop(scope, withRoute, minW) {
     await new Promise(r => { img.onload = r; img.onerror = r; }); fg.drawImage(img, 0, 0, full.width, full.height);
   }
   const c = document.createElement('canvas'); c.width = Math.round(r0.w * f); c.height = Math.round(r0.h * f);
-  c.getContext('2d').drawImage(full, r0.x * f, r0.y * f, r0.w * f, r0.h * f, 0, 0, c.width, c.height);
+  const cg = c.getContext('2d'); cg.fillStyle = '#fff'; cg.fillRect(0, 0, c.width, c.height); cg.drawImage(full, -r0.x * f, -r0.y * f);
   return { canvas: c, r0 };
 }
 /* PowerPoint: map on the left, numbered list on the right; arrows and number circles are editable shapes */
@@ -876,7 +938,7 @@ $('png').onclick = () => {
   $('mbox').innerHTML = `<div class="row" style="flex-wrap:wrap"><b style="flex:1;font-size:17px">匯出（一次下載）</b><button class="ghost sm" id="mclose">關閉</button></div>
   <div class="exp">
     <label><input type="checkbox" id="xPpt" checked> 路線圖 PPT（橫式：左圖右名單，箭頭／編號都是可移動、可刪除的圖形） <small>${esc(n)}_路線圖.pptx</small></label>
-    <div class="sub">地圖範圍 <label><input type="radio" name="xs" value="route" checked> 路線範圍（同「符合路線」畫面）</label><label><input type="radio" name="xs" value="full"> 整張圖</label></div>
+    <div class="sub">地圖範圍 <label><input type="radio" name="xs" value="view" checked> 目前地圖視窗（跟畫面一模一樣）</label><label><input type="radio" name="xs" value="full"> 整張圖</label></div>
     <label><input type="checkbox" id="xSch" checked> 行程表 Word（中＋英） <small>${esc(n)}_行程表.docx</small></label>
     <label><input type="checkbox" id="xVen" checked> 廠商資料表 Word（聯絡人／電話／Email／備註 留白給大家填） <small>${esc(n)}_廠商資料表.docx</small></label>
   </div>
@@ -890,6 +952,7 @@ $('png').onclick = () => {
     if ($('xSch').checked) jobs.push([n + '_行程表.docx', schedDocx]);
     if ($('xVen').checked) jobs.push([n + '_廠商資料表.docx', vendorDocx]);
     if (!jobs.length) return toast('至少勾一個');
+    guide.exported = true; guide();
     if (!window.JSZip && jobs.some(j => /docx$/.test(j[0]))) return toast('Word 元件沒載入，請檢查網路');
     $('xGo').disabled = true; let ok = 0;
     try {
@@ -961,8 +1024,45 @@ $('slots').addEventListener('change', async e => {
 });
 renderSlots('連線中…'); refreshSlots();
 
-function renderAll() { renderStops(); drawRoute(); renderSched(); save(); }
-window.addEventListener('resize', () => { if (mapW && zoom === 1) fit(); });
+/* ---------- 步驟引導：目前該做哪一步就閃哪一區 ---------- */
+let curStep = 0;
+function guide() {}
+/* 操作導覽：第一次開啟跳出 1–5 步說明，關掉後不再自動出現；按「操作導覽」可再看 */
+const HELP = [
+  ['上傳攤位圖 PDF', '左上「1 攤位圖」上傳 PDF，系統會讀出圖上的廠商名稱與攤位號。'],
+  ['左下輸入導覽廠商', '在左下「4 導覽廠商」逐家輸入，或按「貼上整串名單」一次貼上；打錯字或簡稱會列出候選讓你點選。'],
+  ['自動排最佳路線，再自己調整', '按「自動排最佳路線」，系統沿白色走道（優先 6.1m 主走道）排順序；之後可拖曳紅色編號、拖曳線段改走別條走道。'],
+  ['調整完按「符合路線」', '按「符合路線」，畫面會自動抓好角度與範圍，匯出的圖也用這個範圍。'],
+  ['匯出檔案', '按「匯出檔案」，一次下載路線圖 PPT、行程表 Word、廠商資料表 Word。'],
+];
+function showHelp() {
+  closeHelp(); const tgt = $('g1') || $('drop').closest('section');
+  tgt.scrollIntoView({ block: 'nearest' });
+  document.body.insertAdjacentHTML('beforeend', `<div id="hBlock"></div><div id="hSpot"></div>
+    <svg id="hArrow" viewBox="0 0 120 60" aria-hidden="true"><path d="M116 30 H26" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round"/><path d="M40 8 L8 30 L40 52" fill="none" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div id="hBox"><div class="row"><b style="flex:1;font-size:19px">操作導覽（5 步）</b></div>
+    <ol class="helpl">${HELP.map((h, i) => `<li class="${i ? '' : 'first'}"><span class="hn">${i + 1}</span><div><b>${h[0]}</b><p>${h[1]}</p></div></li>`).join('')}</ol>
+    <div class="row"><button class="pri" id="helpOk">知道了，開始使用</button><span class="note" style="margin:0">之後可按右上「❓ 操作導覽」再看</span></div></div>`);
+  placeHelp();
+  $('helpOk').onclick = () => { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} };
+  $('hBlock').onclick = ev => { const r = tgt.getBoundingClientRect(); if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} $('file').click(); } };
+}
+function closeHelp() { ['hBlock', 'hSpot', 'hArrow', 'hBox'].forEach(id => $(id) && $(id).remove()); }
+function placeHelp() {
+  const spot = $('hSpot'); if (!spot) return;
+  const tgt = $('g1') || $('drop').closest('section'), r = tgt.getBoundingClientRect(), p = 8;
+  Object.assign(spot.style, { left: r.left - p + 'px', top: r.top - p + 'px', width: r.width + p * 2 + 'px', height: r.height + p * 2 + 'px' });
+  const ar = $('hArrow'); Object.assign(ar.style, { left: r.right + 14 + 'px', top: r.top + r.height / 2 - 30 + 'px' });
+  const box = $('hBox'), wr = $('wrap').getBoundingClientRect(), bw = Math.min(540, innerWidth - 24);
+  box.style.width = bw + 'px';
+  const bh = box.offsetHeight, cx = (Math.max(0, wr.left) + Math.min(innerWidth, wr.right)) / 2, cy = (Math.max(0, wr.top) + Math.min(innerHeight, wr.bottom)) / 2;
+  box.style.left = Math.max(12, Math.min(innerWidth - bw - 12, cx - bw / 2)) + 'px'; box.style.top = Math.max(12, Math.min(innerHeight - bh - 12, cy - bh / 2)) + 'px';
+}
+addEventListener('resize', placeHelp); addEventListener('scroll', placeHelp, true);
+$('help').onclick = showHelp;
+try { if (localStorage.getItem('tourHelpSeen') !== '1') setTimeout(showHelp, 300); } catch (e) { setTimeout(showHelp, 300); }
+function renderAll() { renderStops(); drawRoute(); renderSched(); save(); guide(); }
+window.addEventListener('resize', () => { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); });
 renderAll();
 }
 
