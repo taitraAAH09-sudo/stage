@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>開幕巡場產出台 V11</title>
+<title>開幕巡場產出台 V17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- 內建：PptxGenJS 3.12.0（產生 PPT）、pdf.js 3.11.174（讀 PDF 主視覺），不需連外部網站 -->
@@ -276,7 +276,7 @@ header .btn{white-space:nowrap}
 <body>
 <header>
   <h1>開幕活動及巡場介紹｜產出台</h1>
-  <span class="ver">V16</span>
+  <span class="ver">V17</span>
   <button class="btn btn-ghost btn-sm" id="btnCam" title="開相機拍照，照片自動存進共用相簿">📷 相機</button>
   <button class="btn btn-ghost btn-sm" id="btnAlbum" title="大家拍的照片都在這裡">🖼 相簿</button>
   <button class="btn btn-ghost btn-sm" id="btnClear" title="清掉畫面，從空白模板開始（線上存檔不受影響）">開新頁</button>
@@ -477,7 +477,9 @@ header .btn{white-space:nowrap}
 
 <script>
 /* ===================== Config ===================== */
-const VERSION = 'V16';
+const VERSION = 'V17';
+document.title = '開幕巡場產出台 ' + VERSION;
+document.querySelectorAll('header .ver').forEach(e => e.textContent = VERSION);   // 分頁標題、頁首版號都跟著這裡走
 // namecard 專案的網頁設定：填好 apiKey 等欄位後，所有人打開就會自動連線
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAg_Od-P53Qw3zTbaVxx_TRi8UjSQYZFfo",
