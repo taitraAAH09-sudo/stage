@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V15 白色版</title>
+<title>導覽路線產生台 V16 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -196,7 +196,7 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V15</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V16</span>
   <button class="newbtn" id="newFile" title="清空目前畫面，從頭開始（雲端存檔點不會被刪）">＋ 開新檔案</button>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
@@ -615,6 +615,7 @@ function afterMap(isImg) {
 /* ---------- matching ---------- */
 function doMatch(s) {
   s.cands = s.q.trim() ? Core.match(s.q, data) : [];
+  if (s.manual && s.x != null) return;           // 手動放的位置保留：之後打名稱不會被移走（要改位置可點候選或重放）
   const [a, b] = s.cands;
   if (a && (a.score >= 85 && (!b || a.score - b.score >= 8 || b.label.includes(a.label) || a.label.includes(b.label))) || (a && s.cands.length === 1 && a.score >= 60)) pick(s, a, false);
   else if (!s.manual) { s.x = s.y = null; s.label = s.code = ''; s.score = a ? a.score : 0; }
@@ -626,7 +627,8 @@ function dispName(s) {
   return q;
 }
 function pick(s, c, confirmed) { s.label = c.label; s.code = c.code; s.x = c.x; s.y = c.y; s.score = confirmed ? 100 : c.score; s.manual = false; }
-const status = s => !s.q.trim() ? null : s.manual ? ['man', '手動放置'] : s.x == null ? (s.cands.length ? ['fz', '請選候選'] : ['no', '找不到']) : s.score >= 100 ? ['ok', '全對'] : ['fz', '模糊 ' + s.score];
+const live = s => !!((s.q || '').trim() || (s.manual && s.x != null));   // 沒打名稱、但已在地圖上放好位置的站也算
+const status = s => !live(s) ? null : s.manual ? ['man', '手動放置' + (s.q.trim() ? '' : '（名稱之後再打）')] : s.x == null ? (s.cands.length ? ['fz', '請選候選'] : ['no', '找不到']) : s.score >= 100 ? ['ok', '全對'] : ['fz', '模糊 ' + s.score];
 
 /* ---------- side panel ---------- */
 function stopParts(s, i) {
@@ -656,7 +658,7 @@ function refreshStop(i) {
 // typing: never re-render the input itself, and wait for IME (注音/倉頡) to finish composing
 function queueMatch(i, el) {
   const s = st.stops[i]; s.q = el.value; clearTimeout(s._t);
-  s._t = setTimeout(() => { if (el._comp) return; s.manual = false; s.rt = null; doMatch(s); refreshStop(i); drawRoute(); renderSched(); save(); }, 450);
+  s._t = setTimeout(() => { if (el._comp) return; if (!(s.manual && s.x != null)) { s.manual = false; s.rt = null; } doMatch(s); refreshStop(i); drawRoute(); renderSched(); save(); }, 450);
 }
 $('stops').addEventListener('compositionstart', e => { e.target._comp = true; });
 $('stops').addEventListener('compositionend', e => { e.target._comp = false; const box = e.target.closest('.stop'); if (box && e.target.dataset.f === 'q') queueMatch(+box.dataset.i, e.target); });
@@ -684,7 +686,7 @@ $('paste').onclick = () => {
   const go = replace => {
     const names = $('pasteTa').value.split(/\n/).map(l => { const cols = l.split('\t').map(c => c.trim()).filter(Boolean); const c = cols.find(c => !/^\d+$/.test(c)) || ''; return c.replace(/^\d+[.、)\s]+/, '').trim(); }).filter(Boolean);
     const add = names.map(n => { const s = blank(); s.q = n; doMatch(s); return s; });
-    st.stops = replace ? add : st.stops.filter(s => s.q.trim()).concat(add); st.routed = false; st.fitted = false;
+    st.stops = replace ? add : st.stops.filter(live).concat(add); st.routed = false; st.fitted = false;
     $('modal').classList.remove('on'); renderAll();
   };
   $('pasteOk').onclick = () => go(true); $('pasteAdd').onclick = () => go(false); $('mclose').onclick = () => $('modal').classList.remove('on');
@@ -842,7 +844,7 @@ function drawRoute() {
   const Y = sty(), R0 = mapW / 75, R = R0 * Y.c, sw = R0 * .36 * Y.a, out = [], handles = [], halos = [], lines = [], heads = [], hits = [];
   const tipOut = .96 * Y.h * sw;   /* 箭頭尖端超出線尾的長度（依箭頭大小、線寬自動算） */ let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
   out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="${(3.2 * Y.h).toFixed(2)}" markerHeight="${(3.2 * Y.h).toFixed(2)}" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
-  const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && o.s.q.trim());
+  const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && live(o.s));
   let prev = st.start.x != null ? { x: st.start.x, y: st.start.y, r: R * .9 } : null;
   const segs = [];
   for (const { s, i } of pts) { if (prev) { const rt = getRt(s); segs.push({ s, i, rt, prev, L: segPoly(prev, s, rt).map(q => ({ x: q.x, y: q.y })) }); } prev = { x: s.x, y: s.y, r: R }; }
@@ -870,7 +872,7 @@ function drawRoute() {
   out.push(...halos, ...lines, ...hits, ...heads, ...handles);   // 箭頭畫在所有線段之上，不會被下一段的白邊蓋掉
   if (st.start.x != null) out.push(`<g data-pt="s" style="cursor:grab"><circle cx="${st.start.x}" cy="${st.start.y}" r="${R * .9}" fill="#16120f" stroke="#fff" stroke-width="${R * .15}"/><text x="${st.start.x}" y="${st.start.y + R * .34}" font-size="${R * 1}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">0</text><title>起點：${esc(st.start.name)}（可拖曳）</title></g>`);
   pts.forEach(({ s, i }, k) => {
-    out.push(`<g data-pt="${i}" style="cursor:grab">${i === selected ? `<circle data-h="1" cx="${s.x}" cy="${s.y}" r="${R * 1.55}" fill="none" stroke="#16120f" stroke-width="${R * .12}" stroke-dasharray="${R * .3}"/>` : ''}<circle cx="${s.x}" cy="${s.y}" r="${R}" fill="#e8481c" stroke="#fff" stroke-width="${R * .16}"/><text x="${s.x}" y="${s.y + R * .38}" font-size="${R * 1.12}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">${k + 1}</text><title>${esc(s.q)}（可拖曳）</title></g>`);
+    out.push(`<g data-pt="${i}" style="cursor:grab">${i === selected ? `<circle data-h="1" cx="${s.x}" cy="${s.y}" r="${R * 1.55}" fill="none" stroke="#16120f" stroke-width="${R * .12}" stroke-dasharray="${R * .3}"/>` : ''}<circle cx="${s.x}" cy="${s.y}" r="${R}" fill="#e8481c" stroke="#fff" stroke-width="${R * .16}"/><text x="${s.x}" y="${s.y + R * .38}" font-size="${R * 1.12}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">${k + 1}</text><title>${esc(s.q || (s.code ? '攤位 ' + s.code : '未命名'))}（可拖曳）</title></g>`);
   });
   for (const q of [st.start.x != null ? st.start : null, ...pts.map(o => o.s)]) if (q) { bx0 = Math.min(bx0, q.x - R); by0 = Math.min(by0, q.y - R); bx1 = Math.max(bx1, q.x + R); by1 = Math.max(by1, q.y + R); }
   lastSegs = segsNow; lastMarks = (st.start.x != null ? [{ x: st.start.x, y: st.start.y, n: 0 }] : []).concat(pts.map(({ s }, k) => ({ x: s.x, y: s.y, n: k + 1 })));
@@ -879,7 +881,7 @@ function drawRoute() {
     out.push(`<g data-h="1" data-hl="1" style="cursor:pointer"><circle class="hl-ring" cx="${hl.x}" cy="${hl.y}" r="${r}" fill="#ffd400" fill-opacity=".28" stroke="#ffb000" stroke-width="${r * .18}"/><circle class="hl-ring" cx="${hl.x}" cy="${hl.y}" r="${r * 1.7}" fill="none" stroke="#ffb000" stroke-width="${r * .1}" stroke-dasharray="${r * .35}" style="animation-delay:.45s"/><title>${esc(hl.label)}（點一下停止閃爍）</title></g>`); }
   ov.innerHTML = out.join('');
   let L = 0; if (pts.length) { let p = st.start.x != null ? st.start : pts[0].s; for (const { s } of pts) { const Q = segPoly(p, s, getRt(s)); for (let j = 1; j < Q.length; j++) L += Math.hypot(Q[j].x - Q[j - 1].x, Q[j].y - Q[j - 1].y); p = s; } }
-  const miss = st.stops.filter(s => s.q.trim() && s.x == null).length;
+  const miss = st.stops.filter(s => live(s) && s.x == null).length;
   $('sum').innerHTML = pts.length ? `已定位 <b>${pts.length}</b> 站${miss ? `，<span style="color:var(--bad)">${miss} 站未定位</span>` : ''}｜路線長度 <b>${Math.round(L / mapW * 1000)}</b>` : '';
 }
 
@@ -1017,7 +1019,7 @@ function ctLine(s) {
 function renderXl() {
   const C = st.contacts, el = $('xlInfo'); if (!el) return;
   if (!C) { el.innerHTML = ''; return; }
-  const list = st.stops.filter(s => s.q.trim()), hit = list.filter(s => contactOf(s)).length;
+  const list = st.stops.filter(live), hit = list.filter(s => contactOf(s)).length;
   const hd = C.hdr || {}, tag = (k, t) => `<span class="${C.has[k] ? 'y' : 'n'}" title="${esc(hd[k] || '')}">${C.has[k] ? '✓' : '✗'} ${t}${C.has[k] && hd[k] ? '＝「' + esc(hd[k]).replace(/ → /g, '」，空的再用「') + '」' : ''}</span>`;
   const filled = k => C.rows.filter(r => r[k]).length;
   el.innerHTML = `<p class="note" style="margin:6px 0 0">${esc(C.file)}｜${C.rows.length} 筆｜已對到 <b>${hit}</b> / ${list.length} 家 <button class="ghost sm" id="xlDel" style="min-height:26px;padding:0 8px;margin-left:6px">移除</button></p>
@@ -1148,7 +1150,7 @@ function orderD(D, m) {
   return o;
 }
 $('opt').onclick = () => {
-  const ok = st.stops.filter(s => s.q.trim() && s.x != null), rest = st.stops.filter(s => !(s.q.trim() && s.x != null));
+  const ok = st.stops.filter(s => live(s) && s.x != null), rest = st.stops.filter(s => !(live(s) && s.x != null));
   if (ok.length < 2) return toast('至少要 2 站已定位');
   toast('計算路線中…');
   setTimeout(() => {
@@ -1167,7 +1169,7 @@ $('opt').onclick = () => {
     const before = F(curOrder), ord = C ? orderSmart(D, n - 1, F) : orderD(D, n - 1), after = F(ord);
     const bt = C ? backtrack(ord, C) : null;
     const picked = ord.map(i => nodes[i]);
-    st.stops = (hasStart ? picked : [nodes[0], ...picked]).concat(rest.filter(s => s.q.trim()));
+    st.stops = (hasStart ? picked : [nodes[0], ...picked]).concat(rest.filter(live));
     st.stops.forEach(s => s.rt = null);
     st.routed = true; st.fitted = false; renderAll(); fitRoute();
     toast((after < before - 1 ? `已重排：路線更順、少走回頭路` : '目前順序已是最佳') + (bt && bt.over3 ? `（有 ${bt.over3} 段走道仍需來回超過 1 次）` : ''));
@@ -1221,8 +1223,8 @@ const WD = ['日', '一', '二', '三', '四', '五', '六'], WDE = ['Sun.', 'Mo
 const hm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
 function rows() {
   const [h, m] = (st.time || '13:30').split(':').map(Number); let t = h * 60 + m;
-  const list = st.stops.filter(s => s.q.trim()), out = [{ a: t - (+st.gather || 0), b: t, zh: '集合', en: 'Meeting at ' + (st.start.name || 'meeting point'), gather: 1 }];
-  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code, s }); t += d; }
+  const list = st.stops.filter(live), out = [{ a: t - (+st.gather || 0), b: t, zh: '集合', en: 'Meeting at ' + (st.start.name || 'meeting point'), gather: 1 }];
+  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s) || (s.code ? '攤位 ' + s.code : '（未命名）'); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code, s }); t += d; }
   return out;
 }
 function dateTxt(en) {
@@ -1453,7 +1455,7 @@ $('slots').addEventListener('click', async e => {
       const now = new Date(), stamp = `${now.getMonth() + 1}/${now.getDate()} ${hm(now.getHours() * 60 + now.getMinutes())}`;
       renderSlots('上傳中…');
       await fb('data/' + k, 'PUT', { st: JSON.stringify(st), map: mapSrc || null });
-      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(s => s.q.trim()).length, map: !!mapSrc, xl: st.contacts ? st.contacts.file : '' });
+      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(live).length, map: !!mapSrc, xl: st.contacts ? st.contacts.file : '' });
       curSlot = k; dirty = false; try { localStorage.setItem('tourCurSlot', k); } catch (e) {}
       await refreshSlots(`已存到「${name}」${st.contacts ? '（含 Excel 聯絡人）' : ''}`);
     } else if (act === 'load') {
@@ -1490,7 +1492,7 @@ renderSlots('連線中…'); refreshSlots();
 let curStep = 0;
 function guide() {
   $('g1').classList.toggle('now', !mapW);
-  $('png').classList.toggle('ready', !!(mapW && st.routed && st.stops.some(s => s.q.trim() && s.x != null)));
+  $('png').classList.toggle('ready', !!(mapW && st.routed && st.stops.some(s => live(s) && s.x != null)));
   $('xlBox').hidden = false;
 }
 /* 操作導覽：第一次開啟跳出 1–5 步說明，關掉後不再自動出現；按「操作導覽」可再看 */
