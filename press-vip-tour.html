@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V11 白色版</title>
+<title>導覽路線產生台 V13 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -121,6 +121,9 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 .sty{display:grid;grid-template-columns:auto 1fr 46px;gap:6px 10px;align-items:center;font-size:13.5px}
 .sty input[type=range]{min-height:0;padding:0;border:0;accent-color:var(--red)}
 .sty output{font:800 15px "Sofia Sans Condensed",sans-serif;text-align:right}
+#png.ready{background:linear-gradient(90deg,#ff7a1a,#e8481c)!important;border-color:#ff7a1a!important;color:#fff!important;font-weight:900;animation:lit 1.6s ease-in-out infinite}
+@keyframes lit{0%,100%{box-shadow:0 0 0 0 #ff7a1a88}50%{box-shadow:0 0 0 7px #ff7a1a00,0 0 18px #ffb36b}}
+@media(prefers-reduced-motion:reduce){#png.ready{animation:none}}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 /* ===== V8 版型 ===== */
@@ -190,7 +193,7 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V11</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V13</span>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
 <main>
@@ -266,7 +269,7 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
     <button class="ghost sm" id="zin" aria-label="放大 5%">＋</button>
     <span class="gt" id="g4"><button class="ghost sm" id="zfit">符合路線</button><span class="gtip down">第 4 步：調整完按這裡，會自動抓好角度與範圍</span></span>
     <button class="ghost sm" id="zall">整張圖</button>
-    <span class="gt" id="g5"><button class="pri" id="png" style="background:var(--ink);border-color:var(--ink);color:var(--bg)">匯出檔案</button><span class="gtip down">第 5 步：匯出檔案</span></span>
+    <span class="gt" id="g5"><button class="pri" id="png" style="background:var(--ink);border-color:var(--ink);color:var(--bg)">都畫好 點我下載</button><span class="gtip down">第 5 步：匯出檔案</span></span>
     <span class="mode" id="mode"></span>
     <span class="sum" id="sum"></span>
   </div>
@@ -924,22 +927,59 @@ const COLS = {
   email: h => /[聯連]絡人/.test(h) && /MAIL|信箱/.test(h),
   tel: h => /[聯連]絡人/.test(h) && /電話|手機|TEL|PHONE/.test(h) && !/傳真|FAX/.test(h)
 };
+const isMail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+/.test(String(v).trim());
+const isTel = v => { const t = String(v).trim(); return t.length >= 6 && /^[+\d(（][\d\s\-()（）#＃+轉分機EXText.:,，/]{5,}$/i.test(t) && (t.replace(/\D/g, '').length >= 6); };
+function detectCols(H) {
+  const col = {};
+  for (const k of Object.keys(COLS)) { const i = H.findIndex(h => h && COLS[k](h)); if (i >= 0) col[k] = i; }
+  if (col.co == null && col.co2 != null) col.co = col.co2; delete col.co2;
+  // 沒有「聯絡人Email／聯絡人電話」時，標題只寫「Email」「電話」也算（聯絡人那一欄右邊的優先）
+  const after = col.name ?? -1, pick = re => { const c = H.map((h, i) => h && re(h) ? i : -1).filter(i => i >= 0); return c.find(i => i > after) ?? c[0]; };
+  if (col.email == null) { const i = pick(h => /MAIL|電子郵件|信箱/.test(h) && !/公司|網址|網站|WEB/.test(h)); if (i != null) col.email = i; }
+  if (col.tel == null) { const i = pick(h => /電話|手機|TEL|PHONE|MOBILE/.test(h) && !/傳真|FAX/.test(h)); if (i != null) col.tel = i; }
+  return col;
+}
 function parseSheet(rows) {
   let best = null;
+  const W = Math.max(0, ...rows.slice(0, 20).map(r => r.length));
   for (let r = 0; r < Math.min(15, rows.length); r++) {
-    const H = rows[r].map(hN), col = {};
-    for (const k of Object.keys(COLS)) { const i = H.findIndex(h => h && COLS[k](h)); if (i >= 0) col[k] = i; }
-    if (col.co == null && col.co2 != null) col.co = col.co2; delete col.co2;
-    // 沒有「聯絡人Email／聯絡人電話」時，標題只寫「Email」「電話」也算
-    if (col.email == null) { const i = H.findIndex(h => h && /MAIL|電子郵件|信箱/.test(h) && !/公司|網址|網站|WEB/.test(h)); if (i >= 0) col.email = i; }
-    if (col.tel == null) { const i = H.findIndex(h => h && /電話|手機|TEL|PHONE|MOBILE/.test(h) && !/傳真|FAX/.test(h)); if (i >= 0) col.tel = i; }
-    const sc = (col.co != null) * 2 + (col.booth != null) * 2 + (col.name != null) + (col.email != null) + (col.tel != null);
-    if ((col.co != null || col.booth != null) && (!best || sc > best.sc)) best = { r, col, sc };
+    // 兩種標題都試：單列標題，以及「上面合併一格『聯絡人』、下面分『姓名／電話／Email』」的兩列標題
+    const one = Array.from({ length: W }, (_, i) => hN(rows[r][i]));
+    const cands = [{ H: one, skip: 1 }];
+    if (rows[r + 1]) { let carry = ''; const two = Array.from({ length: W }, (_, i) => { const top = hN(rows[r][i]), sub = hN(rows[r + 1][i]); if (top) carry = top; else if (!sub) carry = ''; return (top || (sub ? carry : '')) + sub; }); cands.push({ H: two, skip: 2, two: true }); }
+    for (const { H, skip, two } of cands) {
+      const col = detectCols(H);
+      if (two && col.name == null) { const i = H.findIndex(h => /[聯連]絡人/.test(h) && /姓名|NAME/.test(h)); if (i >= 0) col.name = i; }
+      const sc = (col.co != null) * 2 + (col.booth != null) * 2 + (col.name != null) + (col.email != null) + (col.tel != null) - (two ? .5 : 0);
+      if ((col.co != null || col.booth != null) && (!best || sc > best.sc)) best = { r, col, sc, skip, H };
+    }
   }
   if (!best) return null;
-  const c = best.col, g = (row, k) => c[k] == null ? '' : String(row[c[k]] ?? '').trim();
-  const out = rows.slice(best.r + 1).map(row => ({ co: g(row, 'co'), booth: g(row, 'booth').toUpperCase().replace(/\s/g, ''), name: g(row, 'name'), email: g(row, 'email'), tel: g(row, 'tel') })).filter(x => x.co || x.booth);
-  return { rows: out, has: { co: c.co != null, booth: c.booth != null, name: c.name != null, email: c.email != null, tel: c.tel != null }, sc: best.sc };
+  const c = best.col, data = rows.slice(best.r + best.skip);
+  // 依資料內容校正：抓到的欄位幾乎都是空的，就改找「內容長得像 Email／電話」的那一欄
+  const fill = (i, test) => { if (i == null) return 0; let n = 0, ok = 0; for (const row of data.slice(0, 300)) { if (!(row.some(v => String(v).trim()))) continue; n++; if (test(row[i] ?? '')) ok++; } return n ? ok / n : 0; };
+  const bestBy = (test, avoid) => { let bi = null, bv = .25; for (let i = 0; i < W; i++) { if (avoid(i)) continue; const v = fill(i, test); if (v > bv) { bv = v; bi = i; } } return bi; };
+  const fax = i => /傳真|FAX/.test(best.H[i] || '');
+  if (fill(c.email, isMail) < .2) { const i = bestBy(isMail, i => /公司|網址|網站|WEB/.test(best.H[i] || '')); if (i != null) c.email = i; }
+  if (fill(c.tel, isTel) < .2) { const near = c.name ?? -1; const i = bestBy(isTel, i => fax(i) || i === c.booth); if (i != null) c.tel = i; }
+  // 同一份表裡常有兩組聯絡人欄位（例如「參展聯絡人電話／Email」和「連絡人／聯絡人EMAIL／聯絡人電話」）：
+  // 電話、Email 以「緊鄰聯絡人姓名那一欄」的為主；那一列是空的，再用另一組補
+  const H = best.H, all = re => H.map((h, i) => h && re(h) ? i : -1).filter(i => i >= 0);
+  const near = (list, main) => { const ref = c.name ?? -1; const l = [...new Set(list)].sort((a, b) => (Math.abs(a - ref) + (a < ref ? .5 : 0)) - (Math.abs(b - ref) + (b < ref ? .5 : 0))); if (main != null && !l.includes(main) && !l.length) l.push(main); return l; };
+  const nameCols = [c.name, ...all(h => COLS.name(h))].filter(i => i != null);
+  const mailCols = near(all(h => /MAIL|電子郵件|信箱/.test(h) && !/公司|網址|網站|WEB/.test(h)), c.email);
+  const telCols = near(all(h => /電話|手機|TEL|PHONE|MOBILE/.test(h) && !/傳真|FAX/.test(h) && !/公司|代表|總機/.test(h)), c.tel);
+  if (!mailCols.length && c.email != null) mailCols.push(c.email);
+  if (!telCols.length && c.tel != null) telCols.push(c.tel);
+  if (mailCols.length) c.email = mailCols[0]; if (telCols.length) c.tel = telCols[0];
+  const val = v => { let t = String(v ?? '').trim(); return t; };
+  const tel = v => { let t = val(v); if (/^9\d{8}$/.test(t)) t = '0' + t;          // Excel 把手機存成數字，補回開頭的 0
+    else if (/^[2-8]\d{7,8}$/.test(t) && typeof v === 'number') t = '0' + t; return t; };
+  const first = (row, cols, f = val) => { for (const i of cols) { const t = f(row[i]); if (t) return t; } return ''; };
+  const g = (row, k) => c[k] == null ? '' : val(row[c[k]]);
+  const out = data.map(row => ({ co: g(row, 'co'), booth: g(row, 'booth').toUpperCase().replace(/\s/g, ''), name: first(row, [...new Set(nameCols)]), email: first(row, mailCols), tel: first(row, telCols, tel) })).filter(x => x.co || x.booth);
+  const hd = k => { const L = k === 'email' ? mailCols : k === 'tel' ? telCols : [...new Set(nameCols)]; return L.map(i => best.H[i]).filter(Boolean).join(' → '); };
+  return { rows: out, has: { co: c.co != null, booth: c.booth != null, name: c.name != null, email: c.email != null, tel: c.tel != null }, hdr: { name: hd('name'), email: hd('email'), tel: hd('tel') }, sc: best.sc };
 }
 async function loadExcel(f) {
   $('xlInfo').innerHTML = '<p class="note">讀取中…</p>';
@@ -947,9 +987,9 @@ async function loadExcel(f) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => window.XLSX);
     const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
     let best = null;
-    for (const n of wb.SheetNames) { const p = parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: false })); if (p && (!best || p.sc > best.sc || (p.sc === best.sc && p.rows.length > best.rows.length))) best = p; }
+    for (const n of wb.SheetNames) { const p = parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: true })); if (p && (!best || p.sc > best.sc || (p.sc === best.sc && p.rows.length > best.rows.length))) best = p; }
     if (!best) throw new Error('找不到「公司名稱」或「攤位」欄位');
-    st.contacts = { file: f.name, rows: best.rows, has: best.has };
+    st.contacts = { file: f.name, rows: best.rows, has: best.has, hdr: best.hdr || {} };
     renderAll(); toast(curSlot ? `已讀入 Excel，記得按「存檔點 ${curSlot.replace('slot', '')}」的存檔` : '已讀入 Excel，記得找一格存檔');
   } catch (e) { $('xlInfo').innerHTML = `<p class="note" style="color:var(--bad)">讀取失敗：${esc(e.message)}</p>`; }
 }
@@ -974,9 +1014,11 @@ function renderXl() {
   const C = st.contacts, el = $('xlInfo'); if (!el) return;
   if (!C) { el.innerHTML = ''; return; }
   const list = st.stops.filter(s => s.q.trim()), hit = list.filter(s => contactOf(s)).length;
-  const tag = (k, t) => `<span class="${C.has[k] ? 'y' : 'n'}">${C.has[k] ? '✓' : '✗'} ${t}</span>`;
+  const hd = C.hdr || {}, tag = (k, t) => `<span class="${C.has[k] ? 'y' : 'n'}" title="${esc(hd[k] || '')}">${C.has[k] ? '✓' : '✗'} ${t}${C.has[k] && hd[k] ? '＝「' + esc(hd[k]).replace(/ → /g, '」，空的再用「') + '」' : ''}</span>`;
+  const filled = k => C.rows.filter(r => r[k]).length;
   el.innerHTML = `<p class="note" style="margin:6px 0 0">${esc(C.file)}｜${C.rows.length} 筆｜已對到 <b>${hit}</b> / ${list.length} 家 <button class="ghost sm" id="xlDel" style="min-height:26px;padding:0 8px;margin-left:6px">移除</button></p>
     <div class="xlcols">${tag('co', '公司名稱')}${tag('booth', '攤位')}${tag('name', '聯絡人')}${tag('email', '聯絡人 Email')}${tag('tel', '聯絡人電話')}</div>
+    <p class="note" style="margin:4px 0 0">有資料的筆數：聯絡人 ${filled('name')}｜Email ${filled('email')}｜電話 ${filled('tel')}</p>
     ${!C.has.name && !C.has.email && !C.has.tel ? '<p class="note">這份 Excel 沒有聯絡人欄位，資料表會留空。</p>' : ''}`;
   $('xlDel').onclick = () => { delete st.contacts; renderAll(); toast('已移除聯絡人資料'); };
 }
@@ -1444,6 +1486,7 @@ renderSlots('連線中…'); refreshSlots();
 let curStep = 0;
 function guide() {
   $('g1').classList.toggle('now', !mapW);
+  $('png').classList.toggle('ready', !!(mapW && st.routed && st.stops.some(s => s.q.trim() && s.x != null)));
   $('xlBox').hidden = false;
 }
 /* 操作導覽：第一次開啟跳出 1–5 步說明，關掉後不再自動出現；按「操作導覽」可再看 */
@@ -1452,7 +1495,7 @@ const HELP = [
   ['輸入導覽廠商', '在左邊「6 導覽廠商」逐家輸入，或按「貼上整串名單」一次貼上；打錯字或簡稱會列出候選讓你點選。'],
   ['自動排最佳路線，再自己調整', '按「自動排最佳路線」，系統沿白色走道（優先 6.1m 主走道）排順序；之後可拖曳紅色編號、拖曳線段改走別條走道。'],
   ['調整完按「符合路線」', '按「符合路線」，畫面會自動抓好角度與範圍，匯出的圖也用這個範圍。'],
-  ['匯出檔案', '按「匯出檔案」，一次下載路線圖 PPT、行程表 Word、廠商資料表 Word。'],
+  ['都畫好 點我下載', '路線畫好後，右上「都畫好 點我下載」會亮起來；按下去一次下載路線圖 PPT、行程表 Word、廠商資料表 Word。'],
 ];
 function showHelp() {
   closeHelp(); const tgt = $('g1') || $('drop').closest('section');
