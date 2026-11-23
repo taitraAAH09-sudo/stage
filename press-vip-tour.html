@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V20 白色版</title>
+<title>導覽路線產生台 V22 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -202,7 +202,7 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V20</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V22</span>
   <button class="newbtn" id="newFile" title="清空目前畫面，從頭開始（雲端存檔點不會被刪）">＋ 開新檔案</button>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
@@ -1345,10 +1345,14 @@ async function renderCrop(scope, withRoute, minW) {
   return { canvas: c, r0 };
 }
 /* PowerPoint: map on the left, numbered list on the right; arrows and number circles are editable shapes */
-async function buildPpt(scope) {
-  if (!window.PptxGenJS) throw new Error('PPT 元件沒載入，請檢查網路');
-  const { canvas, r0 } = await renderCrop(scope, false, 2600);
-  const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE';
+/* rec＝true：不產生檔案，只把「這一頁怎麼畫」一步一步記下來（存檔用），開幕巡場產出台（tour）會照著重畫成一模一樣的頁面 */
+async function buildPpt(scope, rec) {
+  if (!rec && !window.PptxGenJS) throw new Error('PPT 元件沒載入，請檢查網路');
+  const { canvas, r0 } = await renderCrop(scope, false, rec ? 2200 : 2600);
+  const ops = [];
+  const pptx = rec ? { ShapeType: new Proxy({}, { get: (t, k) => '@' + String(k) }),
+    addSlide: () => { const o = {}; ['addText', 'addShape', 'addImage'].forEach(f => o[f] = (...a) => ops.push([f, JSON.parse(JSON.stringify(a))])); return o; } } : new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
   const FONT = 'Microsoft JhengHei', RED = 'E8481C', INK = '16120F', GREY = '6B625C';
   const s = pptx.addSlide(); s.background = { color: 'FFFFFF' };
   const rr = rows();
@@ -1358,7 +1362,7 @@ async function buildPpt(scope) {
   const BX = .4, BY = 1.32, BW = 8.7, BH = 5.9, ar = canvas.width / canvas.height;
   let iw = BW, ih = BW / ar; if (ih > BH) { ih = BH; iw = BH * ar; }
   const ix = BX + (BW - iw) / 2, iy = BY;
-  s.addImage({ data: canvas.toDataURL('image/png'), x: ix, y: iy, w: iw, h: ih, altText: '攤位圖' });
+  s.addImage({ data: rec ? canvas.toDataURL('image/jpeg', .88) : canvas.toDataURL('image/png'), x: ix, y: iy, w: iw, h: ih, altText: '攤位圖' });
   // 地圖下方：站到站預估走路時間（秒數以 5 秒為單位）
   if (lastLegs.length) {
     const runs = [{ text: '站到站走路預估：', options: { bold: true, color: INK } }];
@@ -1391,7 +1395,7 @@ async function buildPpt(scope) {
     s.addText([{ text: o.zh, options: { bold: true, fontSize: 15, color: INK, breakLine: true } }, { text: `${hm(o.a)}-${hm(o.b)}${o.code ? '　' + o.code : ''}`, options: { fontSize: 11, color: GREY } }], { x: LX + .55, y, w: 2.85, h: rowH, fontFace: FONT, valign: 'top', margin: 0, fit: 'shrink' });
     y += rowH;
   });
-  return pptx.write({ outputType: 'blob' });
+  return rec ? ops : pptx.write({ outputType: 'blob' });
 }
 async function buildPng(scope, withTitle) {
   const { canvas: crop } = await renderCrop(scope, true, 2400);
@@ -1519,8 +1523,17 @@ $('slots').addEventListener('click', async e => {
       const name = box.querySelector('.sname').value.trim() || [st.expo, dateTxt(), st.kind].filter(Boolean).join(' ') || `存檔點 ${SLOTS.indexOf(k) + 1}`;
       const now = new Date(), stamp = `${now.getMonth() + 1}/${now.getDate()} ${hm(now.getHours() * 60 + now.getMinutes())}`;
       renderSlots('上傳中…');
-      await fb('data/' + k, 'PUT', { st: JSON.stringify(st), map: mapSrc || null });
-      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(live).length, map: !!mapSrc, xl: st.contacts ? st.contacts.file : '' });
+      // 一起存一張「PPT 輸出範圍＋路線」的圖，給開幕巡場產出台（tour）的巡場動線頁直接用
+      let routeImg = null;
+      if (mapW && st.stops.some(s => live(s) && s.x != null)) {
+        try { const { canvas } = await renderCrop('view', true, 2200); const k2 = Math.min(1, 2400 / canvas.width), c2 = document.createElement('canvas');
+          c2.width = Math.round(canvas.width * k2); c2.height = Math.round(canvas.height * k2); const g2 = c2.getContext('2d'); g2.fillStyle = '#fff'; g2.fillRect(0, 0, c2.width, c2.height); g2.drawImage(canvas, 0, 0, c2.width, c2.height);
+          routeImg = { url: c2.toDataURL('image/jpeg', .86), w: c2.width, h: c2.height, ext: 'jpeg' }; } catch (e) { console.warn('路線圖輸出失敗', e); }
+      }
+      let routePpt = null;
+      if (routeImg) { try { routePpt = { ops: await buildPpt('view', true), v: 1 }; } catch (e) { console.warn('PPT 版面記錄失敗', e); } }
+      await fb('data/' + k, 'PUT', { st: JSON.stringify(st), map: mapSrc || null, routeImg, routePpt });
+      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(live).length, map: !!mapSrc, xl: st.contacts ? st.contacts.file : '', img: !!routeImg, ppt: !!routePpt });
       curSlot = k; dirty = false; try { localStorage.setItem('tourCurSlot', k); } catch (e) {}
       await refreshSlots(`已存到「${name}」${st.contacts ? '（含 Excel 聯絡人）' : ''}`);
     } else if (act === 'load') {
