@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>開幕巡場產出台 V18</title>
+<title>開幕巡場產出台 V19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- 內建：PptxGenJS 3.12.0（產生 PPT）、pdf.js 3.11.174（讀 PDF 主視覺），不需連外部網站 -->
@@ -276,7 +276,7 @@ header .btn{white-space:nowrap}
 <body>
 <header>
   <h1>VVIP 開幕活動及巡場介紹｜產出台</h1>
-  <span class="ver">V18</span>
+  <span class="ver">V19</span>
   <button class="btn btn-ghost btn-sm" id="btnCam" title="開相機拍照，照片自動存進共用相簿">📷 相機</button>
   <button class="btn btn-ghost btn-sm" id="btnAlbum" title="大家拍的照片都在這裡">🖼 相簿</button>
   <button class="btn btn-ghost btn-sm" id="btnClear" title="清掉畫面，從空白模板開始（線上存檔不受影響）">開新頁</button>
@@ -477,7 +477,7 @@ header .btn{white-space:nowrap}
 
 <script>
 /* ===================== Config ===================== */
-const VERSION = 'V18';
+const VERSION = 'V19';
 document.title = '開幕巡場產出台 ' + VERSION;
 document.querySelectorAll('header .ver').forEach(e => e.textContent = VERSION);   // 分頁標題、頁首版號都跟著這裡走
 // namecard 專案的網頁設定：填好 apiKey 等欄位後，所有人打開就會自動連線
@@ -815,7 +815,7 @@ function renderHalls(){
               <div><label>聯絡人（名字/電話）</label><input type="text" data-h="${i}" data-f="contact" value="${esc(h.contact||'')}" placeholder="例：王小明/0912-345-678"></div>
             </div>
           </div>
-          <div><label>佔位圖/攤位圖</label><div class="imgbox" data-img="hall${i}" data-ph="點擊或拖曳圖片">點擊或拖曳圖片</div></div>
+          <div><label>攤位圖</label><div class="imgbox" data-img="hall${i}" data-ph="點擊或拖曳圖片">點擊或拖曳圖片</div></div>
         </div>
         <label style="margin-top:10px">站位圖（由左至右）<span class="sbar" data-sb="${i}"></span></label>
         <div class="stand" data-st="${i}">${standHTML(h)}</div>
@@ -1069,7 +1069,7 @@ function buildSlides(){
     const imgBottom = (cells.length?5.55:6.95) - (info?0.45:0);
     if(!img(s, IMG['hall'+i], 0.6,1.3,12.1,imgBottom-1.3)){
       s.els.push({t:'shape', shape:'rect', x:0.6,y:1.3,w:12.1,h:imgBottom-1.3, fill:'F2F2F2', line:'BFBFBF', dash:true});
-      s.els.push({t:'text', x:0.6,y:1.3,w:12.1,h:imgBottom-1.3, paras:[P('（佔位圖/攤位圖）')], size:20, color:'A6A6A6', align:'center', valign:'middle'});
+      s.els.push({t:'text', x:0.6,y:1.3,w:12.1,h:imgBottom-1.3, paras:[P('（攤位圖）')], size:20, color:'A6A6A6', align:'center', valign:'middle'});
     }
     if(info) s.els.push({t:'text', x:0.6,y:imgBottom+0.05,w:12.1,h:0.38, paras:[P(info)], size:14, bold:true, color:'404040', align:'center', valign:'middle', margin:0});
     if(cells.length){
@@ -1334,7 +1334,7 @@ function openAlbum(mode='browse', key=null){
   $('#shooterIn').value=shooter(); renderAlbum();
 }
 function closeAlbum(){ $('#album').classList.remove('on'); }
-const slotLabel = k => ({logo:'展覽 Logo', cover:'主視覺 KV', p9:'P9 示意圖', p12:'大會舞台', p13:'座次表', p14:'典禮前合影', p15:'揭幕儀式', p16:'巡場動線地圖'}[k] || (k&&k.startsWith('hall') ? `第 ${+k.slice(4)+1} 館佔位圖/攤位圖` : k));
+const slotLabel = k => ({logo:'展覽 Logo', cover:'主視覺 KV', p9:'P9 示意圖', p12:'大會舞台', p13:'座次表', p14:'典禮前合影', p15:'揭幕儀式', p16:'巡場動線地圖'}[k] || (k&&k.startsWith('hall') ? `第 ${+k.slice(4)+1} 館攤位圖` : k));
 function renderAlbum(){
   if(!$('#album').classList.contains('on')) return;
   const items=Object.entries(PH.meta).map(([id,m])=>({id,...m}));
