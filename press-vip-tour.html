@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V16 白色版</title>
+<title>導覽路線產生台 V20 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -180,6 +180,12 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 .hl-ring{animation:hlp .9s ease-in-out infinite}
 .stop.drop-before{box-shadow:0 -3px 0 var(--red)}
 .stop.drop-after{box-shadow:0 3px 0 var(--red)}
+.bar .sum{text-align:right;line-height:1.35}
+.bar .sum .legs{font-size:12.5px;margin-top:3px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 6px}
+.bar .sum .leg{background:#fff4e0;color:#7a4a00;border-radius:12px;padding:1px 8px;white-space:nowrap}
+.bar .sum .leg b{font:800 14px "Sofia Sans Condensed",sans-serif;color:#7a4a00}
+.bar .sum .leg small{color:#a07a40}
+.stop .walk{font-size:12.5px;color:#7a4a00;background:#fff4e0;border-radius:6px;padding:4px 8px}
 .stop .ct{font-size:12.5px;color:#1d4f91;background:#eef4fc;border-radius:6px;padding:4px 8px}
 .stop .ct.none{color:var(--mute);background:#f4f2f0}
 /* Excel 區 */
@@ -196,7 +202,7 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V16</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V20</span>
   <button class="newbtn" id="newFile" title="清空目前畫面，從頭開始（雲端存檔點不會被刪）">＋ 開新檔案</button>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
@@ -230,6 +236,9 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
       <label class="f">每家預設（分）<input id="per" type="number" min="5" step="5" value="20"></label>
       <label class="f">提前集合（分）<input id="gather" type="number" min="0" step="5" value="10"></label>
       <label class="f" style="grid-column:1/-1">說明（印在廠商資料表上，可空白）<input id="note" placeholder="例：14 位國際記者（來自 12 個國家），廠商用全英文介紹"></label>
+      <label class="f">最小攤位邊長（公尺）<input id="wBooth" type="number" min="1" step="0.5" value="3"></label>
+      <label class="f">步行速度（公尺／分）<input id="wSpeed" type="number" min="10" step="5" value="50"></label>
+      <div style="grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="note" id="wInfo" style="margin:0;flex:1"></span><button class="ghost sm" id="wCal" type="button">手動量比例</button></div>
       <label class="f" style="grid-column:1/-1">類型<select id="kind"><option>媒體導覽</option><option>貴賓導覽</option><option>長官巡場</option></select></label>
     </div>
   </section>
@@ -530,7 +539,7 @@ const KEY = 'tourRoute_V2';
 try { const old = localStorage.getItem('tourRoute_V1'); if (!localStorage.getItem(KEY) && old) { const o = JSON.parse(old); (o.stops || []).forEach(s => s.rt = null); localStorage.setItem(KEY, JSON.stringify(o)); } } catch (e) {}
 let mapSrc = null, lastSegs = [], lastMarks = [], curPage = null, curScale = 1, G = null, pathCache = new Map(), snapCache = new Map(), dragFast = false, lastBox = null;
 let pdfDoc = null, mapW = 0, mapH = 0, data = { labels: [], codes: [] }, zoom = 1, mode = null, selected = -1;
-const DEF = () => ({ expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [], sty: { c: 1, a: 1, h: 1 } });
+const DEF = () => ({ expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [], sty: { c: 1, a: 1, h: 1 }, walk: { booth: 3, speed: 50, pxm: null, inSched: true } });
 let st = DEF();
 const sty = () => Object.assign({ c: 1, a: 1, h: 1 }, st.sty || {});
 const blank = () => ({ q: '', en: '', min: null, label: '', code: '', x: null, y: null, score: 0, cands: [], manual: false, rt: null });
@@ -569,7 +578,7 @@ async function loadFile(f, keep) {
       pdfDoc = null; curPage = null; $('pageRow').style.display = 'none';
       const url = URL.createObjectURL(f), img = new Image();
       await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
-      mapW = img.naturalWidth; mapH = img.naturalHeight; data = { labels: [], codes: [] };
+      mapW = img.naturalWidth; mapH = img.naturalHeight; data = { labels: [], codes: [] }; estPx = null;
       const c = document.createElement('canvas'); c.width = mapW; c.height = mapH; c.getContext('2d').drawImage(img, 0, 0);
       mountMap(c);
       $('mapInfo').textContent = `${f.name}｜圖片檔讀不到文字，請每站按「點地圖」放位置`;
@@ -586,7 +595,7 @@ async function renderPdfPage(n, name) {
   await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
   mapW = c.width; mapH = c.height;
   const tc = await page.getTextContent();
-  data = Core.buildLabels(Core.items2boxes(tc.items, vp.transform, scale));
+  data = Core.buildLabels(Core.items2boxes(tc.items, vp.transform, scale)); estimateScale();
   mountMap(c);
   $('mapInfo').textContent = `${name || ''}｜讀到 ${data.labels.filter(l => !l.combo).length} 個名稱、${data.codes.length} 個攤位號`;
   afterMap(false);
@@ -702,13 +711,51 @@ syUI();
 $('startPick').onclick = () => { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'start' }); };
 
 /* ---------- map interaction ---------- */
-function setMode(m) { mode = m; const el = $('mode'); el.classList.toggle('on', !!m); el.textContent = m ? (m.t === 'start' ? '在地圖上點「起點」位置（Esc 取消）' : `在地圖上點第 ${m.i + 1} 站位置（Esc 取消）`) : ''; $('map').classList.toggle('picking', !!m); }
+/* ---------- 比例尺與走路時間 ----------
+   PDF 裡相鄰的標準攤位號間距＝最小攤位邊長（預設 3 公尺），用它把地圖像素換成公尺；
+   圖片檔或估不準時，可按「手動量比例」在地圖上點兩點、輸入實際公尺數 */
+let estPx = null;
+function estimateScale() {
+  estPx = null; const C = data.codes || []; if (C.length < 8) return;
+  const nn = C.map(a => { let b = Infinity; for (const c of C) if (c !== a) { const d = Math.hypot(c.x - a.x, c.y - a.y); if (d > 1 && d < b) b = d; } return b; }).filter(isFinite).sort((a, b) => a - b);
+  // 取第 25 百分位附近、去掉太近的雜訊：大部分就是兩個相鄰 3×3 攤位的距離
+  const cut = nn.filter(d => d > nn[nn.length >> 1] * .4); estPx = cut[Math.floor(cut.length * .25)] || null;
+}
+const W8 = () => Object.assign({ booth: 3, speed: 50, pxm: null, inSched: true }, st.walk || {});
+function pxPerM() { const w = W8(); return w.pxm || (estPx ? estPx / (w.booth || 3) : null); }
+function walkInfo() {
+  const el = $('wInfo'); if (!el) return; const w = W8(), k = pxPerM();
+  el.textContent = !mapW ? '上傳地圖後會自動估算比例' : w.pxm ? `比例：手動設定（1 公尺 ≈ ${w.pxm.toFixed(1)} 像素）` : k ? `比例：依攤位號間距自動估算（1 公尺 ≈ ${k.toFixed(1)} 像素）` : '這張圖抓不到攤位號，請按「手動量比例」';
+  $('wCal').textContent = w.pxm ? '清除手動比例' : '手動量比例';
+}
+$('wBooth').oninput = e => { st.walk = Object.assign(W8(), { booth: +e.target.value || 3 }); walkInfo(); drawRoute(); renderSched(); save(); };
+$('wSpeed').oninput = e => { st.walk = Object.assign(W8(), { speed: +e.target.value || 50 }); drawRoute(); save(); };
+function syncWalkForm() { const w = W8(); $('wBooth').value = w.booth; $('wSpeed').value = w.speed; }
+const walkLeg = new Map();       // 每一站「從上一站走過來」的公尺數
+const legMin = m => Math.max(1, Math.ceil(m / (W8().speed || 50)));
+const legSec = m => Math.max(5, Math.round(m / (W8().speed || 50) * 60 / 5) * 5);      // 秒數以 5 秒為單位
+const fmtSec = t => { const mm = Math.floor(t / 60), ss = t % 60; return mm ? `${mm}分${ss ? ss + '秒' : ''}` : `${ss}秒`; };
+let lastLegs = [];
+const lastLegsTotal = () => lastLegs.length ? lastLegs.reduce((t, l) => t + l.t, 0) : 0;
+$('wCal').onclick = () => {
+  if (!mapW) return toast('請先上傳地圖');
+  if (W8().pxm) { st.walk = Object.assign(W8(), { pxm: null }); walkInfo(); drawRoute(); renderSched(); save(); return toast('已改回自動估算'); }
+  setMode({ t: 'cal', a: null });
+};
+let routeM = null;   // 目前路線總長（公尺），給行程表用
+function setMode(m) { mode = m; const el = $('mode'); el.classList.toggle('on', !!m); el.textContent = m ? (m.t === 'start' ? '在地圖上點「起點」位置（Esc 取消）' : m.t === 'cal' ? (m.a ? '再點第二個點（Esc 取消）' : '量比例：在地圖上點第一個點，例如一個攤位的左邊（Esc 取消）') : `在地圖上點第 ${m.i + 1} 站位置（Esc 取消）`) : ''; $('map').classList.toggle('picking', !!m); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { setMode(null); $('modal').classList.remove('on'); } });
 function toMap(e) { const r = $('ov').getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * mapW, y: (e.clientY - r.top) / r.height * mapH }; }
 let dragging = null, moved = false;
 function onMapClick(e) {
   if (moved) { moved = false; return; }
   if (!mode) return; const p = toMap(e);
+  if (mode.t === 'cal') {
+    if (!mode.a) { setMode({ t: 'cal', a: p }); return; }
+    const px = Math.hypot(p.x - mode.a.x, p.y - mode.a.y), m = parseFloat((prompt('這兩點實際距離幾公尺？', String(W8().booth)) || '').replace(/[^\d.]/g, ''));
+    setMode(null); if (!(m > 0) || px < 2) return toast('沒有設定比例');
+    st.walk = Object.assign(W8(), { pxm: px / m }); walkInfo(); drawRoute(); renderSched(); save(); return toast(`已設定：1 公尺 ≈ ${(px / m).toFixed(1)} 像素`);
+  }
   if (mode.t === 'start') { st.start.x = p.x; st.start.y = p.y; $('startInfo').textContent = '起點已設定。可直接拖曳地圖上的 0 號調整。'; $('startName').focus(); }
   else { const s = st.stops[mode.i]; s.x = p.x; s.y = p.y; s.manual = true; s.label = ''; s.code = nearestCode(p); }
   setMode(null); renderAll();
@@ -846,7 +893,7 @@ function drawRoute() {
   out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="${(3.2 * Y.h).toFixed(2)}" markerHeight="${(3.2 * Y.h).toFixed(2)}" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
   const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && live(o.s));
   let prev = st.start.x != null ? { x: st.start.x, y: st.start.y, r: R * .9 } : null;
-  const segs = [];
+  const segs = []; walkLeg.clear();
   for (const { s, i } of pts) { if (prev) { const rt = getRt(s); segs.push({ s, i, rt, prev, L: segPoly(prev, s, rt).map(q => ({ x: q.x, y: q.y })) }); } prev = { x: s.x, y: s.y, r: R }; }
   if (!dragFast) lanes(segs, sw * 2.6);
   // 錯開後頭尾補一小段直角接回圓圈中心
@@ -857,6 +904,7 @@ function drawRoute() {
   segShown = {};
   for (const { s, i, rt, prev: pv, L } of segs) {
     segShown[i] = L;
+    { const k = pxPerM(); let d = 0; for (let j = 1; j < L.length; j++) d += Math.hypot(L[j].x - L[j - 1].x, L[j].y - L[j - 1].y); if (k) walkLeg.set(s, d / k); else walkLeg.delete(s); }
     {
       const prev = pv, P = trim(L, prev.r * 1.05, R * 1.14 + tipOut, prev, s); segsNow.push({ P, n: segsNow.length + 1 }); const d0 = 0, d = 'M' + P.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' L');
       halos.push(`<path d="${d}" fill="none" stroke="#fff" stroke-width="${sw * 2.2}" stroke-linejoin="round" opacity=".85"/>`);
@@ -882,7 +930,12 @@ function drawRoute() {
   ov.innerHTML = out.join('');
   let L = 0; if (pts.length) { let p = st.start.x != null ? st.start : pts[0].s; for (const { s } of pts) { const Q = segPoly(p, s, getRt(s)); for (let j = 1; j < Q.length; j++) L += Math.hypot(Q[j].x - Q[j - 1].x, Q[j].y - Q[j - 1].y); p = s; } }
   const miss = st.stops.filter(s => live(s) && s.x == null).length;
-  $('sum').innerHTML = pts.length ? `已定位 <b>${pts.length}</b> 站${miss ? `，<span style="color:var(--bad)">${miss} 站未定位</span>` : ''}｜路線長度 <b>${Math.round(L / mapW * 1000)}</b>` : '';
+  lastLegs = []; pts.forEach(({ s }, n) => { const m = walkLeg.get(s); if (m != null) lastLegs.push({ from: n, to: n + 1, m, t: legSec(m) }); });
+  const k = pxPerM(), W = W8(); routeM = k && pts.length ? L / k : null;
+  const len = routeM != null ? `路線約 <b>${Math.round(routeM / 10) * 10}</b> 公尺・走路約 <b>${fmtSec(lastLegsTotal())}</b>` : `路線長度 <b>${Math.round(L / mapW * 1000)}</b>（尚未設定比例）`;
+  // 站到站預估走路時間（只顯示在這裡，不影響行程表與匯出的時段）
+  const legs = lastLegs.map(l => `<span class="leg">${l.from}→${l.to}　<b>${fmtSec(l.t)}</b><small>（${Math.round(l.m / 5) * 5}m）</small></span>`);
+  $('sum').innerHTML = pts.length ? `<div>已定位 <b>${pts.length}</b> 站${miss ? `，<span style="color:var(--bad)">${miss} 站未定位</span>` : ''}｜${len}</div>${legs.length ? `<div class="legs">🚶 站到站預估：${legs.join('')}</div>` : ''}` : '';
 }
 
 /* ---------- 清晰圖層：把畫面看得到的範圍，用螢幕實際解析度重新從 PDF 畫一次 ----------
@@ -1224,7 +1277,11 @@ const hm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(
 function rows() {
   const [h, m] = (st.time || '13:30').split(':').map(Number); let t = h * 60 + m;
   const list = st.stops.filter(live), out = [{ a: t - (+st.gather || 0), b: t, zh: '集合', en: 'Meeting at ' + (st.start.name || 'meeting point'), gather: 1 }];
-  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s) || (s.code ? '攤位 ' + s.code : '（未命名）'); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code, s }); t += d; }
+  const W = W8();
+  for (const s of list) {
+    const wm = walkLeg.get(s);
+    if (false && wm != null) { const w = legMin(wm); out.push({ a: t, b: t + w, zh: `步行約 ${w} 分鐘（${Math.round(wm / 5) * 5} 公尺）`, en: `Walk ~${w} min (${Math.round(wm / 5) * 5} m)`, walk: 1 }); t += w; }
+    const d = s.min || +st.per || 20; const nm = dispName(s) || (s.code ? '攤位 ' + s.code : '（未命名）'); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code, s }); t += d; }
   return out;
 }
 function dateTxt(en) {
@@ -1233,12 +1290,12 @@ function dateTxt(en) {
 }
 function tableHtml(en) {
   const r = rows(); const th = en ? '<tr><th>Time</th><th>Exhibitor</th></tr>' : '<tr><th>時間</th><th>導覽廠商</th><th>攤位</th></tr>';
-  return `<table>${th}${r.map(x => `<tr><td class="t">${hm(x.a)}-${hm(x.b)}</td><td>${esc(en ? x.en : x.zh)}</td>${en ? '' : `<td class="t">${esc(x.code || '')}</td>`}</tr>`).join('')}</table>`;
+  return `<table>${th}${r.map(x => `<tr${x.walk ? ' style="color:#8a6a3a;background:#fffaf0;font-size:.92em"' : ''}><td class="t">${hm(x.a)}-${hm(x.b)}</td><td>${esc(en ? x.en : x.zh)}</td>${en ? '' : `<td class="t">${esc(x.code || '')}</td>`}</tr>`).join('')}</table>`;
 }
 function renderSched() {
   const r = rows(), last = r[r.length - 1];
   $('sTitle').textContent = `${st.expo ? st.expo + '「' + st.kind + '」' : st.kind + '行程表'}`;
-  $('sMeta').textContent = [dateTxt(), `集合地點：${st.start.name || '—'}`, r.length > 1 ? `共 ${r.length - 1} 家，${hm(r[1].a)}–${hm(last.b)}（${last.b - r[1].a} 分鐘）` : ''].filter(Boolean).join('　');
+  $('sMeta').textContent = [dateTxt(), `集合地點：${st.start.name || '—'}`, r.length > 1 ? `共 ${r.filter(x => !x.walk).length - 1} 家，${hm(r[1].a)}–${hm(last.b)}（${last.b - r[1].a} 分鐘）` : ''].filter(Boolean).join('　');
   $('tZh').innerHTML = `<p class="note" style="margin:0 0 4px">${esc(dateTxt())} 集合地點：${esc(st.start.name)}</p>` + tableHtml(false);
   $('tEn').innerHTML = `<p class="note" style="margin:0 0 4px">${esc(dateTxt(true))} Meeting Point: ${esc(st.start.name)}</p>` + tableHtml(true);
 }
@@ -1249,7 +1306,7 @@ async function copyRich(html, text) {
 const tsv = en => rows().map(x => `${hm(x.a)}-${hm(x.b)}\t${en ? x.en : x.zh}${en ? '' : '\t' + (x.code || '')}`).join('\n');
 $('cpZh').onclick = () => copyRich(`<p>${esc(st.expo)}「${esc(st.kind)}」<br>${esc(dateTxt())}<br>集合地點：${esc(st.start.name)}</p>` + tableHtml(false).replace(/<table>/, '<table border="1" cellpadding="4" style="border-collapse:collapse">'), tsv(false));
 $('cpEn').onclick = () => copyRich(`<p>${esc(st.expo)} Guided Tour Schedule<br>${esc(dateTxt(true))}<br>Meeting Point: ${esc(st.start.name)}</p>` + tableHtml(true).replace(/<table>/, '<table border="1" cellpadding="4" style="border-collapse:collapse">'), tsv(true));
-$('cpVen').onclick = () => { const r = rows().slice(1); copyRich(`<table border="1" cellpadding="4" style="border-collapse:collapse"><tr><th>路線順序</th><th>公司名稱</th><th>攤位</th><th>時段</th></tr>${r.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.zh)}</td><td>${esc(x.code || '')}</td><td>${hm(x.a)}-${hm(x.b)}</td></tr>`).join('')}</table>`, r.map((x, i) => `${i + 1}\t${x.zh}\t${x.code || ''}\t${hm(x.a)}-${hm(x.b)}`).join('\n')); };
+$('cpVen').onclick = () => { const r = rows().slice(1).filter(x => !x.walk); copyRich(`<table border="1" cellpadding="4" style="border-collapse:collapse"><tr><th>路線順序</th><th>公司名稱</th><th>攤位</th><th>時段</th></tr>${r.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.zh)}</td><td>${esc(x.code || '')}</td><td>${hm(x.a)}-${hm(x.b)}</td></tr>`).join('')}</table>`, r.map((x, i) => `${i + 1}\t${x.zh}\t${x.code || ''}\t${hm(x.a)}-${hm(x.b)}`).join('\n')); };
 
 /* ---------- export: PNG + 2 docx, one click ---------- */
 const dlP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
@@ -1302,6 +1359,13 @@ async function buildPpt(scope) {
   let iw = BW, ih = BW / ar; if (ih > BH) { ih = BH; iw = BH * ar; }
   const ix = BX + (BW - iw) / 2, iy = BY;
   s.addImage({ data: canvas.toDataURL('image/png'), x: ix, y: iy, w: iw, h: ih, altText: '攤位圖' });
+  // 地圖下方：站到站預估走路時間（秒數以 5 秒為單位）
+  if (lastLegs.length) {
+    const runs = [{ text: '站到站走路預估：', options: { bold: true, color: INK } }];
+    lastLegs.forEach((l, k) => { runs.push({ text: `${l.from}→${l.to} `, options: { color: GREY } }, { text: fmtSec(l.t), options: { bold: true, color: RED } }, { text: `(${Math.round(l.m / 5) * 5}m)${k < lastLegs.length - 1 ? '  ' : ''}`, options: { color: GREY } }); });
+    runs.push({ text: `　｜共 ${fmtSec(lastLegsTotal())}`, options: { bold: true, color: INK } });
+    s.addText(runs, { x: BX, y: iy + ih + .03, w: BW, h: Math.max(.24, Math.min(.4, 7.48 - (iy + ih + .03))), fontFace: FONT, fontSize: 10, valign: 'middle', margin: 0, fit: 'shrink', objectName: '站到站預估走路時間' });
+  }
   const tx = x => ix + (x - r0.x) / r0.w * iw, ty = y => iy + (y - r0.y) / r0.h * ih;
   // route arrows: one shape per leg between stops (select & delete / drag points to edit)
   for (const seg of lastSegs) {
@@ -1316,7 +1380,7 @@ async function buildPpt(scope) {
   s.addShape(pptx.ShapeType.line, { x: 9.95, y: 6.3, w: 0, h: .95, line: { color: RED, width: +(3.5 * sty().a).toFixed(2), endArrowType: 'triangle' }, objectName: '備用直箭頭' });
   s.addText('(不用請自行刪掉)', { x: 10.25, y: 6.6, w: 2.8, h: .4, fontFace: FONT, fontSize: 14, bold: true, color: RED, margin: 0, objectName: '備用箭頭說明' });
   // right column: numbered list
-  const LX = 9.75, list = rr.slice(1), rowH = Math.min(.82, 4.85 / Math.max(1, list.length + 1));
+  const LX = 9.75, list = rr.slice(1).filter(x => !x.walk), rowH = Math.min(.82, 4.85 / Math.max(1, list.length + 1));
   s.addText('導覽順序', { x: LX, y: .3, w: 3.3, h: .45, fontFace: FONT, fontSize: 18, bold: true, color: INK, margin: 0 });
   let y = 1.32;
   s.addText('0', { shape: pptx.ShapeType.ellipse, x: LX, y: y + .04, w: .42, h: .42, fill: { color: INK }, color: 'FFFFFF', bold: true, fontSize: 15, fontFace: 'Arial', align: 'center', valign: 'middle', margin: 0 });
@@ -1374,7 +1438,7 @@ function schedDocx() {
   return docx(x);
 }
 function vendorDocx() {
-  const r = rows().slice(1), first = r[0], last = r[r.length - 1];
+  const r = rows().slice(1).filter(x => !x.walk), first = r[0], last = r[r.length - 1];
   const W = [700, 1750, 900, 1300, 1400, 1300, 1488, 800];
   let x = para(`${st.expo || ''} ${st.kind}廠商資料`, { b: 1, sz: 16, after: 200 });
   if (st.note) x += para(st.note, { sz: 11, after: 120 });
@@ -1440,6 +1504,7 @@ async function refreshSlots(msg) {
   catch (e) { renderSlots('雲端連不上：' + e.message + '（若在 claude.ai 預覽中開啟會被擋，放 GitHub Pages 就能用）'); }
 }
 function applyForm() {
+  syncWalkForm();
   ['expo', 'date', 'time', 'per', 'gather', 'kind', 'note'].forEach(k => { $(k).value = st[k] ?? ''; });
   $('startName').value = st.start.name || '';
   syUI();
@@ -1541,9 +1606,10 @@ $('newFile').onclick = () => {
   try { localStorage.removeItem(KEY); localStorage.removeItem('tourCurSlot'); } catch (e) {}
   location.reload();
 };
-function renderAll() { renderStops(); drawRoute(); renderSched(); renderXl(); save(); guide(); }
+function renderAll() { walkInfo(); renderStops(); drawRoute(); renderSched(); renderXl(); save(); guide(); }
 function relayout() { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); }
 window.addEventListener('resize', relayout);
+syncWalkForm();
 renderAll();
 }
 
