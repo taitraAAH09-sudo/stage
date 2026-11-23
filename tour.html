@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>開幕巡場產出台 V17</title>
+<title>開幕巡場產出台 V18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- 內建：PptxGenJS 3.12.0（產生 PPT）、pdf.js 3.11.174（讀 PDF 主視覺），不需連外部網站 -->
@@ -275,8 +275,8 @@ header .btn{white-space:nowrap}
 </head>
 <body>
 <header>
-  <h1>開幕活動及巡場介紹｜產出台</h1>
-  <span class="ver">V17</span>
+  <h1>VVIP 開幕活動及巡場介紹｜產出台</h1>
+  <span class="ver">V18</span>
   <button class="btn btn-ghost btn-sm" id="btnCam" title="開相機拍照，照片自動存進共用相簿">📷 相機</button>
   <button class="btn btn-ghost btn-sm" id="btnAlbum" title="大家拍的照片都在這裡">🖼 相簿</button>
   <button class="btn btn-ghost btn-sm" id="btnClear" title="清掉畫面，從空白模板開始（線上存檔不受影響）">開新頁</button>
@@ -477,7 +477,7 @@ header .btn{white-space:nowrap}
 
 <script>
 /* ===================== Config ===================== */
-const VERSION = 'V17';
+const VERSION = 'V18';
 document.title = '開幕巡場產出台 ' + VERSION;
 document.querySelectorAll('header .ver').forEach(e => e.textContent = VERSION);   // 分頁標題、頁首版號都跟著這裡走
 // namecard 專案的網頁設定：填好 apiKey 等欄位後，所有人打開就會自動連線
@@ -776,7 +776,7 @@ function cellsOf(h){
 }
 const isCustom = h => cellsOf(h).map(c=>c.key).join() !== cellsOf({...h,order:null}).map(c=>c.key).join();
 const hallTitle = (h,i) => (h.title||'').trim() || `巡場動線_${(h.name||'').trim()||`第${i+1}館`}(合影)`;
-function ensureHalls(){ while(S.halls.length<S.hallN) S.halls.push({name:'',names:'',guide:'',host:'',vendorOn:false,vendor:''}); }
+function ensureHalls(){ while(S.halls.length<S.hallN) S.halls.push({name:'',names:'',guide:'',host:'',contact:'',vendorOn:false,vendor:''}); }
 function renderCounter(){
   $('#hallCounter').innerHTML = Array.from({length:Math.max(8,S.hallN||0)},(_,i)=>`<button data-hn="${i+1}" class="${S.hallN===i+1?'on':''}">${i+1}</button>`).join('');
 }
@@ -809,9 +809,10 @@ function renderHalls(){
               <input type="text" data-h="${i}" data-f="vendor" value="${esc(h.vendor||'')}" placeholder="廠商代表，例：華碩 施崇棠董事長" ${h.vendorOn?'':'disabled'}>
               <div class="hint" style="margin:4px 0 0">勾選後：單數時第 3 位、雙數時第 2 位固定為廠商（站在 1 的左手邊）。</div>
             </div>
-            <div class="grid" style="margin-top:10px;grid-template-columns:1fr 1fr">
+            <div class="grid" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr">
               <div><label>解說人（不列入合影）</label><input type="text" data-h="${i}" data-f="guide" value="${esc(h.guide||'')}" placeholder="例：國科會產學處 林處長"></div>
               <div><label>接待人（不列入合影）</label><input type="text" data-h="${i}" data-f="host" value="${esc(h.host||'')}" placeholder="例：外貿協會 王專員"></div>
+              <div><label>聯絡人（名字/電話）</label><input type="text" data-h="${i}" data-f="contact" value="${esc(h.contact||'')}" placeholder="例：王小明/0912-345-678"></div>
             </div>
           </div>
           <div><label>佔位圖</label><div class="imgbox" data-img="hall${i}" data-ph="點擊或拖曳圖片">點擊或拖曳圖片</div></div>
@@ -1064,7 +1065,7 @@ function buildSlides(){
     const h=S.halls[i]||{}; if(h.off) continue;
     const s=slide('hall'+i); header(s,SEC.tour,hallTitle(h,i));
     const cells=cellsOf(h);
-    const info=[(h.guide||'').trim()&&`解說人：${h.guide.trim()}`,(h.host||'').trim()&&`接待人：${h.host.trim()}`].filter(Boolean).join('　　');
+    const info=[(h.guide||'').trim()&&`解說人：${h.guide.trim()}`,(h.host||'').trim()&&`接待人：${h.host.trim()}`,(h.contact||'').trim()&&`聯絡人：${h.contact.trim()}`].filter(Boolean).join('　　');
     const imgBottom = (cells.length?5.55:6.95) - (info?0.45:0);
     if(!img(s, IMG['hall'+i], 0.6,1.3,12.1,imgBottom-1.3)){
       s.els.push({t:'shape', shape:'rect', x:0.6,y:1.3,w:12.1,h:imgBottom-1.3, fill:'F2F2F2', line:'BFBFBF', dash:true});
@@ -1442,6 +1443,12 @@ function rName(s){   // 跟導覽路線產生台顯示的名稱一致：打的�
   if(L && rNorm(L).includes(rNorm(q)) && rNorm(L).length>rNorm(q).length) return L;
   return q || (s.code ? '攤位 '+s.code : '');
 }
+function rContact(s, C){   // 舊存檔沒有算好的聯絡人時，自己用攤位號或名稱對 Excel
+  if(!C || !Array.isArray(C.rows)) return null;
+  if(s.code){ const r=C.rows.find(r=>r.booth && r.booth===s.code); if(r) return r; }
+  const qs=[rName(s), s.q, s.label].map(rNorm).filter(Boolean);
+  return C.rows.find(r=>{ const n=rNorm(r.co); return n && qs.some(q=>n===q || (q.length>=2 && (n.includes(q)||q.includes(n)))); }) || null;
+}
 async function importRoute(k){
   const m=RMETA[k]||{};
   busy(true,'匯入中…');
@@ -1458,9 +1465,14 @@ async function importRoute(k){
     if(d.routePpt && d.routePpt.ops){ IMG.__route={ops:d.routePpt.ops}; S.routePptOn=true; } else delete IMG.__route;
     // 各館合影：館名＝站名（依站序），其他欄位保留
     const stops=(rs.stops||[]).filter(s=>(s.q||'').trim() || (s.manual && s.x!=null));
-    if(stops.length){ S.hallN=stops.length; ensureHalls(); stops.forEach((s,i)=>{ S.halls[i].name=rName(s); }); }
+    let ctN=0;
+    if(stops.length){ S.hallN=stops.length; ensureHalls();
+      const outs = Array.isArray(d.stopsOut) ? d.stopsOut : null;
+      stops.forEach((s,i)=>{ S.halls[i].name=rName(s);
+        const ct = outs && outs[i] ? outs[i].ct : rContact(s, rs.contacts);
+        if(ct && (ct.name||ct.tel)){ S.halls[i].contact=[ct.name,ct.tel].filter(Boolean).join('/'); ctN++; } }); }
     rDone=k; dirty=true; renderAll(); renderRouteRecs();
-    toast(`已匯入「${m.name||k}」：展名、日期、${stops.length} 館館名${d.routePpt?'、巡場動線 PPT 版面':d.routeImg?'、路線圖':''}${imgNote}`);
+    toast(`已匯入「${m.name||k}」：展名、日期、${stops.length} 館館名${ctN?`、${ctN} 館聯絡人`:''}${d.routePpt?'、巡場動線 PPT 版面':d.routeImg?'、路線圖':''}${imgNote}`);
   }catch(e){ console.error(e); toast('匯入失敗：'+e.message); }
   busy(false);
 }
