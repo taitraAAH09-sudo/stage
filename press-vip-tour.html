@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V22 白色版</title>
+<title>導覽路線產生台 V24 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -124,6 +124,9 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 #png.ready{background:linear-gradient(90deg,#ff7a1a,#e8481c)!important;border-color:#ff7a1a!important;color:#fff!important;font-weight:900;animation:lit 1.6s ease-in-out infinite}
 @keyframes lit{0%,100%{box-shadow:0 0 0 0 #ff7a1a88}50%{box-shadow:0 0 0 7px #ff7a1a00,0 0 18px #ffb36b}}
 @media(prefers-reduced-motion:reduce){#png.ready{animation:none}}
+.detailbtn{display:inline-flex;align-items:center;background:#fff;color:#132b52;border-radius:8px;font-weight:800;min-height:34px;padding:4px 14px;font-size:14px;text-decoration:none;align-self:center;margin-left:auto;margin-right:8px;white-space:nowrap}
+.detailbtn + .helpbtn{margin-left:0!important}
+.detailbtn:hover{background:#e7f6ef;color:#0f7a5c}
 .newbtn{background:#fff;color:#132b52;border:0;border-radius:8px;font-weight:800;min-height:34px;padding:4px 14px;font-size:14px;align-self:center}
 .newbtn:hover{background:#ffe9dd}
 .newbtn.armed{background:#e8481c;color:#fff}
@@ -202,8 +205,9 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V22</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V24</span>
   <button class="newbtn" id="newFile" title="清空目前畫面，從頭開始（雲端存檔點不會被刪）">＋ 開新檔案</button>
+  <a class="detailbtn" href="https://taitraaah09-sudo.github.io/stage/tour" target="_blank" rel="noopener" title="開新分頁：開幕巡場產出台，可從左邊匯入這裡的存檔">📑 要做更細節的導覽圖點我</a>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
 <main>
@@ -236,9 +240,6 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
       <label class="f">每家預設（分）<input id="per" type="number" min="5" step="5" value="20"></label>
       <label class="f">提前集合（分）<input id="gather" type="number" min="0" step="5" value="10"></label>
       <label class="f" style="grid-column:1/-1">說明（印在廠商資料表上，可空白）<input id="note" placeholder="例：14 位國際記者（來自 12 個國家），廠商用全英文介紹"></label>
-      <label class="f">最小攤位邊長（公尺）<input id="wBooth" type="number" min="1" step="0.5" value="3"></label>
-      <label class="f">步行速度（公尺／分）<input id="wSpeed" type="number" min="10" step="5" value="50"></label>
-      <div style="grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="note" id="wInfo" style="margin:0;flex:1"></span><button class="ghost sm" id="wCal" type="button">手動量比例</button></div>
       <label class="f" style="grid-column:1/-1">類型<select id="kind"><option>媒體導覽</option><option>貴賓導覽</option><option>長官巡場</option></select></label>
     </div>
   </section>
@@ -728,16 +729,16 @@ function walkInfo() {
   el.textContent = !mapW ? '上傳地圖後會自動估算比例' : w.pxm ? `比例：手動設定（1 公尺 ≈ ${w.pxm.toFixed(1)} 像素）` : k ? `比例：依攤位號間距自動估算（1 公尺 ≈ ${k.toFixed(1)} 像素）` : '這張圖抓不到攤位號，請按「手動量比例」';
   $('wCal').textContent = w.pxm ? '清除手動比例' : '手動量比例';
 }
-$('wBooth').oninput = e => { st.walk = Object.assign(W8(), { booth: +e.target.value || 3 }); walkInfo(); drawRoute(); renderSched(); save(); };
-$('wSpeed').oninput = e => { st.walk = Object.assign(W8(), { speed: +e.target.value || 50 }); drawRoute(); save(); };
-function syncWalkForm() { const w = W8(); $('wBooth').value = w.booth; $('wSpeed').value = w.speed; }
+if ($('wBooth')) $('wBooth').oninput = e => { st.walk = Object.assign(W8(), { booth: +e.target.value || 3 }); walkInfo(); drawRoute(); renderSched(); save(); };
+if ($('wSpeed')) $('wSpeed').oninput = e => { st.walk = Object.assign(W8(), { speed: +e.target.value || 50 }); drawRoute(); save(); };
+function syncWalkForm() { const w = W8(); if ($('wBooth')) { $('wBooth').value = w.booth; $('wSpeed').value = w.speed; } }
 const walkLeg = new Map();       // 每一站「從上一站走過來」的公尺數
 const legMin = m => Math.max(1, Math.ceil(m / (W8().speed || 50)));
 const legSec = m => Math.max(5, Math.round(m / (W8().speed || 50) * 60 / 5) * 5);      // 秒數以 5 秒為單位
 const fmtSec = t => { const mm = Math.floor(t / 60), ss = t % 60; return mm ? `${mm}分${ss ? ss + '秒' : ''}` : `${ss}秒`; };
 let lastLegs = [];
 const lastLegsTotal = () => lastLegs.length ? lastLegs.reduce((t, l) => t + l.t, 0) : 0;
-$('wCal').onclick = () => {
+if ($('wCal')) $('wCal').onclick = () => {
   if (!mapW) return toast('請先上傳地圖');
   if (W8().pxm) { st.walk = Object.assign(W8(), { pxm: null }); walkInfo(); drawRoute(); renderSched(); save(); return toast('已改回自動估算'); }
   setMode({ t: 'cal', a: null });
