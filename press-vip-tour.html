@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V13 白色版</title>
+<title>導覽路線產生台 V15 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -124,6 +124,9 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 #png.ready{background:linear-gradient(90deg,#ff7a1a,#e8481c)!important;border-color:#ff7a1a!important;color:#fff!important;font-weight:900;animation:lit 1.6s ease-in-out infinite}
 @keyframes lit{0%,100%{box-shadow:0 0 0 0 #ff7a1a88}50%{box-shadow:0 0 0 7px #ff7a1a00,0 0 18px #ffb36b}}
 @media(prefers-reduced-motion:reduce){#png.ready{animation:none}}
+.newbtn{background:#fff;color:#132b52;border:0;border-radius:8px;font-weight:800;min-height:34px;padding:4px 14px;font-size:14px;align-self:center}
+.newbtn:hover{background:#ffe9dd}
+.newbtn.armed{background:#e8481c;color:#fff}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 /* ===== V8 版型 ===== */
@@ -193,7 +196,8 @@ aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V13</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V15</span>
+  <button class="newbtn" id="newFile" title="清空目前畫面，從頭開始（雲端存檔點不會被刪）">＋ 開新檔案</button>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
 <main>
@@ -1530,6 +1534,11 @@ function placeHelp() {
 addEventListener('resize', placeHelp); addEventListener('scroll', placeHelp, true);
 $('help').onclick = showHelp;
 try { if (localStorage.getItem('tourHelpSeen') !== '1') setTimeout(showHelp, 300); } catch (e) { setTimeout(showHelp, 300); }
+/* 開新檔案：直接清空目前畫面（雲端存檔點都還在，不會被刪） */
+$('newFile').onclick = () => {
+  try { localStorage.removeItem(KEY); localStorage.removeItem('tourCurSlot'); } catch (e) {}
+  location.reload();
+};
 function renderAll() { renderStops(); drawRoute(); renderSched(); renderXl(); save(); guide(); }
 function relayout() { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); }
 window.addEventListener('resize', relayout);
