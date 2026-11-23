@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>導覽路線產生台 V7 白色版</title>
+<title>導覽路線產生台 V11 白色版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Sofia+Sans+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -123,31 +123,99 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
 .sty output{font:800 15px "Sofia Sans Condensed",sans-serif;text-align:right}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
+/* ===== V8 版型 ===== */
+body{background:#eef1f6;overflow:hidden}
+header{background:linear-gradient(90deg,#132b52,#1f4a8a);padding:10px max(2vw,14px);align-items:center;position:sticky;top:0;z-index:20}
+header h1{font-size:21px}
+.slotbar{padding:8px max(2vw,14px);background:#fff;border-bottom:1px solid #dfe4ec}
+.slothead{margin-bottom:6px}
+.slots{grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto}
+.slot{padding:6px 7px;gap:4px;border-radius:10px}
+.slot .row{gap:5px}
+.slot .sn{width:22px;height:22px;font-size:12.5px}
+.slot .sname{min-height:30px;font-size:13.5px;padding:3px 7px}
+.slot .smeta{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .tools button{min-height:28px;padding:1px 7px;font-size:12px}
+main{min-height:0;overflow:hidden;grid-template-columns:minmax(340px,430px) minmax(0,1fr)}
+aside{background:#eef1f6;overflow-y:auto;padding:12px;gap:12px;border-right:1px solid #dfe4ec}
+aside>section{background:#fff;border:1px solid #dfe4ec;border-radius:12px;padding:12px 13px;box-shadow:0 1px 3px #13285214}
+aside section h2{font-size:15px;color:#132b52;font-weight:900;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+aside section h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--red)}
+.stage{overflow-y:auto;background:#fff}
+.stage>*{flex-shrink:0}
+.bar{position:sticky;top:0;z-index:4;background:#fff;box-shadow:0 1px 0 #dfe4ec}
+.gt.now{outline-offset:2px;background:#fff7f3}
+.gt.now>.gtip{font-size:14px}
+/* 試看版：視窗不凍結，左欄跟著整頁捲；右邊地圖黏在畫面上 */
+body{overflow:auto}
+main{height:auto!important;overflow:visible;align-items:start}
+aside{overflow:visible;min-height:calc(100vh - var(--hh,52px))}
+.stage{position:sticky;top:var(--hh,52px);height:calc(100vh - var(--hh,52px));overflow-y:auto}
+#g0 .slots{grid-template-columns:1fr;gap:6px;overflow:visible}
+#g0 .slot{padding:5px 7px;gap:2px}
+#g0 .slot .row{gap:5px}
+#g0 .slot .sname{flex:1}
+#g0 .slot .tools{flex:none;gap:3px}
+#g0 .slot .tools button{min-height:28px;padding:0 7px}
+#g0 .slot .smeta{padding-left:28px}
+#g0 .slot.cur{border-color:var(--red)!important;box-shadow:0 0 0 1px var(--red)}
+.curtag{font-size:11.5px;color:var(--red);font-weight:700;padding-left:28px}
+.curtag:empty{display:none}
+.xlbox{margin-top:0;border-top:1px solid #dfe4ec;padding-top:12px}
+/* 拖曳排序 */
+.stop .pin[data-drag]{cursor:grab;touch-action:none}
+.stop{cursor:grab}.stop input,.stop button{cursor:auto}.stop button{cursor:pointer}
+.stop.dragging{opacity:.45}
+.msearch{display:flex;gap:6px;margin-bottom:8px}
+.msearch input{min-height:36px;font-size:14.5px}
+#msRes{margin:-2px 0 8px}
+#msRes button{min-height:30px;padding:2px 8px;font-size:12.5px;border-color:var(--line)}
+@keyframes hlp{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+.hl-ring{animation:hlp .9s ease-in-out infinite}
+.stop.drop-before{box-shadow:0 -3px 0 var(--red)}
+.stop.drop-after{box-shadow:0 3px 0 var(--red)}
+.stop .ct{font-size:12.5px;color:#1d4f91;background:#eef4fc;border-radius:6px;padding:4px 8px}
+.stop .ct.none{color:var(--mute);background:#f4f2f0}
+/* Excel 區 */
+.xlbox{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.xlbox .drop{padding:10px;background:#f7fbff;border-color:#9bbbe6}
+.xlbox .drop b{color:#1d4f91}
+.xlcols{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.xlcols span{font-size:12px;padding:2px 8px;border-radius:20px;border:1px solid currentColor}
+.xlcols .y{color:var(--ok)}.xlcols .n{color:var(--mute)}
+@media(max-width:900px){body{overflow:auto}main{height:auto!important;overflow:visible}aside,.stage{overflow:visible}.bar{position:static}}
 @media(max-width:900px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V7</span>
+  <h1>媒體／貴賓導覽路線產生台</h1><span class="ver">V11</span>
   <button class="helpbtn" id="help">❓ 操作導覽</button>
 </header>
-<section class="slotbar">
-  <div class="slothead"><b>雲端存檔點</b><span class="note" id="slotMsg" style="margin:0"></span></div>
-  <div class="slots" id="slots"></div>
-</section>
 <main>
 <aside>
+  <section id="g0">
+    <h2>1　雲端存檔點</h2>
+    <div class="slots" id="slots"></div>
+    <p class="note" id="slotMsg" style="margin:6px 0 0"></p>
+  </section>
   <section class="gt" id="g1">
-    <span class="gtip">第 1 步：請先上傳攤位圖 PDF</span>
-    <h2>1　攤位圖</h2>
+    <span class="gtip">請先上傳攤位圖 PDF</span>
+    <h2>2　攤位圖 PDF</h2>
     <div class="drop" id="drop" tabindex="0"><b>點這裡或拖曳上傳地圖</b><br>PDF（可自動讀廠商名）或 JPG／PNG（需手動點位置）</div>
     <input type="file" id="file" accept=".pdf,image/*" hidden>
     <div class="row" id="pageRow" style="display:none;margin-top:6px"><span class="note" style="margin:0">頁次</span><select id="page"></select></div>
     <p class="note" id="mapInfo"></p>
   </section>
+  <section class="xlbox" id="xlBox">
+    <h2>3　廠商聯絡人 Excel（可不傳）</h2>
+    <div class="drop" id="xlDrop" tabindex="0"><b>＋ 上傳 Excel</b><br>自動抓「聯絡人／連絡人」「Email（聯絡人Email）」「電話（聯絡人電話）」，填進廠商資料表 Word；沒有的欄位就留空</div>
+    <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" hidden>
+    <div id="xlInfo"></div>
+  </section>
   <section>
-    <h2>2　活動資訊</h2>
+    <h2>4　活動資訊</h2>
     <div class="grid2">
       <label class="f" style="grid-column:1/-1">展名<input id="expo" placeholder="例：TaipeiPLAS 2026"></label>
       <label class="f">日期<input id="date" type="date" min="2000-01-01" max="2099-12-31"></label>
@@ -159,7 +227,7 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
     </div>
   </section>
   <section>
-    <h2>3　起點（第 0 站）</h2>
+    <h2>5　起點（第 0 站）</h2>
     <div class="start">
       <span class="pin">0</span>
       <input id="startName" value="舞台區" aria-label="起點名稱">
@@ -169,7 +237,9 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
   </section>
   <section class="gt" id="g2">
     <span class="gtip">第 2 步：在這裡輸入要導覽的廠商（可按「貼上整串名單」）</span>
-    <h2>4　導覽廠商（第 1、2、3… 站）</h2>
+    <h2>6　導覽廠商（第 1、2、3… 站）</h2>
+    <div class="msearch"><input id="mSearch" placeholder="🔍 在地圖上找廠商或攤位號（Enter）"><button class="ghost sm" id="mSearchGo">找</button></div>
+    <div class="cands" id="msRes"></div>
     <div class="stops" id="stops"></div>
     <div class="row" style="margin-top:8px">
       <button class="ghost" id="add">＋ 新增一站</button>
@@ -178,7 +248,7 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
     <p class="note">打字時會等你選完字才比對。全對＝綠、模糊＝橘（請點下方候選確認）、找不到＝紅。也可直接打攤位號，例如 N0224。</p>
   </section>
   <section>
-    <h2>5　圓圈與箭頭</h2>
+    <h2>7　圓圈與箭頭</h2>
     <div class="sty">
       <span>圓圈大小</span><input type="range" id="syC" min="0.5" max="2.5" step="0.05"><output id="syCv"></output>
       <span>線條粗細</span><input type="range" id="syA" min="0.3" max="3" step="0.05"><output id="syAv"></output>
@@ -201,7 +271,7 @@ body{background:#f4f6fa}aside{background:#fff}.slotbar{background:#fff}
     <span class="sum" id="sum"></span>
   </div>
   <div class="mapbox"><div class="mapwrap" id="wrap">
-    <div class="empty" id="empty"><div><b>先上傳攤位圖</b>上傳後：拖曳紅色編號＝調整位置；預設沿白色走道走（優先 6.1m 主走道）；拖曳箭頭線段＝改走別條走道；點一下線段＝切換 自動／先橫後直／先直後橫／直線</div></div>
+    <div class="empty" id="empty"><div><b>先上傳攤位圖</b>上傳後：拖曳紅色編號＝調整位置；預設沿白色走道走（優先 6.1m 主走道）；拖曳線段＝只微調那一小段（其他線不動，可先放大再拉）；點一下線段＝切換 自動／先橫後直／先直後橫，微調過的再點一下會還原</div></div>
     <div class="map" id="map" hidden></div>
   </div><div id="frame" hidden><span>PPT 輸出範圍（不滿意就用 ＋／－ 或拖曳地圖調整）</span></div></div>
   <div class="sched">
@@ -453,12 +523,16 @@ const KEY = 'tourRoute_V2';
 try { const old = localStorage.getItem('tourRoute_V1'); if (!localStorage.getItem(KEY) && old) { const o = JSON.parse(old); (o.stops || []).forEach(s => s.rt = null); localStorage.setItem(KEY, JSON.stringify(o)); } } catch (e) {}
 let mapSrc = null, lastSegs = [], lastMarks = [], curPage = null, curScale = 1, G = null, pathCache = new Map(), snapCache = new Map(), dragFast = false, lastBox = null;
 let pdfDoc = null, mapW = 0, mapH = 0, data = { labels: [], codes: [] }, zoom = 1, mode = null, selected = -1;
-let st = { expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [], sty: { c: 1, a: 1, h: 1 } };
+const DEF = () => ({ expo: '', date: '', time: '13:30', per: 20, gather: 10, kind: '媒體導覽', note: '', start: { name: '舞台區', x: null, y: null }, stops: [], sty: { c: 1, a: 1, h: 1 } });
+let st = DEF();
 const sty = () => Object.assign({ c: 1, a: 1, h: 1 }, st.sty || {});
 const blank = () => ({ q: '', en: '', min: null, label: '', code: '', x: null, y: null, score: 0, cands: [], manual: false, rt: null });
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.stops) st = Object.assign(st, s); } catch (e) {}
 if (!st.stops.length) for (let i = 0; i < 6; i++) st.stops.push(blank());
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+let curSlot = '', dirty = false, quiet = false;
+try { curSlot = localStorage.getItem('tourCurSlot') || ''; } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} if (!quiet && curSlot && !dirty) { dirty = true; updCur(); } };
+function updCur() { document.querySelectorAll('.slot').forEach(el => { const on = el.dataset.k === curSlot; el.classList.toggle('cur', on); const t = el.querySelector('.curtag'); if (t) t.textContent = on ? (dirty ? '使用中・有未存的變更，記得按存檔' : '使用中') : ''; }); }
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('on'), 1800); }
 
 /* ---------- map loading ---------- */
@@ -494,7 +568,7 @@ async function loadFile(f, keep) {
       $('mapInfo').textContent = `${f.name}｜圖片檔讀不到文字，請每站按「點地圖」放位置`;
       afterMap(true);
     }
-  } catch (err) { $('mapInfo').textContent = '讀取失敗：' + err.message; }
+  } catch (err) { restoring = false; $('mapInfo').textContent = '讀取失敗：' + err.message; }
 }
 $('page').onchange = () => { if (mapSrc) mapSrc.page = +$('page').value; renderPdfPage(+$('page').value); };
 async function renderPdfPage(n, name) {
@@ -517,6 +591,7 @@ function mountMap(canvas) {
   pathCache.clear(); snapCache.clear(); G = null;
   try { G = Grid.build(canvas.getContext('2d').getImageData(0, 0, mapW, mapH), mapW, mapH, data.codes); } catch (e) { G = null; }
   $('ov').addEventListener('pointerdown', onDown);
+  $('ov').addEventListener('click', e => { if (e.target.closest('[data-hl]')) clearFlash(); });
   m.onclick = onMapClick;
 }
 function afterMap(isImg) {
@@ -559,10 +634,11 @@ function renderStops() {
   $('stops').innerHTML = st.stops.map((s, i) => {
     const P = stopParts(s, i);
     return `<div class="stop ${i === selected ? 'sel' : ''}" data-i="${i}">
-      <div class="row"><span class="pin">${i + 1}</span><input data-f="q" value="${esc(s.q)}" placeholder="廠商名稱或攤位號"><span class="chipw">${P.chip}</span></div>
+      <div class="row"><span class="pin" data-drag title="按住拖曳排序">${i + 1}</span><input data-f="q" value="${esc(s.q)}" placeholder="廠商名稱或攤位號"><span class="chipw">${P.chip}</span></div>
       <div class="info">${P.info}</div>
+      ${ctLine(s)}
       <div class="row"><input data-f="en" value="${esc(s.en)}" placeholder="英文名稱（英文表用，可空白）" style="font-size:14px;min-height:34px"><input data-f="min" type="number" min="5" step="5" value="${s.min ?? ''}" placeholder="${st.per}分" style="max-width:76px;font-size:14px;min-height:34px" title="這站停留分鐘"></div>
-      <div class="tools"><button data-a="up">↑</button><button data-a="down">↓</button><button data-a="place">點地圖放置</button><button data-a="del">刪除</button></div>
+      <div class="tools"><button data-a="find">📍 找位置</button><button data-a="place">點地圖放置</button><button data-a="del">刪除</button></div>
     </div>`;
   }).join('');
 }
@@ -589,8 +665,7 @@ $('stops').addEventListener('click', e => {
   if (!b) { selected = i; drawRoute(); document.querySelectorAll('.stop').forEach(x => x.classList.toggle('sel', +x.dataset.i === i)); return; }
   if (b.dataset.c) { const [, k] = b.dataset.c.split(':').map(Number); pick(s, s.cands[k], true); s.rt = null; }
   const a = b.dataset.a;
-  if (a === 'up' && i > 0) [st.stops[i - 1], st.stops[i]] = [st.stops[i], st.stops[i - 1]];
-  if (a === 'down' && i < st.stops.length - 1) [st.stops[i + 1], st.stops[i]] = [st.stops[i], st.stops[i + 1]];
+  if (a === 'find') { if (!mapW) return toast('請先上傳地圖'); if (s.x == null) return toast('這站還沒定位，請先選候選或按「點地圖放置」'); selected = i; flashAt(s.x, s.y, `第 ${i + 1} 站 ${dispName(s)}`); document.querySelectorAll('.stop').forEach(x => x.classList.toggle('sel', +x.dataset.i === i)); return; }
   if (a === 'del') st.stops.splice(i, 1);
   if (a === 'place') { if (!mapW) return toast('請先上傳地圖'); setMode({ t: 'place', i }); return; }
   renderAll();
@@ -647,24 +722,41 @@ function onDown(e) {
     ov.onpointermove = ev => { const p = toMap(ev); if (Math.hypot(p.x - p0.x, p.y - p0.y) > 3) moved = true; if (!moved) return; dragFast = true; const o = dragging === 's' ? st.start : st.stops[+dragging]; o.x = p.x; o.y = p.y; if (dragging !== 's') o.manual = true; drawRoute(); };
     ov.onpointerup = () => { ov.onpointermove = ov.onpointerup = null; dragFast = false; if (moved && dragging !== 's') { const s = st.stops[+dragging]; s.code = nearestCode(s) || s.code; } dragging = null; renderAll(); setTimeout(() => moved = false, 0); };
   } else {
-    // drag a route segment: slides its middle leg onto another aisle; plain click switches direction
-    const s = st.stops[+seg.dataset.seg], rt = getRt(s);
-    ov.onpointermove = ev => { const p = toMap(ev); if (Math.hypot(p.x - p0.x, p.y - p0.y) > 3) moved = true; if (!moved) return;
-      if (rt.t === 'line' || rt.t === 'auto') { rt.t = Math.abs(p.x - p0.x) > Math.abs(p.y - p0.y) ? 'x' : 'y'; }
-      rt.c = rt.t === 'y' ? p.y : p.x; s.rt = rt; drawRoute(); };
+    // 拖曳線段＝微調「抓到的那一小段」：橫線上下移、直線左右移，其他線段完全不動；點一下＝切換轉彎方向／還原
+    const si = +seg.dataset.seg, s = st.stops[si], rt = getRt(s);
+    let P = null, k = -1, horiz = false, base = null;
+    const start = () => {
+      P = (segShown[si] || []).map(q => ({ x: q.x, y: q.y })); if (P.length < 2) return false;
+      let bd = Infinity; for (let j = 0; j < P.length - 1; j++) { const A = P[j], B = P[j + 1], t = Math.max(0, Math.min(1, ((p0.x - A.x) * (B.x - A.x) + (p0.y - A.y) * (B.y - A.y)) / ((B.x - A.x) ** 2 + (B.y - A.y) ** 2 || 1))), d = Math.hypot(p0.x - (A.x + (B.x - A.x) * t), p0.y - (A.y + (B.y - A.y) * t)); if (d < bd) { bd = d; k = j; } }
+      if (k === 0) { P.unshift({ x: P[0].x, y: P[0].y }); k = 1; }                       // 動到第一段：在圓圈那頭補一小段直角
+      if (k === P.length - 2) { P.push({ x: P[P.length - 1].x, y: P[P.length - 1].y }); }  // 動到最後一段：同理
+      horiz = Math.abs(P[k].y - P[k + 1].y) < .5; base = horiz ? P[k].y : P[k].x; return true;
+    };
+    ov.onpointermove = ev => { const p = toMap(ev); if (!moved && Math.hypot(p.x - p0.x, p.y - p0.y) <= 3) return;
+      if (!moved) { moved = true; if (!start()) return; }
+      if (!P) return; const v = base + (horiz ? p.y - p0.y : p.x - p0.x);
+      if (horiz) { P[k].y = v; P[k + 1].y = v; } else { P[k].x = v; P[k + 1].x = v; }
+      s.rt = { t: 'pts', P: P.map(q => ({ x: q.x, y: q.y })) }; drawRoute(); };
     ov.onpointerup = () => { ov.onpointermove = ov.onpointerup = null;
-      if (!moved) { rt.t = { auto: 'y', y: 'x', x: 'line', line: 'auto' }[rt.t]; rt.c = null; s.rt = rt; toast({ auto: '沿走道（自動）', y: '先橫後直', x: '先直後橫', line: '直線' }[rt.t]); }
+      if (!moved) { const nt = { auto: 'y', y: 'x', x: 'auto', pts: 'auto', line: 'auto' }[rt.t]; s.rt = { t: nt, c: null }; toast(rt.t === 'pts' ? '已還原自動路線' : { auto: '沿走道（自動）', y: '先橫後直', x: '先直後橫' }[nt]); }
+      else if (P) { const L = ortho(s.rt.P); s.rt.P = L; toast('已微調這一段（點一下線段可還原）'); }
       renderAll(); setTimeout(() => moved = false, 0); };
   }
 }
 function getRt(s) {
-  if (!s.rt) s.rt = { t: 'auto', c: null };
+  if (!s.rt || s.rt.t === 'line') s.rt = { t: 'auto', c: null };   // 直線（會穿過攤位）已取消，舊資料改回沿走道
   return s.rt;
 }
 function segPoly(a, b, rt) {
+  if (rt.t === 'pts' && rt.P && rt.P.length >= 2) {      // 手動微調過的線：中間形狀固定，只讓頭尾跟著圓圈
+    const P = rt.P.map(q => ({ x: q.x, y: q.y })), n = P.length;
+    const fix = (end, nb, p) => { const h = Math.abs(end.y - nb.y) < .5 && Math.abs(end.x - nb.x) >= .5; end.x = p.x; end.y = p.y; if (h) nb.y = p.y; else nb.x = p.x; };
+    if (n >= 3) { fix(P[0], P[1], a); fix(P[n - 1], P[n - 2], b); } else { P[0] = { x: a.x, y: a.y }; P[1] = { x: b.x, y: b.y }; }
+    return ortho(P);
+  }
   if (rt.t === 'auto') {
     if (dragFast || !G) return [a, b];
-    const p = gridPath(a, b); if (p) return [a, ...p, b].filter((q, i, P) => i === 0 || Math.hypot(q.x - P[i - 1].x, q.y - P[i - 1].y) > .5);
+    const p = gridPath(a, b); if (p) return ortho([a, ...p, b]);
     return legs(a, b, { t: 'y', c: null });
   }
   return legs(a, b, rt);
@@ -676,29 +768,99 @@ function legs(a, b, rt) {
   else { const c = rt.c ?? a.x; P = [a, { x: c, y: a.y }, { x: c, y: b.y }, b]; }
   return P.filter((p, i) => i === 0 || Math.hypot(p.x - P[i - 1].x, p.y - P[i - 1].y) > .5);
 }
-function trim(pts, r0, r1) {
-  const p = pts.map(q => ({ x: q.x, y: q.y })), mv = (from, to, r) => { const d = Math.hypot(to.x - from.x, to.y - from.y); if (d < 1e-6) return from; const k = Math.min(r, d * .9) / d; return { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k }; };
-  if (p.length < 2) return p;
-  p[0] = mv(p[0], p[1], r0); const n = p.length; p[n - 1] = mv(p[n - 1], p[n - 2], r1); return p;
+// 圓圈接到走道的那一小段改成直角，不再斜斜穿過攤位
+function ortho(P) {
+  P = P.filter((q, i) => i === 0 || Math.hypot(q.x - P[i - 1].x, q.y - P[i - 1].y) > .5);
+  if (P.length < 2) return P;
+  const ok = (u, v) => Math.abs(u.x - v.x) < .5 || Math.abs(u.y - v.y) < .5, out = [P[0]];
+  for (let i = 1; i < P.length; i++) {
+    const u = out[out.length - 1], v = P[i];
+    if (!ok(u, v)) {
+      // 頭：沿下一段的方向接上；尾：沿上一段的方向進去
+      const nx = P[i + 1], pv = out[out.length - 2];
+      let horizFirst;
+      if (i === 1 && nx) horizFirst = Math.abs(nx.y - v.y) < .5 ? false : true;      // 走道下一段是橫的 → 先直再橫接上去
+      else if (pv) horizFirst = Math.abs(pv.y - u.y) < .5;                          // 上一段是橫的 → 繼續橫著走再直進圓圈
+      else horizFirst = Math.abs(v.x - u.x) > Math.abs(v.y - u.y);
+      out.push(horizFirst ? { x: v.x, y: u.y } : { x: u.x, y: v.y });
+    }
+    out.push(v);
+  }
+  // 去掉同一直線上的中間點
+  return out.filter((q, i) => { if (i === 0 || i === out.length - 1) return true; const a = out[i - 1], c = out[i + 1];
+    return !((Math.abs(a.x - q.x) < .5 && Math.abs(q.x - c.x) < .5) || (Math.abs(a.y - q.y) < .5 && Math.abs(q.y - c.y) < .5)); });
 }
+// 依「離圓心的距離」裁切線段頭尾：
+//   起點：從最後一次離開起點圓圈的位置開始畫
+//   終點：路線第一次碰到終點圓圈附近就停（不會繞過去再折回來，箭頭也不會縮進圓圈裡）
+function trim(pts, r0, r1, A, B) {
+  let p = pts.map(q => ({ x: q.x, y: q.y }));
+  if (p.length < 2) return p;
+  const a = A ? { x: A.x, y: A.y } : p[0], b = B ? { x: B.x, y: B.y } : p[p.length - 1], D = (q, c) => Math.hypot(q.x - c.x, q.y - c.y);
+  const hit = (A, B, c, r, entry) => {   // 線段 AB 與圓 (c,r) 的交點：entry=進入點，否則離開點
+    const dx = B.x - A.x, dy = B.y - A.y, fx = A.x - c.x, fy = A.y - c.y;
+    const qa = dx * dx + dy * dy, qb = 2 * (fx * dx + fy * dy), qc = fx * fx + fy * fy - r * r, ds = Math.sqrt(Math.max(0, qb * qb - 4 * qa * qc));
+    let t = qa ? (entry ? (-qb - ds) : (-qb + ds)) / (2 * qa) : 0; t = Math.max(0, Math.min(1, t));
+    return { x: A.x + dx * t, y: A.y + dy * t };
+  };
+  // 起點：最後一個還在起點圓圈內的點
+  let i0 = 0; for (let i = 1; i < p.length; i++) if (D(p[i], a) < r0) i0 = i;
+  if (i0 >= p.length - 1) return [p[0], p[p.length - 1]];
+  p = [hit(p[i0], p[i0 + 1], a, r0, false), ...p.slice(i0 + 1)];
+  // 終點：第一個進入終點圓圈附近的點
+  for (let j = 1; j < p.length; j++) if (D(p[j], b) < r1) { if (D(p[j - 1], b) < r1) return p.slice(0, j); return [...p.slice(0, j), hit(p[j - 1], p[j], b, r1, true)]; }
+  return p;
+}
+/* 線段平行重疊時自動錯開（像捷運路線圖），不再疊在一起 */
+function lanes(segs, gap) {
+  const legs = [];
+  segs.forEach((g, si) => { if (g.rt.t === 'pts') return; const L = g.L;
+    for (let k = 0; k < L.length - 1; k++) { const A = L[k], B = L[k + 1];
+      if (Math.abs(A.y - B.y) < .5 && Math.abs(A.x - B.x) > gap * .6) legs.push({ si, k, ax: 'h', c: A.y, lo: Math.min(A.x, B.x), hi: Math.max(A.x, B.x) });
+      else if (Math.abs(A.x - B.x) < .5 && Math.abs(A.y - B.y) > gap * .6) legs.push({ si, k, ax: 'v', c: A.x, lo: Math.min(A.y, B.y), hi: Math.max(A.y, B.y) }); } });
+  const par = legs.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
+  for (let i = 0; i < legs.length; i++) for (let j = i + 1; j < legs.length; j++) { const a = legs[i], b = legs[j];
+    if (a.ax === b.ax && a.si !== b.si && Math.abs(a.c - b.c) < gap * 1.3 && Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo) > gap * .4) par[f(i)] = f(j); }
+  const groups = {}; legs.forEach((l, i) => (groups[f(i)] = groups[f(i)] || []).push(l));
+  for (const g of Object.values(groups)) {
+    const ids = [...new Set(g.map(l => l.si))]; if (ids.length < 2) continue;
+    ids.sort((a, b) => a - b);                                   // 依站序排車道：先走的在左／上
+    const mid = g.reduce((t, l) => t + l.c, 0) / g.length;          // 以走道中心為準等距排開
+    g.forEach(l => { const k = ids.indexOf(l.si), v = mid + (k - (ids.length - 1) / 2) * gap, L = segs[l.si].L;
+      if (l.ax === 'h') { L[l.k].y = v; L[l.k + 1].y = v; } else { L[l.k].x = v; L[l.k + 1].x = v; } }); }
+}
+let segShown = {};
 function drawRoute() {
   const ov = $('ov'); if (!ov) return;
-  const Y = sty(), R0 = mapW / 75, R = R0 * Y.c, sw = R0 * .36 * Y.a, out = [], handles = []; let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
+  const Y = sty(), R0 = mapW / 75, R = R0 * Y.c, sw = R0 * .36 * Y.a, out = [], handles = [], halos = [], lines = [], heads = [], hits = [];
+  const tipOut = .96 * Y.h * sw;   /* 箭頭尖端超出線尾的長度（依箭頭大小、線寬自動算） */ let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity; const segsNow = [];
   out.push(`<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="${(3.2 * Y.h).toFixed(2)}" markerHeight="${(3.2 * Y.h).toFixed(2)}" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8481c"/></marker></defs>`);
   const pts = st.stops.map((s, i) => ({ s, i })).filter(o => o.s.x != null && o.s.q.trim());
   let prev = st.start.x != null ? { x: st.start.x, y: st.start.y, r: R * .9 } : null;
-  for (const { s, i } of pts) {
-    if (prev) {
-      const rt = getRt(s), L = segPoly(prev, s, rt), P = trim(L, prev.r * 1.15, R * 1.35); segsNow.push({ P, n: segsNow.length + 1 }); const d0 = 0, d = 'M' + P.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' L');
-      out.push(`<path d="${d}" fill="none" stroke="#fff" stroke-width="${sw * 2.2}" stroke-linejoin="round" opacity=".85"/><path d="${d}" fill="none" stroke="#e8481c" stroke-width="${sw}" stroke-linejoin="round" marker-end="url(#ah)"/>`);
+  const segs = [];
+  for (const { s, i } of pts) { if (prev) { const rt = getRt(s); segs.push({ s, i, rt, prev, L: segPoly(prev, s, rt).map(q => ({ x: q.x, y: q.y })) }); } prev = { x: s.x, y: s.y, r: R }; }
+  if (!dragFast) lanes(segs, sw * 2.6);
+  // 錯開後頭尾補一小段直角接回圓圈中心
+  for (const g of segs) { const L = g.L, a = g.prev, b = g.s, n = L.length;
+    if (Math.hypot(L[0].x - a.x, L[0].y - a.y) > .5) L.unshift({ x: a.x, y: a.y });
+    if (Math.hypot(L[L.length - 1].x - b.x, L[L.length - 1].y - b.y) > .5) L.push({ x: b.x, y: b.y });
+    g.L = ortho(L); }
+  segShown = {};
+  for (const { s, i, rt, prev: pv, L } of segs) {
+    segShown[i] = L;
+    {
+      const prev = pv, P = trim(L, prev.r * 1.05, R * 1.14 + tipOut, prev, s); segsNow.push({ P, n: segsNow.length + 1 }); const d0 = 0, d = 'M' + P.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' L');
+      halos.push(`<path d="${d}" fill="none" stroke="#fff" stroke-width="${sw * 2.2}" stroke-linejoin="round" opacity=".85"/>`);
+      lines.push(`<path d="${d}" fill="none" stroke="#e8481c" stroke-width="${sw}" stroke-linejoin="round"/>`);
+      if (P.length >= 2) { const t = P[P.length - 1], f = P[P.length - 2], ll = Math.hypot(t.x - f.x, t.y - f.y) || 1, k2 = Math.min(1, sw / ll);
+        heads.push(`<path d="M${(t.x - (t.x - f.x) * k2).toFixed(1)},${(t.y - (t.y - f.y) * k2).toFixed(1)} L${t.x.toFixed(1)},${t.y.toFixed(1)}" fill="none" stroke="#e8481c" stroke-width="${sw}" marker-end="url(#ah)"/>`); }
       const cur = rt.t === 'y' ? 'ns-resize' : rt.t === 'x' ? 'ew-resize' : 'move'; for (const q of L) { bx0 = Math.min(bx0, q.x); by0 = Math.min(by0, q.y); bx1 = Math.max(bx1, q.x); by1 = Math.max(by1, q.y); }
-      out.push(`<path data-seg="${i}" data-h="1" d="${d}" fill="none" stroke="transparent" stroke-width="${Math.max(R0 * 1.4, sw * 3)}" style="cursor:${cur}"><title>拖曳：把這段移到別的走道／點一下：切換轉彎方向</title></path>`);
-      if ((rt.t === 'y' || rt.t === 'x') && L.length >= 3) { const k = Math.floor((L.length - 1) / 2), m = { x: (L[k].x + L[k + 1].x) / 2, y: (L[k].y + L[k + 1].y) / 2 };
+      hits.push(`<path data-seg="${i}" data-h="1" d="${d}" fill="none" stroke="transparent" stroke-width="${Math.max(R0 * 1.1, sw * 3)}" style="cursor:move"><title>拖曳：微調這一段（其他線不動）／點一下：切換轉彎方向${rt.t === 'pts' ? '（已微調，點一下還原自動）' : ''}</title></path>`);
+      if (false && (rt.t === 'y' || rt.t === 'x') && L.length >= 3) { const k = Math.floor((L.length - 1) / 2), m = { x: (L[k].x + L[k + 1].x) / 2, y: (L[k].y + L[k + 1].y) / 2 };
         handles.push(`<circle data-seg="${i}" data-h="1" cx="${m.x}" cy="${m.y}" r="${R0 * .42}" fill="#fff" stroke="#e8481c" stroke-width="${R0 * .14}" style="cursor:${cur}"><title>拖曳把這段移到別的走道</title></circle>`); }
     }
-    prev = { x: s.x, y: s.y, r: R };
   }
-  out.push(...handles);
+  out.push(...halos, ...lines, ...hits, ...heads, ...handles);   // 箭頭畫在所有線段之上，不會被下一段的白邊蓋掉
   if (st.start.x != null) out.push(`<g data-pt="s" style="cursor:grab"><circle cx="${st.start.x}" cy="${st.start.y}" r="${R * .9}" fill="#16120f" stroke="#fff" stroke-width="${R * .15}"/><text x="${st.start.x}" y="${st.start.y + R * .34}" font-size="${R * 1}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">0</text><title>起點：${esc(st.start.name)}（可拖曳）</title></g>`);
   pts.forEach(({ s, i }, k) => {
     out.push(`<g data-pt="${i}" style="cursor:grab">${i === selected ? `<circle data-h="1" cx="${s.x}" cy="${s.y}" r="${R * 1.55}" fill="none" stroke="#16120f" stroke-width="${R * .12}" stroke-dasharray="${R * .3}"/>` : ''}<circle cx="${s.x}" cy="${s.y}" r="${R}" fill="#e8481c" stroke="#fff" stroke-width="${R * .16}"/><text x="${s.x}" y="${s.y + R * .38}" font-size="${R * 1.12}" text-anchor="middle" fill="#fff" font-family="Sofia Sans Condensed,Arial" font-weight="800">${k + 1}</text><title>${esc(s.q)}（可拖曳）</title></g>`);
@@ -706,6 +868,8 @@ function drawRoute() {
   for (const q of [st.start.x != null ? st.start : null, ...pts.map(o => o.s)]) if (q) { bx0 = Math.min(bx0, q.x - R); by0 = Math.min(by0, q.y - R); bx1 = Math.max(bx1, q.x + R); by1 = Math.max(by1, q.y + R); }
   lastSegs = segsNow; lastMarks = (st.start.x != null ? [{ x: st.start.x, y: st.start.y, n: 0 }] : []).concat(pts.map(({ s }, k) => ({ x: s.x, y: s.y, n: k + 1 })));
   lastBox = isFinite(bx0) ? { x0: bx0, y0: by0, x1: bx1, y1: by1 } : null;
+  if (hl) { const r = mapW / 75 * 1.7;
+    out.push(`<g data-h="1" data-hl="1" style="cursor:pointer"><circle class="hl-ring" cx="${hl.x}" cy="${hl.y}" r="${r}" fill="#ffd400" fill-opacity=".28" stroke="#ffb000" stroke-width="${r * .18}"/><circle class="hl-ring" cx="${hl.x}" cy="${hl.y}" r="${r * 1.7}" fill="none" stroke="#ffb000" stroke-width="${r * .1}" stroke-dasharray="${r * .35}" style="animation-delay:.45s"/><title>${esc(hl.label)}（點一下停止閃爍）</title></g>`); }
   ov.innerHTML = out.join('');
   let L = 0; if (pts.length) { let p = st.start.x != null ? st.start : pts[0].s; for (const { s } of pts) { const Q = segPoly(p, s, getRt(s)); for (let j = 1; j < Q.length; j++) L += Math.hypot(Q[j].x - Q[j - 1].x, Q[j].y - Q[j - 1].y); p = s; } }
   const miss = st.stops.filter(s => s.q.trim() && s.x == null).length;
@@ -749,12 +913,185 @@ $('wrap').addEventListener('scroll', () => {
   if (vx < L - 1 || vy < T - 1 || vx + w.clientWidth > L + W + 1 || vy + w.clientHeight > T + H + 1) hdQueue();
 }, { passive: true });
 
+/* ---------- 廠商聯絡人 Excel ---------- */
+function loadScript(src, ok) { return ok() ? Promise.resolve() : new Promise((res, rej) => { const t = document.createElement('script'); t.src = src; t.onload = res; t.onerror = () => rej(new Error('Excel 元件載入失敗，請確認網路')); document.head.appendChild(t); }); }
+const hN = h => String(h ?? '').replace(/[\s　：:（）()＿_\-]/g, '').toUpperCase();
+const COLS = {
+  co: h => /公司|廠商|展商|COMPANY|EXHIBITOR/.test(h) && !/[聯連]絡|MAIL|電話|英文|ENGLISH|地址|統編|網址|網站/.test(h),
+  co2: h => /名稱/.test(h) && !/英文|ENGLISH|[聯連]絡/.test(h),
+  booth: h => /攤位|攤號|BOOTH/.test(h) && !/面積|數|SIZE|類型/.test(h),
+  name: h => /[聯連]絡人/.test(h) && !/MAIL|信箱|電話|手機|TEL|PHONE|傳真|FAX|職稱|部門|地址/.test(h),
+  email: h => /[聯連]絡人/.test(h) && /MAIL|信箱/.test(h),
+  tel: h => /[聯連]絡人/.test(h) && /電話|手機|TEL|PHONE/.test(h) && !/傳真|FAX/.test(h)
+};
+function parseSheet(rows) {
+  let best = null;
+  for (let r = 0; r < Math.min(15, rows.length); r++) {
+    const H = rows[r].map(hN), col = {};
+    for (const k of Object.keys(COLS)) { const i = H.findIndex(h => h && COLS[k](h)); if (i >= 0) col[k] = i; }
+    if (col.co == null && col.co2 != null) col.co = col.co2; delete col.co2;
+    // 沒有「聯絡人Email／聯絡人電話」時，標題只寫「Email」「電話」也算
+    if (col.email == null) { const i = H.findIndex(h => h && /MAIL|電子郵件|信箱/.test(h) && !/公司|網址|網站|WEB/.test(h)); if (i >= 0) col.email = i; }
+    if (col.tel == null) { const i = H.findIndex(h => h && /電話|手機|TEL|PHONE|MOBILE/.test(h) && !/傳真|FAX/.test(h)); if (i >= 0) col.tel = i; }
+    const sc = (col.co != null) * 2 + (col.booth != null) * 2 + (col.name != null) + (col.email != null) + (col.tel != null);
+    if ((col.co != null || col.booth != null) && (!best || sc > best.sc)) best = { r, col, sc };
+  }
+  if (!best) return null;
+  const c = best.col, g = (row, k) => c[k] == null ? '' : String(row[c[k]] ?? '').trim();
+  const out = rows.slice(best.r + 1).map(row => ({ co: g(row, 'co'), booth: g(row, 'booth').toUpperCase().replace(/\s/g, ''), name: g(row, 'name'), email: g(row, 'email'), tel: g(row, 'tel') })).filter(x => x.co || x.booth);
+  return { rows: out, has: { co: c.co != null, booth: c.booth != null, name: c.name != null, email: c.email != null, tel: c.tel != null }, sc: best.sc };
+}
+async function loadExcel(f) {
+  $('xlInfo').innerHTML = '<p class="note">讀取中…</p>';
+  try {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => window.XLSX);
+    const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
+    let best = null;
+    for (const n of wb.SheetNames) { const p = parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: false })); if (p && (!best || p.sc > best.sc || (p.sc === best.sc && p.rows.length > best.rows.length))) best = p; }
+    if (!best) throw new Error('找不到「公司名稱」或「攤位」欄位');
+    st.contacts = { file: f.name, rows: best.rows, has: best.has };
+    renderAll(); toast(curSlot ? `已讀入 Excel，記得按「存檔點 ${curSlot.replace('slot', '')}」的存檔` : '已讀入 Excel，記得找一格存檔');
+  } catch (e) { $('xlInfo').innerHTML = `<p class="note" style="color:var(--bad)">讀取失敗：${esc(e.message)}</p>`; }
+}
+const bg2 = s => { const a = [...s], r = []; for (let i = 0; i < a.length - 1; i++) r.push(a[i] + a[i + 1]); return r.length ? r : a; };
+function sim(a, b) { if (!a || !b) return 0; if (a === b) return 100; if ((a.includes(b) || b.includes(a)) && Math.min(a.length, b.length) >= 2) return 85;
+  const A = bg2(a), B = bg2(b).slice(); let h = 0; for (const g of A) { const i = B.indexOf(g); if (i >= 0) { h++; B.splice(i, 1); } } return 200 * h / (A.length + bg2(b).length); }
+function contactOf(s) {
+  const C = st.contacts; if (!C || !s.q.trim()) return null;
+  if (s.code) { const r = C.rows.find(r => r.booth && r.booth === s.code); if (r) return r; }
+  const qs = [dispName(s), s.q, s.label].filter(Boolean).map(Core.norm).filter(Boolean);
+  let best = null, bs = 0;
+  for (const r of C.rows) { const n = Core.norm(r.co); if (!n) continue; for (const q of qs) { const v = sim(q, n); if (v > bs) { bs = v; best = r; } } }
+  return bs >= 60 ? best : null;
+}
+function ctLine(s) {
+  if (!st.contacts || !s.q.trim()) return '';
+  const r = contactOf(s); if (!r) return '<div class="ct none">Excel 裡沒對到這家，資料表會留空</div>';
+  const p = [r.name && '👤 ' + esc(r.name), r.tel && '☎ ' + esc(r.tel), r.email && '✉ ' + esc(r.email)].filter(Boolean);
+  return `<div class="ct">${p.length ? p.join('　') : '已對到，但這列沒有聯絡人資料'}</div>`;
+}
+function renderXl() {
+  const C = st.contacts, el = $('xlInfo'); if (!el) return;
+  if (!C) { el.innerHTML = ''; return; }
+  const list = st.stops.filter(s => s.q.trim()), hit = list.filter(s => contactOf(s)).length;
+  const tag = (k, t) => `<span class="${C.has[k] ? 'y' : 'n'}">${C.has[k] ? '✓' : '✗'} ${t}</span>`;
+  el.innerHTML = `<p class="note" style="margin:6px 0 0">${esc(C.file)}｜${C.rows.length} 筆｜已對到 <b>${hit}</b> / ${list.length} 家 <button class="ghost sm" id="xlDel" style="min-height:26px;padding:0 8px;margin-left:6px">移除</button></p>
+    <div class="xlcols">${tag('co', '公司名稱')}${tag('booth', '攤位')}${tag('name', '聯絡人')}${tag('email', '聯絡人 Email')}${tag('tel', '聯絡人電話')}</div>
+    ${!C.has.name && !C.has.email && !C.has.tel ? '<p class="note">這份 Excel 沒有聯絡人欄位，資料表會留空。</p>' : ''}`;
+  $('xlDel').onclick = () => { delete st.contacts; renderAll(); toast('已移除聯絡人資料'); };
+}
+$('xlDrop').onclick = () => $('xlFile').click();
+$('xlDrop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('xlFile').click(); } };
+$('xlDrop').ondragover = e => { e.preventDefault(); $('xlDrop').classList.add('on'); };
+$('xlDrop').ondragleave = () => $('xlDrop').classList.remove('on');
+$('xlDrop').ondrop = e => { e.preventDefault(); $('xlDrop').classList.remove('on'); if (e.dataTransfer.files[0]) loadExcel(e.dataTransfer.files[0]); };
+$('xlFile').onchange = () => { if ($('xlFile').files[0]) loadExcel($('xlFile').files[0]); $('xlFile').value = ''; };
+
+/* ---------- 4 導覽廠商：整張卡片按住拖曳排序（輸入框、按鈕除外） ---------- */
+{
+  const clear = () => document.querySelectorAll('.stop').forEach(x => x.classList.remove('drop-before', 'drop-after', 'dragging'));
+  $('stops').addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('input,button,select,textarea,a')) return;
+    const box = e.target.closest('.stop'); if (!box) return;
+    const from = +box.dataset.i, sx = e.clientX, sy = e.clientY, aside = document.querySelector('aside');
+    let started = false, target = null, after = false, scrollT = null;
+    const move = ev => {
+      if (!started) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return; started = true; document.body.style.userSelect = 'none'; }
+      ev.preventDefault(); clear(); box.classList.add('dragging'); target = null;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.stop');
+      if (el && el !== box) { const r = el.getBoundingClientRect(); after = ev.clientY > r.top + r.height / 2; el.classList.add(after ? 'drop-after' : 'drop-before'); target = +el.dataset.i; }
+      const ar = aside.getBoundingClientRect(); clearInterval(scrollT);     // 拖到左欄上下邊緣自動捲動
+      if (ev.clientY < ar.top + 50) scrollT = setInterval(() => aside.scrollTop -= 14, 16);
+      else if (ev.clientY > ar.bottom - 50) scrollT = setInterval(() => aside.scrollTop += 14, 16);
+    };
+    const up = () => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); clearInterval(scrollT); clear(); document.body.style.userSelect = '';
+      if (!started) return;                                   // 只是點一下：交給 click（選取這站）
+      box.addEventListener('click', ev => ev.stopPropagation(), { capture: true, once: true });
+      if (target == null || target === from) return;
+      const [it] = st.stops.splice(from, 1); let to = target + (after ? 1 : 0); if (from < to) to--;
+      st.stops.splice(to, 0, it);
+      [to - 1, to, to + 1, from].forEach(k => { if (st.stops[k]) st.stops[k].rt = null; });
+      selected = -1; renderAll(); toast(`第 ${from + 1} 站移到第 ${to + 1} 站`);
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+}
+
+/* ---------- 搜尋位置：地圖移過去，持續閃爍直到按 Esc／再搜尋／點閃爍圈 ---------- */
+let hl = null;
+function flashAt(x, y, label) {
+  hl = { x, y, label };
+  const k = Math.max(zoom, 1.6); setScale(k * frameRect().fw / mapW); centerOn(x, y); drawFrame();
+  drawRoute(); toast(`📍 ${label}（Esc 停止閃爍）`);
+}
+function clearFlash() { if (hl) { hl = null; drawRoute(); } }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') clearFlash(); });
+function doSearch(pickFirst) {
+  const q = $('mSearch').value.trim(), box = $('msRes');
+  if (!q) { box.innerHTML = ''; return; }
+  if (!mapW) { toast('請先上傳地圖'); return; }
+  const res = Core.match(q, data);
+  if (!res.length) { box.innerHTML = '<span class="note" style="margin:0">地圖上找不到，換個關鍵字或攤位號試試</span>'; return; }
+  box.innerHTML = res.map((c, k) => `<button data-k="${k}">${esc(c.label)}${c.code ? ' · ' + esc(c.code) : ''}</button>`).join('');
+  box.onclick = ev => { const b = ev.target.closest('button[data-k]'); if (!b) return; const c = res[+b.dataset.k]; flashAt(c.x, c.y, c.label + (c.code ? '（' + c.code + '）' : '')); };
+  if (pickFirst) { const c = res[0]; flashAt(c.x, c.y, c.label + (c.code ? '（' + c.code + '）' : '')); }
+}
+$('mSearch').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); doSearch(true); } });
+$('mSearch').addEventListener('input', e => { if (!e.isComposing) { clearTimeout(doSearch.t); doSearch.t = setTimeout(() => doSearch(false), 350); } });
+$('mSearchGo').onclick = () => doSearch(true);
+
 /* ---------- ordering ---------- */
 function snapC(p) { const k = Math.round(p.x) + ',' + Math.round(p.y); if (!snapCache.has(k)) snapCache.set(k, Grid.snap(G, p)); return snapCache.get(k); }
 function gridPath(a, b) {
   const ca = snapC(a), cb = snapC(b); if (ca < 0 || cb < 0) return null; if (ca === cb) return [];
   const key = ca + '>' + cb; if (pathCache.has(key)) return pathCache.get(key);
   const R = Grid.run(G, ca), p = Grid.pathTo(G, R, cb); pathCache.set(key, p); return p;
+}
+/* 回頭路判斷：把每段路線攤成格子，記錄每格被「橫向」「縱向」各走過幾次。
+   同方向走 2 次＝來回一次（輕罰），3 次以上（重罰）；一橫一直＝十字路口交會，不罰。 */
+function legCells(pts) {
+  if (!pts || pts.length < 2 || !G) return null;
+  const H = [], V = [];
+  for (let k = 1; k < pts.length; k++) {
+    let x0 = Math.floor(pts[k - 1].x / G.cs), y0 = Math.floor(pts[k - 1].y / G.cs); const x1 = Math.floor(pts[k].x / G.cs), y1 = Math.floor(pts[k].y / G.cs);
+    const horiz = y0 === y1, sx = Math.sign(x1 - x0), sy = Math.sign(y1 - y0);
+    while (x0 !== x1 || y0 !== y1) { (horiz ? H : V).push(y0 * G.gw + x0); x0 += sx; y0 += horiz ? 0 : sy; if (!horiz && x0 !== x1) x0 = x1; }
+  }
+  // 頭尾幾格是進出攤位，不算回頭路
+  const cut = a => a.length > 8 ? a.slice(3, -3) : [];
+  return { H: cut(H), V: cut(V) };
+}
+let _cntH = null, _cntV = null;
+function backtrack(ord, C) {
+  const N = G.gw * G.gh; if (!_cntH || _cntH.length !== N) { _cntH = new Uint8Array(N); _cntV = new Uint8Array(N); }
+  const touched = []; let p = 0;
+  for (const i of ord) { const c = C[p][i]; if (c) { for (const q of c.H) { if (!_cntH[q] && !_cntV[q]) touched.push(q); _cntH[q] = Math.min(255, _cntH[q] + 1); } for (const q of c.V) { if (!_cntH[q] && !_cntV[q]) touched.push(q); _cntV[q] = Math.min(255, _cntV[q] + 1); } } p = i; }
+  let two = 0, three = 0;
+  for (const q of touched) { const m = Math.max(_cntH[q], _cntV[q]); if (m === 2) two++; else if (m >= 3) three++; _cntH[q] = _cntV[q] = 0; }
+  return { two, three, over3: three ? Math.max(1, Math.round(three / 12)) : 0 };
+}
+function makeObjective(D, C) {
+  return o => { let d = 0, p = 0; for (const i of o) { d += D[p][i]; p = i; } const b = backtrack(o, C); return d + b.two * .6 + b.three * 8; };
+}
+function orderSmart(D, m, F) {
+  const idx = Array.from({ length: m }, (_, i) => i + 1), L = o => { let d = 0, p = 0; for (const i of o) { d += D[p][i]; p = i; } return d; };
+  let cand;
+  if (m <= 8) {          // 先用距離列出前 300 名，再加上回頭路扣分重新排名
+    const K = 300, top = [];
+    const perm = (arr, k) => { if (k === arr.length) { const l = L(arr); if (top.length < K || l < top[top.length - 1].l) { let lo = 0, hi = top.length; while (lo < hi) { const md = (lo + hi) >> 1; if (top[md].l < l) lo = md + 1; else hi = md; } top.splice(lo, 0, { l, o: arr.slice() }); if (top.length > K) top.pop(); } return; }
+      for (let i = k; i < arr.length; i++) { [arr[k], arr[i]] = [arr[i], arr[k]]; perm(arr, k + 1); [arr[k], arr[i]] = [arr[i], arr[k]]; } };
+    perm(idx.slice(), 0); cand = top.map(t => t.o);
+  } else cand = [orderD(D, m)];
+  let best = cand[0], bf = F(best);
+  for (const o of cand) { const f = F(o); if (f < bf) { bf = f; best = o; } }
+  // 再用 2-opt＋單點搬移微調
+  let imp = true, guard = 0;
+  while (imp && guard++ < 30) { imp = false;
+    for (let i = 0; i < m - 1; i++) for (let j = i + 1; j < m; j++) { const c = best.slice(0, i).concat(best.slice(i, j + 1).reverse(), best.slice(j + 1)); const f = F(c); if (f + 1e-6 < bf) { bf = f; best = c; imp = true; } }
+    for (let i = 0; i < m; i++) for (let j = 0; j < m; j++) { if (i === j) continue; const c = best.slice(); const [x] = c.splice(i, 1); c.splice(j, 0, x); const f = F(c); if (f + 1e-6 < bf) { bf = f; best = c; imp = true; } }
+  }
+  return best;
 }
 function orderD(D, m) {
   // node 0 = start, nodes 1..m = stops; open path from 0
@@ -779,23 +1116,33 @@ $('opt').onclick = () => {
         return row; });
     } else D = nodes.map(a => nodes.map(b => Core.dist(a, b)));
     const curOrder = Array.from({ length: n - 1 }, (_, i) => i + 1), Lc = o => { let d = 0, p = 0; for (const i of o) { d += D[p][i]; p = i; } return d; };
-    const before = Lc(curOrder), ord = orderD(D, n - 1), after = Lc(ord);
+    let C = null; if (G) { const cells = nodes.map(snapC); C = nodes.map((_, i) => nodes.map((_, j) => i === j || cells[i] < 0 || cells[j] < 0 ? null : legCells(pathCache.get(cells[i] + '>' + cells[j])))); }
+    const F = C ? makeObjective(D, C) : Lc;
+    const before = F(curOrder), ord = C ? orderSmart(D, n - 1, F) : orderD(D, n - 1), after = F(ord);
+    const bt = C ? backtrack(ord, C) : null;
     const picked = ord.map(i => nodes[i]);
     st.stops = (hasStart ? picked : [nodes[0], ...picked]).concat(rest.filter(s => s.q.trim()));
     st.stops.forEach(s => s.rt = null);
     st.routed = true; st.fitted = false; renderAll(); fitRoute();
-    toast(after < before - 1 ? `已改走主走道，路線縮短 ${Math.round((1 - after / before) * 100)}%` : '目前順序已是最佳（沿走道）');
+    toast((after < before - 1 ? `已重排：路線更順、少走回頭路` : '目前順序已是最佳') + (bt && bt.over3 ? `（有 ${bt.over3} 段走道仍需來回超過 1 次）` : ''));
   }, 30);
 };
 $('keep').onclick = () => { st.stops.forEach(s => s.rt = null); st.routed = true; st.fitted = false; renderAll(); toast('維持你輸入的順序，線段重新沿走道'); };
 /* 紅色取景框＝PPT 輸出範圍（固定 8.7:5.9），地圖在框下移動／縮放 */
 const FR = 87 / 59;
 function frameRect() {
-  const w = $('wrap'), cw = w.clientWidth, ch = w.clientHeight, pad = 28;
+  const w = $('wrap'), cw = w.clientWidth, ch = w.clientHeight, pad = 22;
   let fw = cw - pad * 2, fh = fw / FR; if (fh > ch - pad * 2) { fh = ch - pad * 2; fw = fh * FR; }
   return { fx: (cw - fw) / 2, fy: (ch - fh) / 2, fw, fh };
 }
-function sizeWrap() { const w = $('wrap'), top = w.getBoundingClientRect().top + scrollY; w.style.height = Math.max(420, innerHeight - top - 14) + 'px'; }
+function sizeWrap() {
+  const w = $('wrap'), main = document.querySelector('main'), bar = document.querySelector('.bar');
+  main.style.height = '';
+  if (innerWidth <= 900) { w.style.height = Math.max(380, innerHeight * .7) + 'px'; return; }
+  // 頁首固定在最上面，右欄黏在頁首下方；地圖高度＝視窗高 − 頁首 − 工具列，瀏覽器 100% 就能看到整個 PPT 輸出範圍
+  const hh = document.querySelector('header').offsetHeight; document.documentElement.style.setProperty('--hh', hh + 'px');
+  w.style.height = Math.max(320, innerHeight - hh - bar.offsetHeight - 2) + 'px';
+}
 function drawFrame() {
   const f = frameRect(), el = $('frame'); if (!el) return;
   Object.assign(el.style, { left: f.fx + 'px', top: f.fy + 'px', width: f.fw + 'px', height: f.fh + 'px' });
@@ -829,7 +1176,7 @@ const hm = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(
 function rows() {
   const [h, m] = (st.time || '13:30').split(':').map(Number); let t = h * 60 + m;
   const list = st.stops.filter(s => s.q.trim()), out = [{ a: t - (+st.gather || 0), b: t, zh: '集合', en: 'Meeting at ' + (st.start.name || 'meeting point'), gather: 1 }];
-  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code }); t += d; }
+  for (const s of list) { const d = s.min || +st.per || 20; const nm = dispName(s); out.push({ a: t, b: t + d, zh: nm, en: s.en || nm, code: s.code, s }); t += d; }
   return out;
 }
 function dateTxt(en) {
@@ -883,7 +1230,8 @@ async function renderCrop(scope, withRoute, minW) {
   if (f > 1.05) await curPage.render({ canvasContext: fg, viewport: curPage.getViewport({ scale: curScale * f }) }).promise;
   else fg.drawImage($('map').querySelector('canvas'), 0, 0, full.width, full.height);
   if (withRoute) {
-    const svg = new XMLSerializer().serializeToString($('ov')).replace(/<(path|circle)[^>]*data-h="1"[^>]*>(?:<title>.*?<\/title>)?<\/\1>/g, '').replace(/<(path|circle)[^>]*data-h="1"[^>]*\/>/g, '');
+    const ovc = $('ov').cloneNode(true); ovc.querySelectorAll('[data-h]').forEach(n => n.remove());
+    const svg = new XMLSerializer().serializeToString(ovc);
     const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     await new Promise(r => { img.onload = r; img.onerror = r; }); fg.drawImage(img, 0, 0, full.width, full.height);
   }
@@ -984,7 +1332,7 @@ function vendorDocx() {
   if (st.note) x += para(st.note, { sz: 11, after: 120 });
   if (first) x += para([[`${dateTxt()} ${hm(first.a)}-${hm(last.b)} 預計 ${r.length} 家廠商，每家約 ${+st.per || 20} 分鐘，共 ${last.b - first.a} 分鐘`, {}]], { sz: 11, after: 60 });
   x += para(`集合地點：${st.start.name || ''}（集合 ${hm(rows()[0].a)}-${hm(rows()[0].b)}）`, { sz: 11, after: 160 });
-  x += table(['路線順序', '公司名稱', '攤位', '時段', '聯絡人', '電話', 'Email', '備註'], r.map((o, i) => [String(i + 1), o.zh, o.code || '', `${hm(o.a)}-${hm(o.b)}`, '', '', '', '']), W, { sz: 10.5, rowH: 1000 });
+  x += table(['路線順序', '公司名稱', '攤位', '時段', '聯絡人', '電話', 'Email', '備註'], r.map((o, i) => { const c = o.s ? contactOf(o.s) : null; return [String(i + 1), o.zh, o.code || '', `${hm(o.a)}-${hm(o.b)}`, c?.name || '', c?.tel || '', c?.email || '', '']; }), W, { sz: 10.5, rowH: 1000 });
   return docx(x);
 }
 $('png').onclick = () => {
@@ -1020,7 +1368,7 @@ $('png').onclick = () => {
 
 /* ---------- Firebase 存檔點（newtest 專案 Realtime Database，節點 tourRoute） ---------- */
 const FB = 'https://newtest-b562b-default-rtdb.firebaseio.com/tourRoute';
-const SLOTS = ['slot1', 'slot2', 'slot3'];
+const SLOTS = ['slot1', 'slot2', 'slot3', 'slot4', 'slot5', 'slot6', 'slot7'];
 let slotMeta = {}, armed = {};
 async function fb(path, method = 'GET', body) {
   const r = await fetch(`${FB}/${path}.json`, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
@@ -1030,11 +1378,14 @@ async function fb(path, method = 'GET', body) {
 function renderSlots(msg) {
   $('slots').innerHTML = SLOTS.map((k, i) => { const m = slotMeta[k];
     return `<div class="slot ${m ? 'has' : ''}" data-k="${k}">
-      <div class="row"><b class="sn">${i + 1}</b><input class="sname" value="${esc(m ? m.name : '')}" placeholder="存檔點 ${i + 1}（可打名字）"></div>
-      <div class="smeta">${m ? `${esc(m.savedAt)}｜${esc(m.expo || '')} ${esc(m.date || '')}｜${m.n || 0} 站${m.map ? '｜含地圖' : ''}` : '空的'}</div>
-      <div class="tools"><button data-s="save">${armed[k] === 'save' ? '覆蓋？再按一次' : '存檔'}</button><button data-s="load" ${m ? '' : 'disabled'}>讀檔</button><button data-s="del" ${m ? '' : 'disabled'}>${armed[k] === 'del' ? '確定刪除？' : '刪除'}</button></div>
+      <div class="row"><b class="sn">${i + 1}</b><input class="sname" value="${esc(m ? m.name : '')}" placeholder="存檔點 ${i + 1}（可打名字）">
+      <div class="tools"><button data-s="save">${armed[k] === 'save' ? '覆蓋？' : '存檔'}</button><button data-s="load" ${m ? '' : 'disabled'}>讀檔</button><button data-s="del" ${m ? '' : 'disabled'}>${armed[k] === 'del' ? '確定？' : '刪除'}</button></div></div>
+      <div class="smeta">${m ? `${esc(m.savedAt)}｜${esc(m.expo || '')} ${esc(m.date || '')}｜${m.n || 0} 站${m.map ? '｜含地圖' : ''}${m.xl ? '｜含 Excel' : ''}` : '空的'}</div>
+      <div class="curtag"></div>
     </div>`; }).join('');
   $('slotMsg').textContent = msg || '';
+  updCur();
+  relayout();
 }
 async function refreshSlots(msg) {
   try { slotMeta = (await fb('meta')) || {}; renderSlots(msg); }
@@ -1056,19 +1407,28 @@ $('slots').addEventListener('click', async e => {
       const now = new Date(), stamp = `${now.getMonth() + 1}/${now.getDate()} ${hm(now.getHours() * 60 + now.getMinutes())}`;
       renderSlots('上傳中…');
       await fb('data/' + k, 'PUT', { st: JSON.stringify(st), map: mapSrc || null });
-      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(s => s.q.trim()).length, map: !!mapSrc });
-      await refreshSlots(`已存到「${name}」`);
+      await fb('meta/' + k, 'PUT', { name, savedAt: stamp, expo: st.expo || '', date: dateTxt() || '', n: st.stops.filter(s => s.q.trim()).length, map: !!mapSrc, xl: st.contacts ? st.contacts.file : '' });
+      curSlot = k; dirty = false; try { localStorage.setItem('tourCurSlot', k); } catch (e) {}
+      await refreshSlots(`已存到「${name}」${st.contacts ? '（含 Excel 聯絡人）' : ''}`);
     } else if (act === 'load') {
       renderSlots('讀取中…');
       const d = await fb('data/' + k); if (!d) throw new Error('這格是空的');
-      st = Object.assign(st, JSON.parse(d.st)); st.stops.forEach(s => { s.cands = s.cands || []; }); applyForm(); save();
-      if (d.map && d.map.b64) {
-        const f = new File([fromB64(d.map.b64)], d.map.name || 'map', { type: d.map.type || '' });
-        await loadFile(f, { page: d.map.page || 1 });
-      } else renderAll();
-      renderSlots(`已讀取「${m ? m.name : ''}」`);
+      quiet = true;
+      // 整份換掉（不是疊加）：這格沒有的東西（例如 Excel 聯絡人）就是沒有，不會沿用上一場
+      st = Object.assign(DEF(), JSON.parse(d.st)); st.stops.forEach(s => { s.cands = s.cands || []; });
+      hl = null; selected = -1; $('mSearch').value = ''; $('msRes').innerHTML = '';
+      applyForm(); save();
+      try {
+        if (d.map && d.map.b64) {
+          const f = new File([fromB64(d.map.b64)], d.map.name || 'map', { type: d.map.type || '' });
+          await loadFile(f, { page: d.map.page || 1 });
+        } else renderAll();
+      } finally { quiet = false; }
+      curSlot = k; dirty = false; try { localStorage.setItem('tourCurSlot', k); } catch (e) {}
+      renderSlots(`已讀取「${m ? m.name : ''}」${st.contacts ? `（含 Excel：${st.contacts.file}）` : '（這場沒有 Excel）'}`);
     } else if (act === 'del') {
       await fb('data/' + k, 'DELETE'); await fb('meta/' + k, 'DELETE');
+      if (curSlot === k) { curSlot = ''; dirty = false; try { localStorage.removeItem('tourCurSlot'); } catch (e) {} }
       await refreshSlots('已刪除');
     }
   } catch (err) { renderSlots('失敗：' + err.message); }
@@ -1082,18 +1442,21 @@ renderSlots('連線中…'); refreshSlots();
 
 /* ---------- 步驟引導：目前該做哪一步就閃哪一區 ---------- */
 let curStep = 0;
-function guide() {}
+function guide() {
+  $('g1').classList.toggle('now', !mapW);
+  $('xlBox').hidden = false;
+}
 /* 操作導覽：第一次開啟跳出 1–5 步說明，關掉後不再自動出現；按「操作導覽」可再看 */
 const HELP = [
-  ['上傳攤位圖 PDF', '左上「1 攤位圖」上傳 PDF，系統會讀出圖上的廠商名稱與攤位號。'],
-  ['左下輸入導覽廠商', '在左下「4 導覽廠商」逐家輸入，或按「貼上整串名單」一次貼上；打錯字或簡稱會列出候選讓你點選。'],
+  ['上傳攤位圖 PDF ＆ 廠商 Excel（非必要）', '「2 攤位圖 PDF」上傳 PDF，系統會讀出圖上的廠商名稱與攤位號。「3 廠商聯絡人 Excel」可以不傳；有傳的話，聯絡人、Email、電話會自動填進廠商資料表 Word。'],
+  ['輸入導覽廠商', '在左邊「6 導覽廠商」逐家輸入，或按「貼上整串名單」一次貼上；打錯字或簡稱會列出候選讓你點選。'],
   ['自動排最佳路線，再自己調整', '按「自動排最佳路線」，系統沿白色走道（優先 6.1m 主走道）排順序；之後可拖曳紅色編號、拖曳線段改走別條走道。'],
   ['調整完按「符合路線」', '按「符合路線」，畫面會自動抓好角度與範圍，匯出的圖也用這個範圍。'],
   ['匯出檔案', '按「匯出檔案」，一次下載路線圖 PPT、行程表 Word、廠商資料表 Word。'],
 ];
 function showHelp() {
   closeHelp(); const tgt = $('g1') || $('drop').closest('section');
-  tgt.scrollIntoView({ block: 'nearest' });
+  $('g1').scrollIntoView({ block: 'center' });
   document.body.insertAdjacentHTML('beforeend', `<div id="hBlock"></div><div id="hSpot"></div>
     <svg id="hArrow" viewBox="0 0 120 60" aria-hidden="true"><path d="M116 30 H26" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round"/><path d="M40 8 L8 30 L40 52" fill="none" stroke="#ff7a1a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <div id="hBox"><div class="row"><b style="flex:1;font-size:19px">操作導覽（5 步）</b></div>
@@ -1101,24 +1464,32 @@ function showHelp() {
     <div class="row"><button class="pri" id="helpOk">知道了，開始使用</button><span class="note" style="margin:0">之後可按右上「❓ 操作導覽」再看</span></div></div>`);
   placeHelp();
   $('helpOk').onclick = () => { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} };
-  $('hBlock').onclick = ev => { const r = tgt.getBoundingClientRect(); if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) { closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} $('file').click(); } };
+  $('hBlock').onclick = ev => { const inR = el => { const r = el.getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom; };
+    const hitPdf = inR($('g1')), hitXl = inR($('xlBox')); if (!hitPdf && !hitXl) return;
+    closeHelp(); try { localStorage.setItem('tourHelpSeen', '1'); } catch (e) {} (hitXl ? $('xlFile') : $('file')).click(); };
 }
 function closeHelp() { ['hBlock', 'hSpot', 'hArrow', 'hBox'].forEach(id => $(id) && $(id).remove()); }
+function helpRect() {     // 操作導覽聚光燈：同時框住「2 攤位圖 PDF」與「3 Excel」
+  const a = $('g1').getBoundingClientRect(), x = $('xlBox'), b = x && !x.hidden ? x.getBoundingClientRect() : a;
+  const left = Math.min(a.left, b.left), top = Math.min(a.top, b.top), right = Math.max(a.right, b.right), bottom = Math.max(a.bottom, b.bottom);
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
 function placeHelp() {
   const spot = $('hSpot'); if (!spot) return;
-  const tgt = $('g1') || $('drop').closest('section'), r = tgt.getBoundingClientRect(), p = 8;
+  const r = helpRect(), p = 8;
   Object.assign(spot.style, { left: r.left - p + 'px', top: r.top - p + 'px', width: r.width + p * 2 + 'px', height: r.height + p * 2 + 'px' });
   const ar = $('hArrow'); Object.assign(ar.style, { left: r.right + 14 + 'px', top: r.top + r.height / 2 - 30 + 'px' });
   const box = $('hBox'), wr = $('wrap').getBoundingClientRect(), bw = Math.min(540, innerWidth - 24);
   box.style.width = bw + 'px';
   const bh = box.offsetHeight, cx = (Math.max(0, wr.left) + Math.min(innerWidth, wr.right)) / 2, cy = (Math.max(0, wr.top) + Math.min(innerHeight, wr.bottom)) / 2;
-  box.style.left = Math.max(12, Math.min(innerWidth - bw - 12, cx - bw / 2)) + 'px'; box.style.top = Math.max(12, Math.min(innerHeight - bh - 12, cy - bh / 2)) + 'px';
+  box.style.left = Math.max(12, (innerWidth - bw) / 2) + 'px'; box.style.top = Math.max(12, (innerHeight - bh) / 2) + 'px';   // 畫面正中間
 }
 addEventListener('resize', placeHelp); addEventListener('scroll', placeHelp, true);
 $('help').onclick = showHelp;
 try { if (localStorage.getItem('tourHelpSeen') !== '1') setTimeout(showHelp, 300); } catch (e) { setTimeout(showHelp, 300); }
-function renderAll() { renderStops(); drawRoute(); renderSched(); save(); guide(); }
-window.addEventListener('resize', () => { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); });
+function renderAll() { renderStops(); drawRoute(); renderSched(); renderXl(); save(); guide(); }
+function relayout() { if (!mapW) { sizeWrap(); return; } const c = viewCenter(), z = zoom; sizeWrap(); drawFrame(); setScale(z * frameRect().fw / mapW); centerOn(c.x, c.y); }
+window.addEventListener('resize', relayout);
 renderAll();
 }
 
